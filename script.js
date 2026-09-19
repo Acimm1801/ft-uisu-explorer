@@ -1,5529 +1,989 @@
-import * as THREE from "three";
-
-
-/* ===================================================== */
-/* MODEL PATH */
-/* ===================================================== */
-
-const MODEL_PATH =
-    "assets/models/biro-fakultas-teknik.glb";
-
-
-
-/* ===================================================== */
-/* DATA GEDUNG */
-/* ===================================================== */
-
-const buildings = [
-
-    {
-
-        id:
-            "biro",
-
-        name:
-            "Gedung Biro Fakultas Teknik",
-
-        description:
-            "Gedung Biro Fakultas Teknik Universitas Islam Sumatera Utara.",
-
-        rooms: [
-
-            "Gudang Mini",
-
-            "Program Studi Teknik Industri",
-
-            "Program Studi Mesin",
-
-            "Program Studi Teknik Sipil",
-
-            "Program Studi Teknik Informatika",
-
-            "Program Studi Teknik Elektro",
-
-            "LPMF",
-
-            "WD3-KAK",
-
-            "WD2-STK",
-
-            "WD1-ADI",
-
-            "Ruang Dekan",
-
-            "Loket Pembayaran Mahasiswa",
-
-            "KaSubBag Akademik IT dan Kerjasama",
-
-            "KaSubBag Keuangan",
-
-            "KaSubBag Kemahasiswaan",
-
-            "KaSubBag SIAKAD",
-
-            "KTU",
-
-            "KaSubBag Umum Perlengkapan Kerumahtanggaan",
-
-            "Mushola",
-
-            "Dapur",
-
-            "Toilet"
-
-        ].map(
-
-            (
-
-                name,
-                index
-
-            ) => ({
-
-                id:
-                    "biro-room-" +
-                    (index + 1),
-
-                name,
-
-                floor:
-                    1,
-
-                description:
-
-                    "Detail informasi " +
-
-                    name +
-
-                    " akan dilengkapi kemudian."
-
-            })
-
-        )
-
-    },
-
-
-
-    {
-
-        id:
-            "perpustakaan",
-
-        name:
-            "Perpustakaan Fakultas Teknik",
-
-        description:
-            "Perpustakaan Fakultas Teknik Universitas Islam Sumatera Utara.",
-
-        rooms:
-            []
-
-    },
-
-
-
-    {
-
-        id:
-            "serbaguna",
-
-        name:
-            "Gedung Serbaguna Fakultas Teknik",
-
-        description:
-            "Gedung Serbaguna Fakultas Teknik Universitas Islam Sumatera Utara.",
-
-        rooms:
-            []
-
-    },
-
-
-
-    {
-
-        id:
-            "perkuliahan",
-
-        name:
-            "Gedung Perkuliahan Fakultas Teknik",
-
-        description:
-            "Gedung Perkuliahan Fakultas Teknik Universitas Islam Sumatera Utara.",
-
-        rooms:
-
-            Array.from(
-
-                {
-
-                    length:
-                        8
-
-                },
-
-                (
-
-                    _,
-                    index
-
-                ) => ({
-
-                    id:
-                        "kuliah-" +
-                        (index + 1),
-
-                    name:
-                        "Ruang Kuliah " +
-                        (index + 1),
-
-                    floor:
-                        1,
-
-                    description:
-
-                        "Ruang Kuliah " +
-
-                        (index + 1) +
-
-                        " berada di Gedung Perkuliahan Fakultas Teknik."
-
-                })
-
-            )
-
-    },
-
-
-
-    {
-
-        id:
-            "laboratorium",
-
-        name:
-            "Gedung Laboratorium Fakultas Teknik",
-
-        description:
-            "Gedung Laboratorium Fakultas Teknik terdiri dari 3 lantai.",
-
-        floors:
-            3,
-
-        rooms: [
-
-
-            /* LANTAI 1 */
-
-            {
-
-                id:
-                    "lab-foundry",
-
-                name:
-                    "Lab. Foundry",
-
-                floor:
-                    1
-
-            },
-
-
-            {
-
-                id:
-                    "lab-teknologi-mekanik",
-
-                name:
-                    "Lab. Teknologi Mekanik",
-
-                floor:
-                    1
-
-            },
-
-
-            {
-
-                id:
-                    "lab-beton",
-
-                name:
-                    "Lab. Beton",
-
-                floor:
-                    1
-
-            },
-
-
-            {
-
-                id:
-                    "lab-mekanika-tanah",
-
-                name:
-                    "Lab. Mekanika Tanah",
-
-                floor:
-                    1
-
-            },
-
-
-            {
-
-                id:
-                    "lab-jalan-raya",
-
-                name:
-                    "Lab. Jalan Raya",
-
-                floor:
-                    1
-
-            },
-
-
-            {
-
-                id:
-                    "lab-hidrolika",
-
-                name:
-                    "Lab. Hidrolika",
-
-                floor:
-                    1
-
-            },
-
-
-
-            /* LANTAI 2 */
-
-            {
-
-                id:
-                    "lab-rangkaian-listrik",
-
-                name:
-                    "Lab. Rangkaian Listrik",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-dasar-elektronika",
-
-                name:
-                    "Lab. Dasar Elektronika",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-sistem-pengukuran",
-
-                name:
-                    "Lab. Sistem Pengukuran",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-pengukuran-listrik",
-
-                name:
-                    "Lab. Pengukuran Listrik",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-dasar-telekomunikasi",
-
-                name:
-                    "Lab. Dasar Sistem Telekomunikasi",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-ilmu-ukur-tanah",
-
-                name:
-                    "Lab. Ilmu Ukur Tanah",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-komputasi",
-
-                name:
-                    "Lab. Komputasi",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-pengukuran-statistik",
-
-                name:
-                    "Lab. Pengukuran & Statistik",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-faktor-manusia",
-
-                name:
-                    "Lab. Teknik Faktor Manusia",
-
-                floor:
-                    2
-
-            },
-
-
-            {
-
-                id:
-                    "lab-jaringan-komputer",
-
-                name:
-                    "Lab. Jaringan Komputer Mikro",
-
-                floor:
-                    2
-
-            },
-
-
-            ...Array.from(
-
-                {
-
-                    length:
-                        5
-
-                },
-
-                (
-
-                    _,
-                    index
-
-                ) => ({
-
-                    id:
-                        "kuliah-" +
-                        (index + 9),
-
-                    name:
-                        "Ruang Kuliah " +
-                        (index + 9),
-
-                    floor:
-                        2
-
-                })
-
-            ),
-
-
-
-            /* LANTAI 3 */
-
-            {
-
-                id:
-                    "lab-sistem-digital",
-
-                name:
-                    "Lab. Sistem Digital",
-
-                floor:
-                    3
-
-            },
-
-
-            {
-
-                id:
-                    "lab-teknik-produksi",
-
-                name:
-                    "Lab. Teknik Produksi",
-
-                floor:
-                    3
-
-            },
-
-
-            {
-
-                id:
-                    "lab-menggambar",
-
-                name:
-                    "Lab. Menggambar",
-
-                floor:
-                    3
-
-            }
-
-
-        ].map(
-
-            room => ({
-
-                ...room,
-
-                description:
-
-                    room.name +
-
-                    " berada di Gedung Laboratorium Fakultas Teknik, Lantai " +
-
-                    room.floor +
-
-                    "."
-
-            })
-
-        )
-
-    }
-
-];
-
-
-
-/* ===================================================== */
-/* SEARCH INDEX */
-/* ===================================================== */
-
-const locations =
-    [];
-
-
-buildings
-.forEach(
-
-    building => {
-
-
-        locations
-        .push({
-
-            id:
-                building.id,
-
-            type:
-                "building",
-
-            name:
-                building.name,
-
-            parent:
-                "Fakultas Teknik UISU",
-
-            description:
-                building.description,
-
-            buildingId:
-                building.id
-
-        });
-
-
-
-        building
-        .rooms
-        .forEach(
-
-            room => {
-
-
-                locations
-                .push({
-
-                    ...room,
-
-                    type:
-                        "room",
-
-                    parent:
-                        building.name,
-
-                    buildingId:
-                        building.id
-
-                });
-
-
-            }
-
-        );
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* STATE */
-/* ===================================================== */
+import {
+  MAP_WIDTH,
+  MAP_HEIGHT,
+  buildings,
+  rooms,
+  routeNodes,
+  routeEdges,
+  getBuildingById
+} from "./data/map-data.js?v=12";
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 const state = {
-
-    selectedSearch:
-        null,
-
-    destination:
-        null,
-
-    navigationMode:
-        null,
-
-    mapStart:
-        null,
-
-    mapDestination:
-        null,
-
-    mapStep:
-        "start",
-
-    currentSlide:
-        0,
-
-
-    /* WEBXR */
-
-    xrSession:
-        null,
-
-    renderer:
-        null,
-
-    scene:
-        null,
-
-    camera:
-        null,
-
-    reticle:
-        null,
-
-    hitTestSource:
-        null,
-
-    hitTestRequested:
-        false,
-
-    routeGroup:
-        null,
-
-    destinationWorld:
-        null,
-
-    routePlaced:
-        false,
-
-    arrived:
-        false
-
+  currentSlide: 0,
+  globalSelection: null,
+  infoLocation: null,
+  destination: null,
+  clickedPosition: null,
+  routeResult: null,
+  cameraStream: null
 };
 
+/* =========================================================
+   LOCATION DATABASE
+========================================================= */
 
+const locations = [];
 
-/* ===================================================== */
-/* DOM HELPER */
-/* ===================================================== */
+buildings.forEach((building) => {
+  locations.push({
+    id: building.id,
+    type: "building",
+    name: building.name,
+    buildingId: building.id,
+    parent: "Fakultas Teknik UISU",
+    floor: building.actualFloor,
+    description: building.description
+  });
+});
 
-const $ =
-    selector =>
+rooms.forEach((room) => {
+  const building = getBuildingById(room.buildingId);
+  locations.push({
+    ...room,
+    type: "room",
+    parent: building ? building.name : "Fakultas Teknik UISU",
+    description:
+      `${room.name} berada di ${building ? building.name : "Fakultas Teknik UISU"}` +
+      `${room.floor ? `, lantai ${room.floor}` : ""}. ` +
+      "Detail penanggung jawab, fungsi, dan letak spesifik ruangan akan dilengkapi kemudian."
+  });
+});
 
-        document
-        .querySelector(
-            selector
-        );
+function normalizeText(value) {
+  return String(value || "").toLowerCase().trim();
+}
 
+function searchLocations(value) {
+  const query = normalizeText(value);
+  if (!query) return [];
 
-const $$ =
-    selector =>
+  return locations
+    .filter((location) =>
+      normalizeText(`${location.name} ${location.parent}`).includes(query)
+    )
+    .slice(0, 30);
+}
 
-        [
+function renderSearchResults(results, container, onSelect) {
+  container.innerHTML = "";
 
-            ...document
-            .querySelectorAll(
-                selector
-            )
+  if (!results.length) {
+    container.innerHTML = `<div class="search-empty">Lokasi tidak ditemukan.</div>`;
+    container.classList.remove("hidden");
+    return;
+  }
 
-        ];
+  results.forEach((location) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "search-result";
+    button.innerHTML = `
+      <span>
+        <strong>${location.name}</strong>
+        <small>${location.parent}${location.floor ? ` • Lantai ${location.floor}` : ""}</small>
+      </span>
+      <span class="search-type">${location.type === "building" ? "Gedung" : "Ruangan"}</span>
+    `;
+    button.addEventListener("click", () => onSelect(location));
+    container.appendChild(button);
+  });
 
+  container.classList.remove("hidden");
+}
 
-
-/* ===================================================== */
-/* DRAWER */
-/* ===================================================== */
-
-const drawer =
-    $("#drawer");
-
-
-const drawerOverlay =
-    $("#drawerOverlay");
-
-
-$("#hamburgerButton")
-.addEventListener(
-
-    "click",
-
-    openDrawer
-
-);
-
-
-$("#closeDrawer")
-.addEventListener(
-
-    "click",
-
-    closeDrawer
-
-);
-
-
-drawerOverlay
-.addEventListener(
-
-    "click",
-
-    closeDrawer
-
-);
-
-
+/* =========================================================
+   PAGE & DRAWER
+========================================================= */
 
 function openDrawer() {
-
-    drawer
-    .classList
-    .add(
-        "open"
-    );
-
-
-    drawerOverlay
-    .classList
-    .add(
-        "show"
-    );
-
-
-    document
-    .body
-    .style
-    .overflow =
-        "hidden";
-
+  $("#drawer").classList.add("open");
+  $("#drawerOverlay").classList.add("show");
+  document.body.style.overflow = "hidden";
 }
-
-
 
 function closeDrawer() {
-
-    drawer
-    .classList
-    .remove(
-        "open"
-    );
-
-
-    drawerOverlay
-    .classList
-    .remove(
-        "show"
-    );
-
-
-    document
-    .body
-    .style
-    .overflow =
-        "";
-
+  $("#drawer").classList.remove("open");
+  $("#drawerOverlay").classList.remove("show");
+  document.body.style.overflow = "";
 }
 
+function showPage(pageName) {
+  $$(".page").forEach((page) => page.classList.remove("active"));
 
+  const target = $(`#${pageName}Page`);
+  if (target) target.classList.add("active");
 
-/* ===================================================== */
-/* PAGE SYSTEM */
-/* ===================================================== */
+  $$(".header-link").forEach((button) => {
+    button.classList.toggle("active", button.dataset.page === pageName);
+  });
 
-function showPage(
-    page
-) {
+  if (pageName !== "arNavigation") stopNavigationCamera();
 
-    $$(".page")
-    .forEach(
-
-        item => {
-
-
-            item
-            .classList
-            .remove(
-                "active"
-            );
-
-
-        }
-
-    );
-
-
-    const target =
-        $("#" + page + "Page");
-
-
-    if(target) {
-
-        target
-        .classList
-        .add(
-            "active"
-        );
-
-    }
-
-
-    $$(".header-link")
-    .forEach(
-
-        link => {
-
-
-            link
-            .classList
-            .toggle(
-
-                "active",
-
-                link
-                .dataset
-                .page ===
-                page
-
-            );
-
-
-        }
-
-    );
-
-
-    closeDrawer();
-
-
-    if(
-
-        page !==
-        "arNavigation"
-
-    ) {
-
-        window
-        .scrollTo({
-
-            top:
-                0,
-
-            behavior:
-                "smooth"
-
-        });
-
-    }
-
+  closeDrawer();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+$("#hamburgerButton").addEventListener("click", openDrawer);
+$("#closeDrawer").addEventListener("click", closeDrawer);
+$("#drawerOverlay").addEventListener("click", closeDrawer);
+$("#logoHome").addEventListener("click", () => showPage("home"));
 
+$$('[data-page]').forEach((button) => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
 
-$$("[data-page]")
-.forEach(
+/* =========================================================
+   HOME SLIDER - 20 DETIK
+========================================================= */
 
-    button => {
-
-
-        button
-        .addEventListener(
-
-            "click",
-
-            () => {
-
-
-                showPage(
-
-                    button
-                    .dataset
-                    .page
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-);
-
-
-
-$("#logoHome")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-        showPage(
-            "home"
-        );
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* SLIDER */
-/* ===================================================== */
-
-const slides =
-    $$(".slide");
-
-
+const slides = $$(".hero-slide");
 let sliderTimer;
 
+function showSlide(index) {
+  index = (index + slides.length) % slides.length;
+  state.currentSlide = index;
 
+  slides.forEach((slide, slideIndex) => {
+    slide.classList.toggle("active", slideIndex === index);
+  });
 
-function showSlide(
-    index
-) {
-
-    index =
-
-        (
-
-            index +
-
-            slides.length
-
-        )
-
-        %
-
-        slides.length;
-
-
-    state.currentSlide =
-        index;
-
-
-
-    slides
-    .forEach(
-
-        (
-
-            slide,
-            slideIndex
-
-        ) => {
-
-
-            slide
-            .classList
-            .toggle(
-
-                "active",
-
-                slideIndex ===
-                index
-
-            );
-
-
-        }
-
-    );
-
-
-
-    $$(".dot")
-    .forEach(
-
-        (
-
-            dot,
-            dotIndex
-
-        ) => {
-
-
-            dot
-            .classList
-            .toggle(
-
-                "active",
-
-                dotIndex ===
-                index
-
-            );
-
-
-        }
-
-    );
-
+  $$(".slider-dot").forEach((dot, dotIndex) => {
+    dot.classList.toggle("active", dotIndex === index);
+  });
 }
 
-
-
-/* ===================================================== */
-/* AUTO SLIDER 20 DETIK */
-/* ===================================================== */
-
-function startSliderTimer() {
-
-    clearInterval(
-        sliderTimer
-    );
-
-
-    sliderTimer =
-
-        setInterval(
-
-            () => {
-
-
-                showSlide(
-
-                    state
-                    .currentSlide +
-
-                    1
-
-                );
-
-
-            },
-
-            20000
-
-        );
-
+function restartSlider() {
+  clearInterval(sliderTimer);
+  sliderTimer = setInterval(() => showSlide(state.currentSlide + 1), 20000);
 }
 
-
-
-$("#nextSlide")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showSlide(
-
-            state
-            .currentSlide +
-
-            1
-
-        );
-
-
-        startSliderTimer();
-
-
-    }
-
-);
-
-
-
-$("#prevSlide")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showSlide(
-
-            state
-            .currentSlide -
-
-            1
-
-        );
-
-
-        startSliderTimer();
-
-
-    }
-
-);
-
-
-
-$$(".dot")
-.forEach(
-
-    dot => {
-
-
-        dot
-        .addEventListener(
-
-            "click",
-
-            () => {
-
-
-                showSlide(
-
-                    Number(
-
-                        dot
-                        .dataset
-                        .slide
-
-                    )
-
-                );
-
-
-                startSliderTimer();
-
-
-            }
-
-        );
-
-
-    }
-
-);
-
-
-startSliderTimer();
-
-
-
-/* ===================================================== */
-/* SEARCH */
-/* ===================================================== */
-
-function searchLocation(
-    value
-) {
-
-    value =
-
-        value
-        .toLowerCase()
-        .trim();
-
-
-    if(!value) {
-
-        return [];
-
-    }
-
-
-    return locations
-
-    .filter(
-
-        location => {
-
-
-            const text =
-
-                (
-
-                    location.name +
-
-                    " " +
-
-                    location.parent
-
-                )
-
-                .toLowerCase();
-
-
-            return text
-            .includes(
-                value
-            );
-
-
-        }
-
-    )
-
-    .slice(
-        0,
-        15
-    );
-
+$("#nextSlide").addEventListener("click", () => {
+  showSlide(state.currentSlide + 1);
+  restartSlider();
+});
+
+$("#prevSlide").addEventListener("click", () => {
+  showSlide(state.currentSlide - 1);
+  restartSlider();
+});
+
+$$(".slider-dot").forEach((dot) => {
+  dot.addEventListener("click", () => {
+    showSlide(Number(dot.dataset.slide));
+    restartSlider();
+  });
+});
+
+restartSlider();
+
+/* =========================================================
+   GLOBAL SEARCH
+========================================================= */
+
+$("#globalSearch").addEventListener("input", (event) => {
+  const value = event.target.value;
+  state.globalSelection = null;
+  $("#globalSelected").classList.add("hidden");
+
+  if (!value) {
+    $("#globalSearchResults").classList.add("hidden");
+    return;
+  }
+
+  renderSearchResults(searchLocations(value), $("#globalSearchResults"), (location) => {
+    state.globalSelection = location;
+    $("#globalSearch").value = location.name;
+    $("#globalSelectedName").textContent = location.name;
+    $("#globalSearchResults").classList.add("hidden");
+    $("#globalSelected").classList.remove("hidden");
+  });
+});
+
+$("#clearGlobalSearch").addEventListener("click", () => {
+  $("#globalSearch").value = "";
+  state.globalSelection = null;
+  $("#globalSearchResults").classList.add("hidden");
+  $("#globalSelected").classList.add("hidden");
+});
+
+$("#globalInfoButton").addEventListener("click", () => {
+  if (state.globalSelection) openInfo(state.globalSelection);
+});
+
+$("#globalNavButton").addEventListener("click", () => {
+  if (state.globalSelection) openNavigationWithDestination(state.globalSelection);
+});
+
+/* =========================================================
+   INFO MODAL
+========================================================= */
+
+function openInfo(location) {
+  state.infoLocation = location;
+  $("#infoTitle").textContent = location.name;
+  $("#infoParent").textContent = location.parent;
+  $("#infoDescription").textContent = location.description || "Detail informasi akan dilengkapi kemudian.";
+  $("#infoModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
 }
-
-
-
-function renderResults(
-
-    results,
-
-    container,
-
-    callback
-
-) {
-
-    container
-    .innerHTML =
-        "";
-
-
-    if(
-
-        results.length ===
-        0
-
-    ) {
-
-        container
-        .innerHTML =
-
-            `
-
-            <div class="empty-search">
-
-                Lokasi tidak ditemukan.
-
-            </div>
-
-            `;
-
-
-        container
-        .classList
-        .remove(
-            "hidden"
-        );
-
-
-        return;
-
-    }
-
-
-
-    results
-    .forEach(
-
-        location => {
-
-
-            const button =
-
-                document
-                .createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button
-            .className =
-                "search-result";
-
-
-            button
-            .innerHTML =
-
-                `
-
-                <span>
-
-                    <strong>
-
-                        ${location.name}
-
-                    </strong>
-
-                    <small>
-
-                        ${location.parent}
-
-                    </small>
-
-                </span>
-
-
-                <span class="type-badge">
-
-                    ${
-                        location.type ===
-                        "building"
-
-                        ?
-
-                        "Gedung"
-
-                        :
-
-                        "Ruangan"
-                    }
-
-                </span>
-
-                `;
-
-
-            button
-            .addEventListener(
-
-                "click",
-
-                () => {
-
-
-                    callback(
-                        location
-                    );
-
-
-                }
-
-            );
-
-
-            container
-            .appendChild(
-                button
-            );
-
-
-        }
-
-    );
-
-
-    container
-    .classList
-    .remove(
-        "hidden"
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* GLOBAL SEARCH */
-/* ===================================================== */
-
-$("#globalSearch")
-.addEventListener(
-
-    "input",
-
-    event => {
-
-
-        state.selectedSearch =
-            null;
-
-
-        $("#globalSearchActions")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        const value =
-            event
-            .target
-            .value;
-
-
-        if(!value) {
-
-            $("#globalSearchResults")
-            .classList
-            .add(
-                "hidden"
-            );
-
-
-            return;
-
-        }
-
-
-        renderResults(
-
-            searchLocation(
-                value
-            ),
-
-            $("#globalSearchResults"),
-
-            location => {
-
-
-                state.selectedSearch =
-                    location;
-
-
-                $("#globalSearch")
-                .value =
-                    location.name;
-
-
-                $("#globalSearchResults")
-                .classList
-                .add(
-                    "hidden"
-                );
-
-
-                $("#globalSelectedName")
-                .textContent =
-                    location.name;
-
-
-                $("#globalSearchActions")
-                .classList
-                .remove(
-                    "hidden"
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-);
-
-
-
-$("#clearSearch")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        $("#globalSearch")
-        .value =
-            "";
-
-
-        $("#globalSearchResults")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#globalSearchActions")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        state.selectedSearch =
-            null;
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* INFORMATION MODAL */
-/* ===================================================== */
-
-function openInfo(
-    location
-) {
-
-    closeDrawer();
-
-
-    state.selectedSearch =
-        location;
-
-
-    $("#infoTitle")
-    .textContent =
-        location.name;
-
-
-    $("#infoParent")
-    .textContent =
-        location.parent;
-
-
-    $("#infoDescription")
-    .textContent =
-
-        location.description
-
-        ||
-
-        "Detail informasi akan dilengkapi kemudian.";
-
-
-    $("#infoModal")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    document
-    .body
-    .style
-    .overflow =
-        "hidden";
-
-}
-
-
 
 function closeInfo() {
-
-    $("#infoModal")
-    .classList
-    .add(
-        "hidden"
-    );
-
-
-    document
-    .body
-    .style
-    .overflow =
-        "";
-
+  $("#infoModal").classList.add("hidden");
+  document.body.style.overflow = "";
 }
 
+$("#closeInfoModal").addEventListener("click", closeInfo);
+$("#infoBackdrop").addEventListener("click", closeInfo);
+$("#infoNavigationButton").addEventListener("click", () => {
+  if (!state.infoLocation) return;
+  const location = state.infoLocation;
+  closeInfo();
+  openNavigationWithDestination(location);
+});
 
+/* =========================================================
+   BUILDING SELECTORS - 3D & MAIN AR
+========================================================= */
 
-$("#globalInfoButton")
-.addEventListener(
+function populateBuildingSelect(selectElement) {
+  selectElement.innerHTML = `<option value="">-- Pilih Gedung --</option>`;
+  buildings.forEach((building) => {
+    const option = document.createElement("option");
+    option.value = building.id;
+    option.textContent = building.name;
+    selectElement.appendChild(option);
+  });
+}
 
-    "click",
+populateBuildingSelect($("#viewerBuildingSelect"));
+populateBuildingSelect($("#arBuildingSelect"));
 
-    () => {
+$("#show3DModel").addEventListener("click", () => {
+  const building = getBuildingById($("#viewerBuildingSelect").value);
 
+  if (!building) {
+    $("#viewerMessage").textContent = "Pilih gedung terlebih dahulu.";
+    $("#viewerCard").classList.add("hidden");
+    return;
+  }
 
-        if(
+  if (!building.modelPath) {
+    $("#viewerMessage").textContent = `Model 3D ${building.shortName} belum tersedia.`;
+    $("#viewerCard").classList.add("hidden");
+    return;
+  }
 
-            state
-            .selectedSearch
+  $("#viewerMessage").textContent = "";
+  $("#viewerTitle").textContent = building.name;
+  $("#mainModelViewer").setAttribute("src", building.modelPath);
+  $("#viewerCard").classList.remove("hidden");
+});
 
-        ) {
+$("#resetCamera").addEventListener("click", () => {
+  const viewer = $("#mainModelViewer");
+  viewer.cameraOrbit = "0deg 75deg 105%";
+  viewer.cameraTarget = "auto auto auto";
+});
 
-            openInfo(
+$("#prepareMainAR").addEventListener("click", () => {
+  const building = getBuildingById($("#arBuildingSelect").value);
 
-                state
-                .selectedSearch
+  if (!building) {
+    $("#arMessage").textContent = "Pilih gedung terlebih dahulu.";
+    $("#arCard").classList.add("hidden");
+    return;
+  }
 
-            );
+  if (!building.modelPath) {
+    $("#arMessage").textContent = `Model AR ${building.shortName} belum tersedia.`;
+    $("#arCard").classList.add("hidden");
+    return;
+  }
 
-        }
+  $("#arMessage").textContent = "";
+  $("#mainARViewer").setAttribute("src", building.modelPath);
+  $("#mainARStatus").textContent = `Siap menampilkan ${building.shortName}`;
+  $("#arCard").classList.remove("hidden");
+});
 
+$("#launchMainAR").addEventListener("click", async () => {
+  try {
+    await $("#mainARViewer").activateAR();
+  } catch (error) {
+    console.error(error);
+    toast("AR utama belum dapat dibuka pada perangkat ini.");
+  }
+});
 
+/* =========================================================
+   ROUTING ENGINE
+   Network tidak pernah digambar seluruhnya. Hanya route aktif.
+========================================================= */
+
+function pointDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function pointsEqual(a, b, epsilon = 0.5) {
+  return pointDistance(a, b) <= epsilon;
+}
+
+function polylineLength(points) {
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i += 1) {
+    total += pointDistance(points[i], points[i + 1]);
+  }
+  return total;
+}
+
+const routingEdges = routeEdges.map((edge) => {
+  const points = edge.points.map(([x, y]) => ({ x, y }));
+  const cumulative = [0];
+  let total = 0;
+
+  for (let i = 0; i < points.length - 1; i += 1) {
+    total += pointDistance(points[i], points[i + 1]);
+    cumulative.push(total);
+  }
+
+  return { ...edge, points, cumulative, length: total };
+});
+
+const edgeById = new Map(routingEdges.map((edge) => [edge.id, edge]));
+
+const routeGraph = {};
+Object.keys(routeNodes).forEach((nodeId) => { routeGraph[nodeId] = []; });
+
+routingEdges.forEach((edge) => {
+  routeGraph[edge.from].push({ node: edge.to, edgeId: edge.id, weight: edge.length });
+  routeGraph[edge.to].push({ node: edge.from, edgeId: edge.id, weight: edge.length });
+});
+
+function projectPointToSegment(point, a, b) {
+  const abX = b.x - a.x;
+  const abY = b.y - a.y;
+  const apX = point.x - a.x;
+  const apY = point.y - a.y;
+  const lengthSquared = abX * abX + abY * abY;
+
+  let t = lengthSquared === 0 ? 0 : (apX * abX + apY * abY) / lengthSquared;
+  t = Math.max(0, Math.min(1, t));
+
+  const projected = { x: a.x + abX * t, y: a.y + abY * t };
+  return { point: projected, t, distance: pointDistance(point, projected) };
+}
+
+function snapPointToNetwork(point) {
+  let best = null;
+
+  routingEdges.forEach((edge) => {
+    for (let i = 0; i < edge.points.length - 1; i += 1) {
+      const a = edge.points[i];
+      const b = edge.points[i + 1];
+      const projection = projectPointToSegment(point, a, b);
+      const segmentLength = pointDistance(a, b);
+      const along = edge.cumulative[i] + segmentLength * projection.t;
+
+      if (!best || projection.distance < best.distance) {
+        best = {
+          edge,
+          segmentIndex: i,
+          t: projection.t,
+          point: projection.point,
+          distance: projection.distance,
+          along,
+          distanceToFrom: along,
+          distanceToTo: edge.length - along
+        };
+      }
     }
+  });
 
-);
+  return best;
+}
 
+function dijkstra(startNode, targetNode) {
+  const distances = {};
+  const previousNode = {};
+  const previousEdge = {};
+  const unvisited = new Set(Object.keys(routeNodes));
 
+  Object.keys(routeNodes).forEach((nodeId) => {
+    distances[nodeId] = Infinity;
+    previousNode[nodeId] = null;
+    previousEdge[nodeId] = null;
+  });
 
-$("#closeInfoModal")
-.addEventListener(
+  distances[startNode] = 0;
 
-    "click",
+  while (unvisited.size) {
+    let current = null;
+    let smallest = Infinity;
 
-    closeInfo
+    unvisited.forEach((nodeId) => {
+      if (distances[nodeId] < smallest) {
+        smallest = distances[nodeId];
+        current = nodeId;
+      }
+    });
 
-);
+    if (current === null) break;
+    if (current === targetNode) break;
 
+    unvisited.delete(current);
 
+    routeGraph[current].forEach((connection) => {
+      if (!unvisited.has(connection.node)) return;
+      const candidate = distances[current] + connection.weight;
+      if (candidate < distances[connection.node]) {
+        distances[connection.node] = candidate;
+        previousNode[connection.node] = current;
+        previousEdge[connection.node] = connection.edgeId;
+      }
+    });
+  }
 
-/* ===================================================== */
-/* GLOBAL PETUNJUK ARAH */
-/* ===================================================== */
+  if (!Number.isFinite(distances[targetNode])) return null;
 
-$("#globalNavigationButton")
-.addEventListener(
+  const nodePath = [];
+  const edgePath = [];
+  let cursor = targetNode;
 
-    "click",
+  while (cursor) {
+    nodePath.unshift(cursor);
+    if (cursor === startNode) break;
+    edgePath.unshift(previousEdge[cursor]);
+    cursor = previousNode[cursor];
+  }
 
-    () => {
+  if (nodePath[0] !== startNode) return null;
+  return { distance: distances[targetNode], nodePath, edgePath };
+}
 
-
-        if(
-
-            !state
-            .selectedSearch
-
-        ) {
-
-            return;
-
-        }
-
-
-        selectDestination(
-
-            state
-            .selectedSearch
-
-        );
-
-
-        showPage(
-            "navigation"
-        );
-
-
+function dedupePolyline(points) {
+  const output = [];
+  points.forEach((point) => {
+    if (!output.length || !pointsEqual(output[output.length - 1], point)) {
+      output.push({ x: point.x, y: point.y });
     }
+  });
+  return output;
+}
 
-);
+function snapToEndpointPolyline(snap, endpointNode) {
+  const edge = snap.edge;
+  const points = edge.points;
+  const i = snap.segmentIndex;
+  const result = [{ ...snap.point }];
 
+  if (endpointNode === edge.from) {
+    result.push(points[i]);
+    for (let j = i - 1; j >= 0; j -= 1) result.push(points[j]);
+  } else {
+    result.push(points[i + 1]);
+    for (let j = i + 2; j < points.length; j += 1) result.push(points[j]);
+  }
 
+  return dedupePolyline(result);
+}
 
-$("#infoNavigationButton")
-.addEventListener(
+function endpointToSnapPolyline(snap, endpointNode) {
+  return snapToEndpointPolyline(snap, endpointNode).reverse();
+}
 
-    "click",
+function sameEdgePolyline(startSnap, targetSnap) {
+  const edge = startSnap.edge;
+  const points = edge.points;
+  const result = [{ ...startSnap.point }];
 
-    () => {
-
-
-        if(
-
-            !state
-            .selectedSearch
-
-        ) {
-
-            return;
-
-        }
-
-
-        const destination =
-
-            state
-            .selectedSearch;
-
-
-        closeInfo();
-
-
-        selectDestination(
-            destination
-        );
-
-
-        showPage(
-            "navigation"
-        );
-
-
+  if (startSnap.along <= targetSnap.along) {
+    for (let j = startSnap.segmentIndex + 1; j <= targetSnap.segmentIndex; j += 1) {
+      result.push(points[j]);
     }
-
-);
-
-
-
-/* ===================================================== */
-/* MODAL OVERLAYS */
-/* ===================================================== */
-
-$$("[data-modal-close]")
-.forEach(
-
-    overlay => {
-
-
-        overlay
-        .addEventListener(
-
-            "click",
-
-            () => {
-
-
-                if(
-
-                    overlay
-                    .dataset
-                    .modalClose ===
-                    "info"
-
-                ) {
-
-                    closeInfo();
-
-                }
-
-
-                if(
-
-                    overlay
-                    .dataset
-                    .modalClose ===
-                    "map"
-
-                ) {
-
-                    closeMapPicker();
-
-                }
-
-
-            }
-
-        );
-
-
+  } else {
+    for (let j = startSnap.segmentIndex; j > targetSnap.segmentIndex; j -= 1) {
+      result.push(points[j]);
     }
+  }
 
-);
+  result.push({ ...targetSnap.point });
+  return dedupePolyline(result);
+}
 
+function middlePolyline(dijkstraResult) {
+  if (!dijkstraResult || !dijkstraResult.edgePath.length) return [];
 
+  const output = [];
 
-/* ===================================================== */
-/* DIRECTORY */
-/* ===================================================== */
+  dijkstraResult.edgePath.forEach((edgeId, index) => {
+    const edge = edgeById.get(edgeId);
+    const fromNode = dijkstraResult.nodePath[index];
+    let points = edge.from === fromNode ? edge.points : [...edge.points].reverse();
+    if (output.length) points = points.slice(1);
+    output.push(...points);
+  });
+
+  return dedupePolyline(output);
+}
+
+function routeBetweenSnaps(startSnap, targetSnap) {
+  const candidates = [];
+
+  if (startSnap.edge.id === targetSnap.edge.id) {
+    candidates.push({
+      distance: Math.abs(startSnap.along - targetSnap.along),
+      points: sameEdgePolyline(startSnap, targetSnap)
+    });
+  }
+
+  const startEndpoints = [startSnap.edge.from, startSnap.edge.to];
+  const targetEndpoints = [targetSnap.edge.from, targetSnap.edge.to];
+
+  startEndpoints.forEach((startNode) => {
+    targetEndpoints.forEach((targetNode) => {
+      const middle = dijkstra(startNode, targetNode);
+      if (!middle) return;
+
+      const startDistance = startNode === startSnap.edge.from
+        ? startSnap.distanceToFrom
+        : startSnap.distanceToTo;
+
+      const targetDistance = targetNode === targetSnap.edge.from
+        ? targetSnap.distanceToFrom
+        : targetSnap.distanceToTo;
+
+      const startPart = snapToEndpointPolyline(startSnap, startNode);
+      const middlePart = middlePolyline(middle);
+      const targetPart = endpointToSnapPolyline(targetSnap, targetNode);
+
+      candidates.push({
+        distance: startDistance + middle.distance + targetDistance,
+        points: dedupePolyline([...startPart, ...middlePart, ...targetPart])
+      });
+    });
+  });
+
+  return candidates.sort((a, b) => a.distance - b.distance)[0] || null;
+}
+
+function findBestEntranceRoute(clickedPosition, building) {
+  const startSnap = snapPointToNetwork(clickedPosition);
+  if (!startSnap) return null;
+
+  let best = null;
+
+  building.entrances.forEach((entrance) => {
+    const targetSnap = snapPointToNetwork(entrance);
+    if (!targetSnap) return;
+
+    const networkRoute = routeBetweenSnaps(startSnap, targetSnap);
+    if (!networkRoute) return;
+
+    const totalDistance =
+      pointDistance(clickedPosition, startSnap.point) +
+      networkRoute.distance +
+      pointDistance(targetSnap.point, entrance);
+
+    const points = dedupePolyline([
+      clickedPosition,
+      startSnap.point,
+      ...networkRoute.points,
+      targetSnap.point,
+      entrance
+    ]);
+
+    const candidate = {
+      entrance,
+      startSnap,
+      targetSnap,
+      distance: totalDistance,
+      points
+    };
+
+    if (!best || candidate.distance < best.distance) best = candidate;
+  });
+
+  return best;
+}
+
+/* =========================================================
+   NAVIGATION FLOW
+========================================================= */
+
+function getDestinationBuilding() {
+  if (!state.destination) return null;
+  return getBuildingById(state.destination.buildingId);
+}
+
+function setElementPosition(element, point) {
+  element.style.left = `${(point.x / MAP_WIDTH) * 100}%`;
+  element.style.top = `${(point.y / MAP_HEIGHT) * 100}%`;
+}
+
+function updateProgress(stage) {
+  const steps = ["stepTarget", "stepPosition", "stepRoute", "stepAR"];
+  steps.forEach((id, index) => {
+    $(`#${id}`).classList.toggle("active", index <= stage);
+  });
+}
+
+function clearRouteOnly() {
+  state.clickedPosition = null;
+  state.routeResult = null;
+  $("#activeRoute").setAttribute("points", "");
+  $("#userMarker").classList.add("hidden");
+  $("#entranceMarker").classList.add("hidden");
+  $("#resetPosition").classList.add("hidden");
+  $("#routeFoundBox").classList.add("hidden");
+  $("#positionStatus").textContent = "Belum dipilih";
+  $("#routeStatus").textContent = "Menunggu posisi";
+  $("#mapHeadingTitle").textContent = "Tandai posisi Anda sekarang";
+  $("#mapInstruction").textContent = "Tap pada denah sesuai posisi Anda saat ini.";
+  updateProgress(state.destination ? 1 : 0);
+}
+
+function resetNavigation() {
+  state.destination = null;
+  $("#navigationSearch").value = "";
+  $("#navigationSearchResults").innerHTML = `<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>`;
+  $("#selectedDestination").classList.add("hidden");
+  $("#mapSection").classList.add("hidden");
+  $("#destinationHighlight").classList.add("hidden");
+  clearRouteOnly();
+  updateProgress(0);
+}
+
+function selectNavigationDestination(location) {
+  state.destination = location;
+  $("#navigationSearch").value = location.name;
+  $("#navigationSearchResults").innerHTML = "";
+  $("#selectedDestinationName").textContent = location.name;
+  $("#selectedDestinationParent").textContent = location.parent;
+  $("#selectedDestination").classList.remove("hidden");
+
+  const building = getDestinationBuilding();
+  if (!building) return;
+
+  $("#targetStatus").textContent = location.name;
+  setElementPosition($("#destinationHighlight"), building.mapMarker);
+  $("#destinationHighlight").classList.remove("hidden");
+  $("#mapSection").classList.remove("hidden");
+
+  clearRouteOnly();
+  updateProgress(1);
+
+  setTimeout(() => {
+    $("#mapSection").scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 120);
+}
+
+function openNavigationWithDestination(location = null) {
+  showPage("navigation");
+  resetNavigation();
+
+  if (location) {
+    selectNavigationDestination(location);
+  } else {
+    setTimeout(() => $("#navigationSearch").focus(), 180);
+  }
+}
+
+$("#navigationSearch").addEventListener("input", (event) => {
+  const value = event.target.value;
+
+  if (!value) {
+    $("#navigationSearchResults").innerHTML = `<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>`;
+    return;
+  }
+
+  renderSearchResults(searchLocations(value), $("#navigationSearchResults"), selectNavigationDestination);
+});
+
+$("#navigationMap").addEventListener("pointerdown", (event) => {
+  const building = getDestinationBuilding();
+  if (!building) {
+    toast("Pilih tujuan terlebih dahulu.");
+    return;
+  }
+
+  const rect = $("#navigationMap").getBoundingClientRect();
+  const clicked = {
+    x: ((event.clientX - rect.left) / rect.width) * MAP_WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * MAP_HEIGHT
+  };
+
+  state.clickedPosition = clicked;
+  setElementPosition($("#userMarker"), clicked);
+  $("#userMarker").classList.remove("hidden");
+
+  const routeResult = findBestEntranceRoute(clicked, building);
+  if (!routeResult) {
+    toast("Rute tidak ditemukan dari posisi tersebut.");
+    return;
+  }
+
+  state.routeResult = routeResult;
+
+  setElementPosition($("#entranceMarker"), routeResult.entrance);
+  $("#entranceLabel").textContent = `Entrance ${building.shortName}`;
+  $("#entranceMarker").classList.remove("hidden");
+
+  const pointsText = routeResult.points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  $("#activeRoute").setAttribute("points", pointsText);
+
+  $("#positionStatus").textContent = "Posisi dipilih";
+  $("#routeStatus").textContent = "Rute Ditemukan";
+  $("#mapHeadingTitle").textContent = "Rute menuju tujuan";
+  $("#mapInstruction").textContent = `Rute aktif menuju entrance ${building.shortName}.`;
+  $("#resetPosition").classList.remove("hidden");
+  $("#routeFoundBox").classList.remove("hidden");
+  updateProgress(2);
+});
+
+$("#resetPosition").addEventListener("click", clearRouteOnly);
+
+/* =========================================================
+   AR NAVIGATION - CAMERA + HUD
+========================================================= */
+
+function calculateInitialArrowRotation(points) {
+  if (!points || points.length < 2) return 0;
+
+  let start = points[0];
+  let next = points[1];
+
+  for (let i = 1; i < points.length; i += 1) {
+    if (pointDistance(start, points[i]) > 12) {
+      next = points[i];
+      break;
+    }
+  }
+
+  const dx = next.x - start.x;
+  const dy = next.y - start.y;
+  return Math.atan2(dx, -dy) * (180 / Math.PI);
+}
+
+async function startNavigationCamera() {
+  const video = $("#navigationCamera");
+  $("#cameraStatus").textContent = "Meminta izin kamera...";
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    $("#cameraStatus").textContent = "Browser tidak mendukung akses kamera.";
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },
+      audio: false
+    });
+
+    state.cameraStream = stream;
+    video.srcObject = stream;
+    await video.play();
+    $("#cameraStatus").textContent = "Kamera aktif • HUD navigasi siap";
+  } catch (error) {
+    console.error(error);
+    $("#cameraStatus").textContent = "Kamera gagal dibuka. Periksa izin kamera browser.";
+  }
+}
+
+function stopNavigationCamera() {
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach((track) => track.stop());
+    state.cameraStream = null;
+  }
+
+  const video = $("#navigationCamera");
+  if (video) video.srcObject = null;
+}
+
+$("#openARNavigation").addEventListener("click", async () => {
+  if (!state.routeResult || !state.destination) return;
+
+  const building = getDestinationBuilding();
+  $("#arNavigationTitle").textContent = state.destination.name;
+  $("#arNavigationDestination").textContent = `${state.destination.name} • ${building.shortName}`;
+
+  const rotation = calculateInitialArrowRotation(state.routeResult.points);
+  $("#directionArrow").style.setProperty("--arrow-rotation", `${rotation}deg`);
+  $("#directionText").textContent = "Ikuti arah menuju tujuan";
+
+  updateProgress(3);
+  showPage("arNavigation");
+  await startNavigationCamera();
+});
+
+$("#closeARNavigation").addEventListener("click", () => {
+  stopNavigationCamera();
+  showPage("navigation");
+});
+
+/* =========================================================
+   DIRECTORY
+========================================================= */
+
+function renderRoomList(roomList, container) {
+  container.innerHTML = "";
+
+  if (!roomList.length) {
+    container.innerHTML = `<div class="search-empty">Data ruangan akan dilengkapi kemudian.</div>`;
+    return;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "room-grid";
+
+  roomList.forEach((room) => {
+    const item = document.createElement("div");
+    item.className = "room-item";
+    item.innerHTML = `
+      <div class="room-row">
+        <span>${room.name}</span>
+        <button type="button">Pilih</button>
+      </div>
+      <div class="room-actions hidden">
+        <button class="room-info-button" type="button">Informasi</button>
+        <button class="room-nav-button" type="button">Petunjuk Arah</button>
+      </div>
+    `;
+
+    const actions = item.querySelector(".room-actions");
+    item.querySelector(".room-row button").addEventListener("click", () => {
+      actions.classList.toggle("hidden");
+    });
+
+    const location = locations.find((candidate) => candidate.id === room.id);
+
+    item.querySelector(".room-info-button").addEventListener("click", () => {
+      if (location) openInfo(location);
+    });
+
+    item.querySelector(".room-nav-button").addEventListener("click", () => {
+      if (location) openNavigationWithDestination(location);
+    });
+
+    grid.appendChild(item);
+  });
+
+  container.appendChild(grid);
+}
+
+function renderLaboratory(buildingRooms, container) {
+  const floorButtons = document.createElement("div");
+  floorButtons.className = "floor-buttons";
+  const roomArea = document.createElement("div");
+
+  [1, 2, 3].forEach((floor) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `floor-button${floor === 1 ? " active" : ""}`;
+    button.textContent = `Lantai ${floor}`;
+
+    button.addEventListener("click", () => {
+      floorButtons.querySelectorAll(".floor-button").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      renderRoomList(buildingRooms.filter((room) => room.floor === floor), roomArea);
+    });
+
+    floorButtons.appendChild(button);
+  });
+
+  container.appendChild(floorButtons);
+  container.appendChild(roomArea);
+  renderRoomList(buildingRooms.filter((room) => room.floor === 1), roomArea);
+}
 
 function renderDirectory() {
-
-    const container =
-        $("#directoryContainer");
-
-
-    container
-    .innerHTML =
-        "";
-
-
-
-    buildings
-    .forEach(
-
-        (
-
-            building,
-            index
-
-        ) => {
-
-
-            const card =
-
-                document
-                .createElement(
-                    "article"
-                );
-
-
-            card
-            .className =
-                "building-card";
-
-
-            card
-            .innerHTML =
-
-                `
-
-                <button
-                    type="button"
-                    class="building-header">
-
-
-                    <span class="building-number">
-
-                        ${String(
-                            index + 1
-                        ).padStart(
-                            2,
-                            "0"
-                        )}
-
-                    </span>
-
-
-                    <span>
-
-                        <strong>
-
-                            ${building.name}
-
-                        </strong>
-
-                        <p>
-
-                            ${
-                                building.rooms.length
-
-                                ?
-
-                                building.rooms.length +
-                                " ruangan"
-
-                                :
-
-                                "Data ruangan belum ditambahkan"
-                            }
-
-                        </p>
-
-                    </span>
-
-
-                    <span class="building-arrow">
-
-                        ›
-
-                    </span>
-
-
-                </button>
-
-
-                <div class="building-content">
-                </div>
-
-                `;
-
-
-            const header =
-
-                card
-                .querySelector(
-                    ".building-header"
-                );
-
-
-            const content =
-
-                card
-                .querySelector(
-                    ".building-content"
-                );
-
-
-            header
-            .addEventListener(
-
-                "click",
-
-                () => {
-
-
-                    card
-                    .classList
-                    .toggle(
-                        "open"
-                    );
-
-
-                }
-
-            );
-
-
-            if(
-
-                building.id ===
-                "laboratorium"
-
-            ) {
-
-                renderLaboratory(
-
-                    building,
-                    content
-
-                );
-
-            }
-
-            else {
-
-                renderRooms(
-
-                    building,
-                    content,
-                    1
-
-                );
-
-            }
-
-
-            container
-            .appendChild(
-                card
-            );
-
-
-        }
-
-    );
-
-}
-
-
-
-function renderLaboratory(
-
-    building,
-    container
-
-) {
-
-    const floors =
-
-        document
-        .createElement(
-            "div"
-        );
-
-
-    floors
-    .className =
-        "floor-buttons";
-
-
-    const roomContainer =
-
-        document
-        .createElement(
-            "div"
-        );
-
-
-    [1, 2, 3]
-    .forEach(
-
-        floor => {
-
-
-            const button =
-
-                document
-                .createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button
-            .className =
-
-                "floor-button" +
-
-                (
-
-                    floor ===
-                    1
-
-                    ?
-
-                    " active"
-
-                    :
-
-                    ""
-
-                );
-
-
-            button
-            .textContent =
-
-                "Lantai " +
-                floor;
-
-
-            button
-            .addEventListener(
-
-                "click",
-
-                () => {
-
-
-                    floors
-                    .querySelectorAll(
-                        "button"
-                    )
-                    .forEach(
-
-                        item => {
-
-
-                            item
-                            .classList
-                            .remove(
-                                "active"
-                            );
-
-
-                        }
-
-                    );
-
-
-                    button
-                    .classList
-                    .add(
-                        "active"
-                    );
-
-
-                    renderRooms(
-
-                        building,
-                        roomContainer,
-                        floor
-
-                    );
-
-
-                }
-
-            );
-
-
-            floors
-            .appendChild(
-                button
-            );
-
-
-        }
-
-    );
-
-
-    container
-    .appendChild(
-        floors
-    );
-
-
-    container
-    .appendChild(
-        roomContainer
-    );
-
-
-    renderRooms(
-
-        building,
-        roomContainer,
-        1
-
-    );
-
-}
-
-
-
-function renderRooms(
-
-    building,
-    container,
-    floor
-
-) {
-
-    container
-    .innerHTML =
-        "";
-
-
-    let rooms =
-        building.rooms;
-
-
-    if(
-
-        building.id ===
-        "laboratorium"
-
-    ) {
-
-        rooms =
-
-            rooms
-            .filter(
-
-                room =>
-
-                    room.floor ===
-                    floor
-
-            );
-
+  const container = $("#directoryContainer");
+  container.innerHTML = "";
+
+  buildings.forEach((building, index) => {
+    const buildingRooms = rooms.filter((room) => room.buildingId === building.id);
+    const article = document.createElement("article");
+    article.className = "building-card";
+    article.innerHTML = `
+      <button class="building-button" type="button">
+        <span class="building-number">${String(index + 1).padStart(2, "0")}</span>
+        <span>
+          <strong>${building.name}</strong>
+          <p>${building.description}</p>
+        </span>
+        <span>›</span>
+      </button>
+      <div class="building-content"></div>
+    `;
+
+    article.querySelector(".building-button").addEventListener("click", () => {
+      article.classList.toggle("open");
+    });
+
+    const content = article.querySelector(".building-content");
+    if (building.id === "laboratorium-ft") {
+      renderLaboratory(buildingRooms, content);
+    } else {
+      renderRoomList(buildingRooms, content);
     }
 
-
-    if(
-
-        rooms.length ===
-        0
-
-    ) {
-
-        container
-        .innerHTML =
-
-            `
-
-            <div class="empty-search">
-
-                Data ruangan belum tersedia.
-
-            </div>
-
-            `;
-
-
-        return;
-
-    }
-
-
-    const grid =
-
-        document
-        .createElement(
-            "div"
-        );
-
-
-    grid
-    .className =
-        "room-grid";
-
-
-    rooms
-    .forEach(
-
-        room => {
-
-
-            const item =
-
-                document
-                .createElement(
-                    "div"
-                );
-
-
-            item
-            .className =
-                "room";
-
-
-            item
-            .innerHTML =
-
-                `
-
-                <span>
-
-                    ${room.name}
-
-                </span>
-
-                <button
-                    type="button">
-
-                    Informasi
-
-                </button>
-
-                `;
-
-
-            item
-            .querySelector(
-                "button"
-            )
-            .addEventListener(
-
-                "click",
-
-                () => {
-
-
-                    openInfo({
-
-                        ...room,
-
-                        type:
-                            "room",
-
-                        parent:
-                            building.name,
-
-                        buildingId:
-                            building.id
-
-                    });
-
-
-                }
-
-            );
-
-
-            grid
-            .appendChild(
-                item
-            );
-
-
-        }
-
-    );
-
-
-    container
-    .appendChild(
-        grid
-    );
-
+    container.appendChild(article);
+  });
 }
-
-
 
 renderDirectory();
 
-
-
-/* ===================================================== */
-/* MODEL VIEWERS */
-/* ===================================================== */
-
-const mainModelViewer =
-    $("#mainModelViewer");
-
-
-const heroModelViewer =
-    $("#heroModelViewer");
-
-
-const arModelViewer =
-    $("#arModelViewer");
-
-
-
-mainModelViewer.src =
-    MODEL_PATH;
-
-
-heroModelViewer.src =
-    MODEL_PATH;
-
-
-arModelViewer.src =
-    MODEL_PATH;
-
-
-
-mainModelViewer
-.addEventListener(
-
-    "load",
-
-    () => {
-
-
-        $("#modelStatus")
-        .textContent =
-            "Model berhasil dimuat";
-
-
-    }
-
-);
-
-
-
-mainModelViewer
-.addEventListener(
-
-    "error",
-
-    () => {
-
-
-        $("#modelStatus")
-        .textContent =
-            "Model gagal dimuat";
-
-
-        toast(
-
-            "Pastikan biro-fakultas-teknik.glb berada di assets/models/"
-
-        );
-
-
-    }
-
-);
-
-
-
-$("#resetCamera")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        mainModelViewer
-        .cameraOrbit =
-            "0deg 75deg 105%";
-
-
-        mainModelViewer
-        .cameraTarget =
-            "auto auto auto";
-
-
-        toast(
-            "Kamera 3D direset."
-        );
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* OPEN 3D */
-/* ===================================================== */
-
-function open3DViewer() {
-
-    mainModelViewer.src =
-        MODEL_PATH;
-
-
-    $("#modelStatus")
-    .textContent =
-        "Memuat Gedung Biro Fakultas Teknik...";
-
-
-    showPage(
-        "viewer"
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* OPEN NAVIGATION */
-/* ===================================================== */
-
-function openNavigation() {
-
-    showPage(
-        "navigation"
-    );
-
-
-    setTimeout(
-
-        () => {
-
-
-            $("#navigationSearch")
-            .focus();
-
-
-        },
-
-        300
-
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* FEATURE BUTTONS */
-/* ===================================================== */
-
-$("#feature3DButton")
-.addEventListener(
-
-    "click",
-
-    open3DViewer
-
-);
-
-
-
-$("#featureARButton")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showPage(
-            "ar"
-        );
-
-
-    }
-
-);
-
-
-
-$("#featureNavigationButton")
-.addEventListener(
-
-    "click",
-
-    openNavigation
-
-);
-
-
-
-/* ===================================================== */
-/* HOME BUTTONS */
-/* ===================================================== */
-
-$("#home3DButton")
-.addEventListener(
-
-    "click",
-
-    open3DViewer
-
-);
-
-
-
-$("#homeARButton")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showPage(
-            "ar"
-        );
-
-
-    }
-
-);
-
-
-
-$("#homeNavigationButton")
-.addEventListener(
-
-    "click",
-
-    openNavigation
-
-);
-
-
-
-$("#homeDirectoryButton")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showPage(
-            "directory"
-        );
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* DRAWER BUTTONS */
-/* ===================================================== */
-
-$("#menu3D")
-.addEventListener(
-
-    "click",
-
-    open3DViewer
-
-);
-
-
-
-$("#menuAR")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showPage(
-            "ar"
-        );
-
-
-        setTimeout(
-
-            () => {
-
-                launchSimpleAR();
-
-            },
-
-            300
-
-        );
-
-
-    }
-
-);
-
-
-
-$("#menuNavigation")
-.addEventListener(
-
-    "click",
-
-    openNavigation
-
-);
-
-
-
-$("#menuDirectory")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        showPage(
-            "directory"
-        );
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* AR MAP */
-/* ===================================================== */
-
-$("#launchAR")
-.addEventListener(
-
-    "click",
-
-    launchSimpleAR
-
-);
-
-
-
-async function launchSimpleAR() {
-
-    $("#trackingStatus")
-    .textContent =
-        "Membuka kamera...";
-
-
-    $("#trackingHint")
-    .textContent =
-        "Berikan izin kamera jika browser meminta.";
-
-
-    try {
-
-        await arModelViewer
-        .activateAR();
-
-    }
-
-    catch(error) {
-
-        console.error(
-            error
-        );
-
-
-        $("#trackingStatus")
-        .textContent =
-            "AR gagal dibuka";
-
-
-        $("#trackingHint")
-        .textContent =
-            "Pastikan website menggunakan HTTPS dan perangkat mendukung AR.";
-
-
-        toast(
-
-            "AR tidak tersedia pada perangkat/browser ini."
-
-        );
-
-    }
-
-}
-
-
-
-arModelViewer
-.addEventListener(
-
-    "ar-status",
-
-    event => {
-
-
-        const status =
-            event
-            .detail
-            .status;
-
-
-        if(
-
-            status ===
-            "session-started"
-
-        ) {
-
-            $("#trackingStatus")
-            .textContent =
-                "Kamera AR aktif";
-
-
-            $("#trackingHint")
-            .textContent =
-                "Gerakkan kamera perlahan untuk mencari bidang datar.";
-
-        }
-
-
-        else if(
-
-            status ===
-            "object-placed"
-
-        ) {
-
-            $("#trackingStatus")
-            .textContent =
-                "Model berhasil ditempatkan";
-
-
-            $("#trackingHint")
-            .textContent =
-                "Tracking aktif.";
-
-        }
-
-
-        else if(
-
-            status ===
-            "failed"
-
-        ) {
-
-            $("#trackingStatus")
-            .textContent =
-                "AR tidak didukung";
-
-        }
-
-
-        else if(
-
-            status ===
-            "not-presenting"
-
-        ) {
-
-            $("#trackingStatus")
-            .textContent =
-                "Sesi AR selesai";
-
-        }
-
-
-    }
-
-);
-
-
-
-arModelViewer
-.addEventListener(
-
-    "ar-tracking",
-
-    event => {
-
-
-        if(
-
-            event.detail.status ===
-            "tracking"
-
-        ) {
-
-            $("#trackingStatus")
-            .textContent =
-                "Tracking bidang aktif";
-
-        }
-
-        else {
-
-            $("#trackingStatus")
-            .textContent =
-                "Mencari bidang...";
-
-        }
-
-
-    }
-
-);
-
-
-
-$("#resetAR")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        $("#trackingStatus")
-        .textContent =
-            "AR direset";
-
-
-        $("#trackingHint")
-        .textContent =
-            "Buka kamera kembali untuk melakukan tracking ulang.";
-
-
-        toast(
-            "State AR direset."
-        );
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* NAVIGATION SEARCH */
-/* ===================================================== */
-
-$("#navigationSearch")
-.addEventListener(
-
-    "input",
-
-    event => {
-
-
-        const value =
-            event
-            .target
-            .value;
-
-
-        if(!value) {
-
-            $("#navigationResults")
-            .innerHTML =
-
-                `
-
-                <div class="empty-search">
-
-                    Ketik lokasi tujuan.
-
-                </div>
-
-                `;
-
-
-            return;
-
-        }
-
-
-        renderResults(
-
-            searchLocation(
-                value
-            ),
-
-            $("#navigationResults"),
-
-            selectDestination
-
-        );
-
-
-    }
-
-);
-
-
-
-function selectDestination(
-    location
-) {
-
-    state.destination =
-        location;
-
-
-    $("#navigationSearch")
-    .value =
-        location.name;
-
-
-    $("#navigationResults")
-    .innerHTML =
-        "";
-
-
-    $("#destinationName")
-    .textContent =
-        location.name;
-
-
-    $("#destinationParent")
-    .textContent =
-        location.parent;
-
-
-    $("#selectedDestinationBox")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    $("#navigate3D")
-    .disabled =
-        false;
-
-
-    $("#navigateAR")
-    .disabled =
-        false;
-
-}
-
-
-
-/* ===================================================== */
-/* LOCAL STORAGE MAP POINTS */
-/* ===================================================== */
-
-function getStoredPoints() {
-
-    try {
-
-        return JSON.parse(
-
-            localStorage
-            .getItem(
-                "ftUisuPoints"
-            )
-
-            ||
-
-            "{}"
-
-        );
-
-    }
-
-    catch {
-
-        return {};
-
-    }
-
-}
-
-
-
-function getDestinationPoint(
-    id
-) {
-
-    const points =
-        getStoredPoints();
-
-
-    return points[id]
-        || null;
-
-}
-
-
-
-function saveDestinationPoint(
-
-    id,
-    point
-
-) {
-
-    const points =
-        getStoredPoints();
-
-
-    points[id] =
-        point;
-
-
-    localStorage
-    .setItem(
-
-        "ftUisuPoints",
-
-        JSON.stringify(
-            points
-        )
-
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* NAVIGATION MODE */
-/* ===================================================== */
-
-$("#navigate3D")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        state.navigationMode =
-            "3d";
-
-
-        openMapPicker();
-
-
-    }
-
-);
-
-
-
-$("#navigateAR")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        state.navigationMode =
-            "ar";
-
-
-        openMapPicker();
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* MAP PICKER */
-/* ===================================================== */
-
-function openMapPicker() {
-
-    if(
-
-        !state.destination
-
-    ) {
-
-        return;
-
-    }
-
-
-    state.mapStart =
-        null;
-
-
-    state.mapDestination =
-
-        getDestinationPoint(
-
-            state
-            .destination
-            .id
-
-        );
-
-
-    state.mapStep =
-        "start";
-
-
-    $("#startMarker")
-    .classList
-    .add(
-        "hidden"
-    );
-
-
-    if(
-
-        state
-        .mapDestination
-
-    ) {
-
-        positionMarker(
-
-            $("#destinationMarker"),
-
-            state
-            .mapDestination
-
-        );
-
-
-        $("#destinationMarker")
-        .classList
-        .remove(
-            "hidden"
-        );
-
-
-        $("#targetStatus")
-        .textContent =
-            state
-            .destination
-            .name;
-
-    }
-
-    else {
-
-        $("#destinationMarker")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#targetStatus")
-        .textContent =
-            "Belum dipetakan";
-
-    }
-
-
-    $("#startStatus")
-    .textContent =
-        "Belum dipilih";
-
-
-    $("#mapModalTitle")
-    .textContent =
-        "Tandai posisi Anda sekarang";
-
-
-    $("#mapInstruction")
-    .textContent =
-        "Tap pada denah sesuai posisi Anda saat ini.";
-
-
-    $("#confirmRoute")
-    .disabled =
-        true;
-
-
-    updateMapLine();
-
-
-    $("#mapModal")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    document
-    .body
-    .style
-    .overflow =
-        "hidden";
-
-}
-
-
-
-function closeMapPicker() {
-
-    $("#mapModal")
-    .classList
-    .add(
-        "hidden"
-    );
-
-
-    document
-    .body
-    .style
-    .overflow =
-        "";
-
-}
-
-
-
-$("#closeMapModal")
-.addEventListener(
-
-    "click",
-
-    closeMapPicker
-
-);
-
-
-
-$("#mapCanvas")
-.addEventListener(
-
-    "pointerdown",
-
-    event => {
-
-
-        if(
-
-            event
-            .target
-            .closest(
-                ".map-point"
-            )
-
-        ) {
-
-            return;
-
-        }
-
-
-        const rect =
-
-            $("#mapCanvas")
-            .getBoundingClientRect();
-
-
-        const point = {
-
-
-            x:
-
-                (
-
-                    (
-
-                        event.clientX -
-
-                        rect.left
-
-                    )
-
-                    /
-
-                    rect.width
-
-                )
-
-                *
-
-                1000,
-
-
-            y:
-
-                (
-
-                    (
-
-                        event.clientY -
-
-                        rect.top
-
-                    )
-
-                    /
-
-                    rect.height
-
-                )
-
-                *
-
-                600
-
-
-        };
-
-
-        if(
-
-            state.mapStep ===
-            "start"
-
-        ) {
-
-
-            state.mapStart =
-                point;
-
-
-            positionMarker(
-
-                $("#startMarker"),
-
-                point
-
-            );
-
-
-            $("#startMarker")
-            .classList
-            .remove(
-                "hidden"
-            );
-
-
-            $("#startStatus")
-            .textContent =
-                "Posisi dipilih";
-
-
-            if(
-
-                !state
-                .mapDestination
-
-            ) {
-
-
-                state.mapStep =
-                    "destination";
-
-
-                $("#mapModalTitle")
-                .textContent =
-                    "Tandai titik tujuan";
-
-
-                $("#mapInstruction")
-                .textContent =
-
-                    state
-                    .destination
-                    .name +
-
-                    " belum mempunyai titik pada denah. Tap lokasi tujuan.";
-
-            }
-
-
-        }
-
-        else {
-
-
-            state.mapDestination =
-                point;
-
-
-            saveDestinationPoint(
-
-                state
-                .destination
-                .id,
-
-                point
-
-            );
-
-
-            positionMarker(
-
-                $("#destinationMarker"),
-
-                point
-
-            );
-
-
-            $("#destinationMarker")
-            .classList
-            .remove(
-                "hidden"
-            );
-
-
-            $("#targetStatus")
-            .textContent =
-                state
-                .destination
-                .name;
-
-
-            state.mapStep =
-                "done";
-
-
-            $("#mapModalTitle")
-            .textContent =
-                "Rute siap";
-
-
-            $("#mapInstruction")
-            .textContent =
-                "Tekan Lanjutkan untuk memulai navigasi.";
-
-
-        }
-
-
-        updateMapLine();
-
-
-        $("#confirmRoute")
-        .disabled =
-
-            !(
-
-                state.mapStart
-
-                &&
-
-                state.mapDestination
-
-            );
-
-
-    }
-
-);
-
-
-
-function positionMarker(
-
-    element,
-    point
-
-) {
-
-    element
-    .style
-    .left =
-
-        (
-
-            point.x /
-
-            1000 *
-
-            100
-
-        )
-
-        +
-
-        "%";
-
-
-    element
-    .style
-    .top =
-
-        (
-
-            point.y /
-
-            600 *
-
-            100
-
-        )
-
-        +
-
-        "%";
-
-}
-
-
-
-function updateMapLine() {
-
-    const line =
-        $("#mapRouteLine");
-
-
-    if(
-
-        state.mapStart
-
-        &&
-
-        state.mapDestination
-
-    ) {
-
-        line
-        .setAttribute(
-
-            "x1",
-
-            state
-            .mapStart
-            .x
-
-        );
-
-
-        line
-        .setAttribute(
-
-            "y1",
-
-            state
-            .mapStart
-            .y
-
-        );
-
-
-        line
-        .setAttribute(
-
-            "x2",
-
-            state
-            .mapDestination
-            .x
-
-        );
-
-
-        line
-        .setAttribute(
-
-            "y2",
-
-            state
-            .mapDestination
-            .y
-
-        );
-
-    }
-
-    else {
-
-        line
-        .setAttribute(
-            "x1",
-            0
-        );
-
-
-        line
-        .setAttribute(
-            "y1",
-            0
-        );
-
-
-        line
-        .setAttribute(
-            "x2",
-            0
-        );
-
-
-        line
-        .setAttribute(
-            "y2",
-            0
-        );
-
-    }
-
-}
-
-
-
-$("#resetMap")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        state.mapStart =
-            null;
-
-
-        state.mapStep =
-            "start";
-
-
-        $("#startMarker")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#startStatus")
-        .textContent =
-            "Belum dipilih";
-
-
-        $("#confirmRoute")
-        .disabled =
-            true;
-
-
-        $("#mapModalTitle")
-        .textContent =
-            "Tandai posisi Anda sekarang";
-
-
-        $("#mapInstruction")
-        .textContent =
-            "Tap pada denah sesuai posisi Anda saat ini.";
-
-
-        updateMapLine();
-
-
-    }
-
-);
-
-
-
-$("#confirmRoute")
-.addEventListener(
-
-    "click",
-
-    async () => {
-
-
-        if(
-
-            !state.mapStart
-
-            ||
-
-            !state.mapDestination
-
-        ) {
-
-            return;
-
-        }
-
-
-        closeMapPicker();
-
-
-        if(
-
-            state.navigationMode ===
-            "3d"
-
-        ) {
-
-            start3DNavigation();
-
-        }
-
-        else {
-
-            await startARNavigation();
-
-        }
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* 3D NAVIGATION */
-/* ===================================================== */
-
-function start3DNavigation() {
-
-    showPage(
-        "viewer"
-    );
-
-
-    $("#viewerDestinationText")
-    .textContent =
-        state
-        .destination
-        .name;
-
-
-    $("#viewerHUDDestination")
-    .textContent =
-        state
-        .destination
-        .name;
-
-
-    $("#viewerDestinationMarker")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    $("#viewerRoute")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    $("#viewerMiniMap")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    $("#viewerNavigationHUD")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-}
-
-
-
-$("#stop3DNavigation")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        $("#viewerDestinationMarker")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#viewerRoute")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#viewerMiniMap")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#viewerNavigationHUD")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        toast(
-            "Navigasi 3D selesai."
-        );
-
-
-    }
-
-);
-
-
-
-/* ===================================================== */
-/* WEBXR CONFIG */
-/* ===================================================== */
-
-const XR_CONFIG = {
-
-    mapPixelsPerMeter:
-        70,
-
-    arrowSpacing:
-        1,
-
-    arrivalDistance:
-        .8,
-
-    maxDistance:
-        30
-
-};
-
-
-
-/* ===================================================== */
-/* START WEBXR NAVIGATION */
-/* ===================================================== */
-
-async function startARNavigation() {
-
-    if(
-
-        !window.isSecureContext
-
-    ) {
-
-        toast(
-
-            "Navigasi AR WebXR membutuhkan HTTPS."
-
-        );
-
-
-        return;
-
-    }
-
-
-    if(
-
-        !navigator.xr
-
-    ) {
-
-        toast(
-
-            "Browser ini tidak mendukung WebXR."
-
-        );
-
-
-        return;
-
-    }
-
-
-    let supported =
-        false;
-
-
-    try {
-
-        supported =
-
-            await navigator
-            .xr
-            .isSessionSupported(
-                "immersive-ar"
-            );
-
-    }
-
-    catch(error) {
-
-        console.error(
-            error
-        );
-
-    }
-
-
-    if(!supported) {
-
-        toast(
-
-            "Perangkat tidak mendukung WebXR immersive-ar."
-
-        );
-
-
-        return;
-
-    }
-
-
-    showPage(
-        "arNavigation"
-    );
-
-
-    $("#arDestinationName")
-    .textContent =
-        state
-        .destination
-        .name;
-
-
-    $("#arrivalName")
-    .textContent =
-        state
-        .destination
-        .name;
-
-
-    state.routePlaced =
-        false;
-
-
-    state.arrived =
-        false;
-
-
-    try {
-
-        const session =
-
-            await navigator
-            .xr
-            .requestSession(
-
-                "immersive-ar",
-
-                {
-
-                    requiredFeatures: [
-
-                        "hit-test"
-
-                    ],
-
-                    optionalFeatures: [
-
-                        "local-floor",
-
-                        "dom-overlay"
-
-                    ],
-
-                    domOverlay: {
-
-                        root:
-                            document.body
-
-                    }
-
-                }
-
-            );
-
-
-        state.xrSession =
-            session;
-
-
-        await setupXR(
-            session
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(
-            error
-        );
-
-
-        toast(
-
-            "Gagal membuka sesi AR."
-
-        );
-
-
-        showPage(
-            "navigation"
-        );
-
-    }
-
-}
-
-
-
-/* ===================================================== */
-/* SETUP XR */
-/* ===================================================== */
-
-async function setupXR(
-    session
-) {
-
-    const container =
-        $("#arCanvasContainer");
-
-
-    container
-    .innerHTML =
-        "";
-
-
-    const scene =
-        new THREE.Scene();
-
-
-    state.scene =
-        scene;
-
-
-    const camera =
-        new THREE
-        .PerspectiveCamera();
-
-
-    state.camera =
-        camera;
-
-
-    scene
-    .add(
-
-        new THREE
-        .HemisphereLight(
-
-            0xffffff,
-
-            0x888888,
-
-            2.5
-
-        )
-
-    );
-
-
-    const renderer =
-
-        new THREE
-        .WebGLRenderer({
-
-            alpha:
-                true,
-
-            antialias:
-                true
-
-        });
-
-
-    renderer
-    .xr
-    .enabled =
-        true;
-
-
-    renderer
-    .setPixelRatio(
-
-        Math.min(
-
-            window
-            .devicePixelRatio,
-
-            2
-
-        )
-
-    );
-
-
-    renderer
-    .setSize(
-
-        window
-        .innerWidth,
-
-        window
-        .innerHeight
-
-    );
-
-
-    container
-    .appendChild(
-
-        renderer
-        .domElement
-
-    );
-
-
-    state.renderer =
-        renderer;
-
-
-    await renderer
-    .xr
-    .setSession(
-        session
-    );
-
-
-    const geometry =
-
-        new THREE
-        .RingGeometry(
-
-            .08,
-
-            .11,
-
-            32
-
-        );
-
-
-    geometry
-    .rotateX(
-
-        -Math.PI /
-        2
-
-    );
-
-
-    const material =
-
-        new THREE
-        .MeshBasicMaterial({
-
-            color:
-                0x33d5b8
-
-        });
-
-
-    const reticle =
-
-        new THREE
-        .Mesh(
-
-            geometry,
-
-            material
-
-        );
-
-
-    reticle
-    .matrixAutoUpdate =
-        false;
-
-
-    reticle
-    .visible =
-        false;
-
-
-    scene
-    .add(
-        reticle
-    );
-
-
-    state.reticle =
-        reticle;
-
-
-    const controller =
-
-        renderer
-        .xr
-        .getController(
-            0
-        );
-
-
-    controller
-    .addEventListener(
-
-        "select",
-
-        () => {
-
-
-            if(
-
-                !state
-                .routePlaced
-
-                &&
-
-                reticle
-                .visible
-
-            ) {
-
-                placeARRoute(
-
-                    reticle
-                    .matrix
-
-                );
-
-            }
-
-
-        }
-
-    );
-
-
-    scene
-    .add(
-        controller
-    );
-
-
-    session
-    .addEventListener(
-
-        "end",
-
-        cleanupXR
-
-    );
-
-
-    renderer
-    .setAnimationLoop(
-
-        onXRFrame
-
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* XR FRAME */
-/* ===================================================== */
-
-async function onXRFrame(
-
-    time,
-    frame
-
-) {
-
-    const renderer =
-        state.renderer;
-
-
-    const session =
-        state.xrSession;
-
-
-    if(
-
-        !renderer
-
-        ||
-
-        !session
-
-    ) {
-
-        return;
-
-    }
-
-
-    const referenceSpace =
-
-        renderer
-        .xr
-        .getReferenceSpace();
-
-
-    if(
-
-        !state
-        .hitTestRequested
-
-    ) {
-
-        try {
-
-            const viewerSpace =
-
-                await session
-                .requestReferenceSpace(
-                    "viewer"
-                );
-
-
-            state.hitTestSource =
-
-                await session
-                .requestHitTestSource({
-
-                    space:
-                        viewerSpace
-
-                });
-
-
-            state.hitTestRequested =
-                true;
-
-        }
-
-        catch(error) {
-
-            console.error(
-                error
-            );
-
-        }
-
-    }
-
-
-    if(
-
-        state.hitTestSource
-
-        &&
-
-        state.reticle
-
-    ) {
-
-        const results =
-
-            frame
-            .getHitTestResults(
-
-                state
-                .hitTestSource
-
-            );
-
-
-        if(
-
-            results.length >
-            0
-
-        ) {
-
-            const pose =
-
-                results[0]
-                .getPose(
-
-                    referenceSpace
-
-                );
-
-
-            if(pose) {
-
-                state.reticle
-                .visible =
-
-                    !state
-                    .routePlaced;
-
-
-                state.reticle
-                .matrix
-                .fromArray(
-
-                    pose
-                    .transform
-                    .matrix
-
-                );
-
-
-                if(
-
-                    !state
-                    .routePlaced
-
-                ) {
-
-                    $("#arTrackingBadge")
-                    .textContent =
-                        "Bidang ditemukan";
-
-                }
-
-            }
-
-        }
-
-        else {
-
-            if(
-
-                !state
-                .routePlaced
-
-            ) {
-
-                state.reticle
-                .visible =
-                    false;
-
-
-                $("#arTrackingBadge")
-                .textContent =
-                    "Mencari bidang...";
-
-            }
-
-        }
-
-    }
-
-
-    if(
-
-        state.routePlaced
-
-        &&
-
-        state.destinationWorld
-
-        &&
-
-        !state.arrived
-
-    ) {
-
-        checkArrival();
-
-    }
-
-
-    renderer
-    .render(
-
-        state.scene,
-
-        state.camera
-
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* CREATE AR ROUTE */
-/* ===================================================== */
-
-function placeARRoute(
-    matrix
-) {
-
-    if(
-
-        !state.mapStart
-
-        ||
-
-        !state.mapDestination
-
-    ) {
-
-        return;
-
-    }
-
-
-    const origin =
-        new THREE.Vector3();
-
-
-    const quaternion =
-        new THREE.Quaternion();
-
-
-    const scale =
-        new THREE.Vector3();
-
-
-    matrix
-    .decompose(
-
-        origin,
-
-        quaternion,
-
-        scale
-
-    );
-
-
-    let dx =
-
-        (
-
-            state
-            .mapDestination
-            .x
-
-            -
-
-            state
-            .mapStart
-            .x
-
-        )
-
-        /
-
-        XR_CONFIG
-        .mapPixelsPerMeter;
-
-
-    let dz =
-
-        (
-
-            state
-            .mapDestination
-            .y
-
-            -
-
-            state
-            .mapStart
-            .y
-
-        )
-
-        /
-
-        XR_CONFIG
-        .mapPixelsPerMeter;
-
-
-    let routeLength =
-
-        Math.hypot(
-
-            dx,
-            dz
-
-        );
-
-
-    if(
-
-        routeLength >
-
-        XR_CONFIG
-        .maxDistance
-
-    ) {
-
-        const factor =
-
-            XR_CONFIG
-            .maxDistance
-
-            /
-
-            routeLength;
-
-
-        dx *= factor;
-
-        dz *= factor;
-
-
-        routeLength =
-
-            XR_CONFIG
-            .maxDistance;
-
-    }
-
-
-    const destination =
-
-        new THREE
-        .Vector3(
-
-            dx,
-
-            .02,
-
-            -dz
-
-        );
-
-
-    const routeGroup =
-
-        new THREE
-        .Group();
-
-
-    const arrowCount =
-
-        Math.max(
-
-            1,
-
-            Math.floor(
-
-                routeLength
-
-                /
-
-                XR_CONFIG
-                .arrowSpacing
-
-            )
-
-        );
-
-
-    for(
-
-        let index = 1;
-
-        index <=
-        arrowCount;
-
-        index++
-
-    ) {
-
-        const progress =
-
-            index /
-
-            arrowCount;
-
-
-        const arrow =
-            createArrow();
-
-
-        arrow
-        .position
-        .copy(
-
-            destination
-            .clone()
-            .multiplyScalar(
-                progress
-            )
-
-        );
-
-
-        const angle =
-
-            Math.atan2(
-
-                destination.x,
-
-                destination.z
-
-            );
-
-
-        arrow
-        .rotation
-        .y =
-            angle;
-
-
-        routeGroup
-        .add(
-            arrow
-        );
-
-    }
-
-
-    /* DESTINATION MARKER */
-
-    const marker =
-
-        new THREE
-        .Group();
-
-
-    const ring =
-
-        new THREE
-        .Mesh(
-
-            new THREE
-            .TorusGeometry(
-
-                .28,
-
-                .05,
-
-                16,
-
-                40
-
-            )
-            .rotateX(
-
-                Math.PI /
-                2
-
-            ),
-
-            new THREE
-            .MeshStandardMaterial({
-
-                color:
-                    0x18aa68
-
-            })
-
-        );
-
-
-    marker
-    .add(
-        ring
-    );
-
-
-    const pole =
-
-        new THREE
-        .Mesh(
-
-            new THREE
-            .CylinderGeometry(
-
-                .035,
-
-                .035,
-
-                .8,
-
-                16
-
-            ),
-
-            new THREE
-            .MeshStandardMaterial({
-
-                color:
-                    0x18aa68
-
-            })
-
-        );
-
-
-    pole
-    .position
-    .y =
-        .4;
-
-
-    marker
-    .add(
-        pole
-    );
-
-
-    const head =
-
-        new THREE
-        .Mesh(
-
-            new THREE
-            .SphereGeometry(
-
-                .11,
-
-                20,
-
-                20
-
-            ),
-
-            new THREE
-            .MeshStandardMaterial({
-
-                color:
-                    0x49e39c
-
-            })
-
-        );
-
-
-    head
-    .position
-    .y =
-        .83;
-
-
-    marker
-    .add(
-        head
-    );
-
-
-    marker
-    .position
-    .copy(
-        destination
-    );
-
-
-    routeGroup
-    .add(
-        marker
-    );
-
-
-    routeGroup
-    .position
-    .copy(
-        origin
-    );
-
-
-    const rotation =
-
-        new THREE
-        .Euler()
-        .setFromQuaternion(
-
-            quaternion,
-
-            "YXZ"
-
-        );
-
-
-    routeGroup
-    .rotation
-    .y =
-        rotation.y;
-
-
-    state.scene
-    .add(
-        routeGroup
-    );
-
-
-    routeGroup
-    .updateMatrixWorld(
-        true
-    );
-
-
-    state.destinationWorld =
-
-        marker
-        .getWorldPosition(
-
-            new THREE
-            .Vector3()
-
-        );
-
-
-    state.routeGroup =
-        routeGroup;
-
-
-    state.routePlaced =
-        true;
-
-
-    state.reticle
-    .visible =
-        false;
-
-
-    $("#placementInstruction")
-    .classList
-    .add(
-        "hidden"
-    );
-
-
-    $("#arDirectionBox")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    $("#arTrackingBadge")
-    .textContent =
-        "Tracking aktif";
-
-}
-
-
-
-/* ===================================================== */
-/* CREATE ARROW */
-/* ===================================================== */
-
-function createArrow() {
-
-    const group =
-
-        new THREE
-        .Group();
-
-
-    const shaft =
-
-        new THREE
-        .Mesh(
-
-            new THREE
-            .BoxGeometry(
-
-                .12,
-
-                .025,
-
-                .40
-
-            ),
-
-            new THREE
-            .MeshStandardMaterial({
-
-                color:
-                    0x26cba8,
-
-                emissive:
-                    0x052d27
-
-            })
-
-        );
-
-
-    shaft
-    .position
-    .z =
-        .08;
-
-
-    group
-    .add(
-        shaft
-    );
-
-
-    const head =
-
-        new THREE
-        .Mesh(
-
-            new THREE
-            .ConeGeometry(
-
-                .20,
-
-                .35,
-
-                4
-
-            ),
-
-            new THREE
-            .MeshStandardMaterial({
-
-                color:
-                    0x2da4d0
-
-            })
-
-        );
-
-
-    head
-    .rotation
-    .x =
-
-        Math.PI /
-        2;
-
-
-    head
-    .rotation
-    .z =
-
-        Math.PI /
-        4;
-
-
-    head
-    .position
-    .z =
-        -.24;
-
-
-    group
-    .add(
-        head
-    );
-
-
-    group
-    .position
-    .y =
-        .03;
-
-
-    return group;
-
-}
-
-
-
-/* ===================================================== */
-/* CHECK ARRIVAL */
-/* ===================================================== */
-
-function checkArrival() {
-
-    if(
-
-        !state.renderer
-
-        ||
-
-        !state.destinationWorld
-
-    ) {
-
-        return;
-
-    }
-
-
-    const xrCamera =
-
-        state
-        .renderer
-        .xr
-        .getCamera();
-
-
-    const cameraPosition =
-
-        new THREE
-        .Vector3();
-
-
-    xrCamera
-    .getWorldPosition(
-
-        cameraPosition
-
-    );
-
-
-    const distance =
-
-        Math.hypot(
-
-            cameraPosition.x
-
-            -
-
-            state
-            .destinationWorld
-            .x,
-
-
-            cameraPosition.z
-
-            -
-
-            state
-            .destinationWorld
-            .z
-
-        );
-
-
-    $("#arDistanceText")
-    .textContent =
-
-        "Jarak ke tujuan: "
-
-        +
-
-        distance
-        .toFixed(
-            1
-        )
-
-        +
-
-        " meter";
-
-
-    if(
-
-        distance <=
-
-        XR_CONFIG
-        .arrivalDistance
-
-    ) {
-
-        state.arrived =
-            true;
-
-
-        $("#arrivalScreen")
-        .classList
-        .remove(
-            "hidden"
-        );
-
-
-        $("#arDirectionBox")
-        .classList
-        .add(
-            "hidden"
-        );
-
-
-        $("#arTrackingBadge")
-        .textContent =
-            "Tujuan tercapai";
-
-
-        setTimeout(
-
-            () => {
-
-
-                endXR();
-
-
-                showPage(
-                    "navigation"
-                );
-
-
-                toast(
-
-                    "Navigasi selesai. Anda sudah sampai di tujuan."
-
-                );
-
-
-            },
-
-            2500
-
-        );
-
-    }
-
-}
-
-
-
-/* ===================================================== */
-/* CLOSE AR NAVIGATION */
-/* ===================================================== */
-
-$("#closeARNavigation")
-.addEventListener(
-
-    "click",
-
-    () => {
-
-
-        endXR();
-
-
-        showPage(
-            "navigation"
-        );
-
-
-    }
-
-);
-
-
-
-function endXR() {
-
-    if(
-
-        state.xrSession
-
-    ) {
-
-        try {
-
-            state
-            .xrSession
-            .end();
-
-        }
-
-        catch(error) {
-
-            console.log(
-                error
-            );
-
-        }
-
-    }
-
-    else {
-
-        cleanupXR();
-
-    }
-
-}
-
-
-
-/* ===================================================== */
-/* CLEANUP XR */
-/* ===================================================== */
-
-function cleanupXR() {
-
-    if(
-
-        state.renderer
-
-    ) {
-
-        state.renderer
-        .setAnimationLoop(
-            null
-        );
-
-
-        state.renderer
-        .dispose();
-
-    }
-
-
-    if(
-
-        state.hitTestSource
-
-    ) {
-
-        try {
-
-            state
-            .hitTestSource
-            .cancel();
-
-        }
-
-        catch {
-
-        }
-
-    }
-
-
-    state.xrSession =
-        null;
-
-
-    state.renderer =
-        null;
-
-
-    state.scene =
-        null;
-
-
-    state.camera =
-        null;
-
-
-    state.reticle =
-        null;
-
-
-    state.hitTestSource =
-        null;
-
-
-    state.hitTestRequested =
-        false;
-
-
-    state.routeGroup =
-        null;
-
-
-    state.destinationWorld =
-        null;
-
-
-    state.routePlaced =
-        false;
-
-
-    $("#arCanvasContainer")
-    .innerHTML =
-        "";
-
-
-    $("#placementInstruction")
-    .classList
-    .remove(
-        "hidden"
-    );
-
-
-    $("#arDirectionBox")
-    .classList
-    .add(
-        "hidden"
-    );
-
-
-    $("#arrivalScreen")
-    .classList
-    .add(
-        "hidden"
-    );
-
-}
-
-
-
-/* ===================================================== */
-/* TOAST */
-/* ===================================================== */
+/* =========================================================
+   BUTTON BINDINGS
+========================================================= */
+
+const openViewer = () => showPage("viewer");
+const openAR = () => showPage("ar");
+const openDirectory = () => showPage("directory");
+const openNavigation = () => openNavigationWithDestination();
+
+$("#menu3D").addEventListener("click", openViewer);
+$("#feature3D").addEventListener("click", openViewer);
+$("#hero3DButton").addEventListener("click", openViewer);
+
+$("#menuAR").addEventListener("click", openAR);
+$("#featureAR").addEventListener("click", openAR);
+
+$("#menuNavigation").addEventListener("click", openNavigation);
+$("#featureNav").addEventListener("click", openNavigation);
+$("#heroNavigationButton").addEventListener("click", openNavigation);
+$("#heroNavigationButton2").addEventListener("click", openNavigation);
+
+$("#menuDirectory").addEventListener("click", openDirectory);
+$("#featureDirectory").addEventListener("click", openDirectory);
+$("#heroDirectoryButton").addEventListener("click", openDirectory);
+
+/* =========================================================
+   TOAST & ESCAPE
+========================================================= */
 
 let toastTimer;
-
-
-function toast(
-    message
-) {
-
-    const element =
-        $("#toast");
-
-
-    element
-    .textContent =
-        message;
-
-
-    element
-    .classList
-    .add(
-        "show"
-    );
-
-
-    clearTimeout(
-        toastTimer
-    );
-
-
-    toastTimer =
-
-        setTimeout(
-
-            () => {
-
-
-                element
-                .classList
-                .remove(
-                    "show"
-                );
-
-
-            },
-
-            3500
-
-        );
-
+function toast(message) {
+  const element = $("#toast");
+  element.textContent = message;
+  element.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => element.classList.remove("show"), 3200);
 }
 
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
 
+  closeDrawer();
 
-/* ===================================================== */
-/* ESCAPE */
-/* ===================================================== */
+  if (!$("#infoModal").classList.contains("hidden")) {
+    closeInfo();
+  }
 
-document
-.addEventListener(
-
-    "keydown",
-
-    event => {
-
-
-        if(
-
-            event.key ===
-            "Escape"
-
-        ) {
-
-
-            closeDrawer();
-
-
-            if(
-
-                !$("#infoModal")
-                .classList
-                .contains(
-                    "hidden"
-                )
-
-            ) {
-
-                closeInfo();
-
-            }
-
-
-            if(
-
-                !$("#mapModal")
-                .classList
-                .contains(
-                    "hidden"
-                )
-
-            ) {
-
-                closeMapPicker();
-
-            }
-
-
-        }
-
-
-    }
-
-);
+  if ($("#arNavigationPage").classList.contains("active")) {
+    stopNavigationCamera();
+    showPage("navigation");
+  }
+});
