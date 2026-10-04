@@ -1,7 +1,7 @@
 /* =========================================================
    FT UISU EXPLORER
    STYLE.CSS
-   REVISION 37
+   REVISION 37 - REVISI 1
    NATIVE 3D VIEWER CONTROL
 ========================================================= */
 
@@ -3215,260 +3215,188 @@ a{
 ========================================================= */
 
 .directory{
-
     display:flex;
-
     flex-direction:column;
-
     gap:10px;
-
 }
-
 
 .building-card{
-
     overflow:hidden;
-
-    border:
-        1px solid
-        #dbe7e8;
-
+    border:1px solid var(--line);
     border-radius:15px;
-
-    background:#fff;
-
+    background:var(--white);
 }
-
 
 .building-button{
-
     width:100%;
-
     min-height:74px;
-
     padding:12px 15px;
-
     display:grid;
-
-    grid-template-columns:
-        auto
-        minmax(0,1fr)
-        auto;
-
+    grid-template-columns:auto minmax(0,1fr) auto;
     align-items:center;
-
     gap:12px;
-
     border:0;
-
-    background:#fff;
-
-    color:var(--text);
-
     text-align:left;
-
-    transition:
-        background .2s,
-        color .2s;
-
 }
-
-
-.building-button:hover{
-
-    background:#f1f9f7;
-
-}
-
 
 .building-number{
-
     width:34px;
     height:34px;
-
     display:grid;
-
     place-items:center;
-
     border-radius:10px;
-
-    background:#e7f4f0;
-
-    color:var(--green);
-
+    background:rgba(255,255,255,.16);
+    color:inherit;
     font-size:8px;
-
     font-weight:900;
-
 }
-
 
 .building-button strong{
-
     font-size:10px;
-
 }
-
 
 .building-button p{
-
     margin-top:4px;
-
-    color:var(--muted);
-
+    color:inherit;
     font-size:7px;
-
     line-height:1.5;
-
 }
-
 
 .building-content{
-
     display:none;
-
-    padding:
-        0 14px 15px;
-
-    border-top:
-        1px solid
-        #e6eeee;
-
+    padding:0 14px 15px;
+    border-top:1px solid var(--line);
 }
-
 
 .building-card.open .building-content{
-
     display:block;
-
 }
-
 
 .building-actions{
-
     padding:12px 0;
-
     display:flex;
-
+    flex-wrap:wrap;
     gap:7px;
-
 }
-
 
 .room-grid{
-
     display:grid;
-
-    grid-template-columns:
-        repeat(2,1fr);
-
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:start;
     gap:7px;
-
 }
-
 
 .room-item{
-
-    padding:10px;
-
-    border:
-        1px solid
-        #e1eaeb;
-
+    min-width:0;
+    overflow:hidden;
+    border:1px solid var(--green);
     border-radius:10px;
-
-    background:#f9fbfb;
-
+    background:var(--white);
 }
-
 
 .room-row{
-
+    width:100%;
+    min-height:44px;
+    padding:10px;
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
     gap:9px;
-
+    border:0;
+    text-align:left;
 }
-
 
 .room-row > span{
-
     font-size:8px;
-
     font-weight:700;
-
 }
 
+.room-name{
+    min-width:0;
+    overflow-wrap:anywhere;
+}
 
-.room-select-button,
+.room-chevron{
+    flex-shrink:0;
+    transition:transform .2s;
+}
+
+.room-item.open .room-chevron{
+    transform:rotate(90deg);
+}
+
 .room-info,
 .room-nav,
 .floor-button{
-
     min-height:27px;
-
     padding:0 8px;
-
-    border:
-        1px solid
-        var(--green);
-
+    border:1px solid var(--green);
     border-radius:7px;
-
-    background:#fff;
-
-    color:var(--green);
-
     font-size:6px;
-
     font-weight:900;
-
-    transition:
-        color .2s,
-        background .2s;
-
 }
 
-
-.room-select-button:hover,
-.room-info:hover,
-.room-nav:hover,
-.floor-button:hover,
-.floor-button.active{
-
+.directory .building-button,
+.directory .room-toggle-button,
+.directory .building-info,
+.directory .building-nav,
+.directory .room-info,
+.directory .room-nav,
+.directory .floor-button{
     background:var(--green);
-
-    color:#fff;
-
+    color:var(--white);
+    transition:background .2s, color .2s;
 }
 
+@media (hover:hover){
+    .directory .building-button:hover,
+    .directory .room-toggle-button:hover,
+    .directory .building-info:hover,
+    .directory .building-nav:hover,
+    .directory .room-info:hover,
+    .directory .room-nav:hover,
+    .directory .floor-button:hover{
+        background:var(--white);
+        color:var(--green);
+    }
+
+    .directory .building-button:hover .building-number{
+        background:var(--green-soft);
+    }
+}
+
+.directory button:focus-visible{
+    outline:2px solid var(--green-dark);
+    outline-offset:-3px;
+}
+
+.directory .floor-button.active{
+    text-decoration:underline;
+    text-underline-offset:3px;
+}
 
 .room-actions{
-
-    margin-top:8px;
-
+    padding:8px 10px 10px;
     display:flex;
-
+    flex-wrap:wrap;
     gap:5px;
-
 }
 
-
 .floor-buttons{
-
-    margin:
-        12px 0 9px;
-
+    margin:12px 0 9px;
     display:flex;
-
     flex-wrap:wrap;
-
     gap:6px;
+}
 
+@media (pointer:coarse){
+    .directory .building-info,
+    .directory .building-nav,
+    .directory .room-info,
+    .directory .room-nav,
+    .directory .floor-button{
+        min-height:44px;
+    }
 }
 
 
