@@ -357,8 +357,9 @@ a{color:inherit;text-decoration:none;}
 @media (hover:hover){
 :is(.button-primary,.hero-button,.native-ar-button,.room-info,.room-nav,.model-switch-button.active,.directory .floor-button.active):hover{background:var(--white);color:var(--green);border-color:var(--green);}
 }
+
 /* FT UISU Explorer — Revisi 39.
-   Muat sesudah style.css. Nama gambar mengikuti repository pengguna. */
+   Sudah digabung di style.css; nama gambar sesuai repository ft-uisu-explorer. */
 
 :root {
     --r39-title-gradient: linear-gradient(135deg, #087f72, #1898d5);
@@ -383,28 +384,28 @@ a{color:inherit;text-decoration:none;}
    Logo AR sedikit lebih lebar agar kubus beserta bidangnya tetap terbaca. */
 #menu3D,
 #feature3D {
-    --r39-logo-image: url("./assets/images/logo_3d(2).png");
+    --r39-logo-image: url("./assets/images/logo_3d.png?v=39-fix1");
     --r39-logo-size: 309.794% auto;
     --r39-logo-position: 52.077% 50.109%;
 }
 
 #menuAR,
 #featureAR {
-    --r39-logo-image: url("./assets/images/logo_ar(3).png");
+    --r39-logo-image: url("./assets/images/logo_ar.png?v=39-fix1");
     --r39-logo-size: 198.330% auto;
     --r39-logo-position: 52.836% 119.249%;
 }
 
 #menuNavigation,
 #featureNav {
-    --r39-logo-image: url("./assets/images/logo_navigasi(2).png");
+    --r39-logo-image: url("./assets/images/logo_navigasi.png?v=39-fix1");
     --r39-logo-size: 97.950% auto;
     --r39-logo-position: 50% 169.444%;
 }
 
 #menuDirectory,
 #featureDirectory {
-    --r39-logo-image: url("./assets/images/logo_direktori(1).png");
+    --r39-logo-image: url("./assets/images/logo_direktori.png?v=39-fix1");
     --r39-logo-size: 92.017% auto;
     --r39-logo-position: 66.546% 79.414%;
 }
@@ -437,9 +438,9 @@ a{color:inherit;text-decoration:none;}
     height: 43px;
 }
 
-/* Logo kelima untuk header; ukuran desktop/mobile mengikuti style.css. */
+/* Logo kelima untuk header; ukuran desktop/mobile mengikuti CSS utama. */
 #logoHome > .revision39-brand-icon {
-    --r39-logo-image: url("./assets/images/logo-ft-uisu(4).png");
+    --r39-logo-image: url("./assets/images/logo-ft-uisu.png?v=39-fix1");
     --r39-logo-size: 118.681% auto;
     --r39-logo-position: 56.088% 50.529%;
 }
