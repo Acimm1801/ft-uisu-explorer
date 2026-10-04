@@ -357,3 +357,104 @@ a{color:inherit;text-decoration:none;}
 @media (hover:hover){
 :is(.button-primary,.hero-button,.native-ar-button,.room-info,.room-nav,.model-switch-button.active,.directory .floor-button.active):hover{background:var(--white);color:var(--green);border-color:var(--green);}
 }
+/* FT UISU Explorer — Revisi 39.
+   Muat sesudah style.css. Nama gambar mengikuti repository pengguna. */
+
+:root {
+    --r39-title-gradient: linear-gradient(135deg, #087f72, #1898d5);
+}
+
+/* Hanya nama website, dua judul slider, dan empat judul kartu Home. */
+.brand-copy strong,
+.hero-slide[data-slide-index="0"] .hero-title > span:not(.accent),
+.hero-slide[data-slide-index="1"] .hero-title > span:not(.accent),
+#feature3D h3,
+#featureAR h3,
+#featureNav h3,
+#featureDirectory h3 {
+    background-image: var(--r39-title-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* Ukuran dan posisi dihitung dari area objek, termasuk margin transparan.
+   Logo AR sedikit lebih lebar agar kubus beserta bidangnya tetap terbaca. */
+#menu3D,
+#feature3D {
+    --r39-logo-image: url("./assets/images/logo_3d(2).png");
+    --r39-logo-size: 309.794% auto;
+    --r39-logo-position: 52.077% 50.109%;
+}
+
+#menuAR,
+#featureAR {
+    --r39-logo-image: url("./assets/images/logo_ar(3).png");
+    --r39-logo-size: 198.330% auto;
+    --r39-logo-position: 52.836% 119.249%;
+}
+
+#menuNavigation,
+#featureNav {
+    --r39-logo-image: url("./assets/images/logo_navigasi(2).png");
+    --r39-logo-size: 97.950% auto;
+    --r39-logo-position: 50% 169.444%;
+}
+
+#menuDirectory,
+#featureDirectory {
+    --r39-logo-image: url("./assets/images/logo_direktori(1).png");
+    --r39-logo-size: 92.017% auto;
+    --r39-logo-position: 66.546% 79.414%;
+}
+
+/* Mengganti simbol lama tanpa mengubah tombol, deskripsi, dan hover. */
+:is(#menu3D, #menuAR, #menuNavigation, #menuDirectory) > .drawer-icon,
+:is(#feature3D, #featureAR, #featureNav, #featureDirectory) > .feature-icon,
+#logoHome > .revision39-brand-icon {
+    padding: 0;
+    border-radius: 0;
+    background-color: transparent;
+    background-image: var(--r39-logo-image);
+    background-size: var(--r39-logo-size);
+    background-position: var(--r39-logo-position);
+    background-repeat: no-repeat;
+    color: transparent;
+    font-size: 0;
+    flex-shrink: 0;
+}
+
+:is(#menu3D, #menuAR, #menuNavigation, #menuDirectory) > .drawer-icon {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+}
+
+:is(#feature3D, #featureAR, #featureNav, #featureDirectory) > .feature-icon {
+    width: 43px;
+    min-width: 43px;
+    height: 43px;
+}
+
+/* Logo kelima untuk header; ukuran desktop/mobile mengikuti style.css. */
+#logoHome > .revision39-brand-icon {
+    --r39-logo-image: url("./assets/images/logo-ft-uisu(4).png");
+    --r39-logo-size: 118.681% auto;
+    --r39-logo-position: 56.088% 50.529%;
+}
+
+/* Warna judul tetap terbaca ketika sistem memaksa palet kontras tinggi. */
+@media (forced-colors: active) {
+    .brand-copy strong,
+    .hero-slide[data-slide-index="0"] .hero-title > span:not(.accent),
+    .hero-slide[data-slide-index="1"] .hero-title > span:not(.accent),
+    #feature3D h3,
+    #featureAR h3,
+    #featureNav h3,
+    #featureDirectory h3 {
+        background-image: none;
+        -webkit-text-fill-color: CanvasText;
+        color: CanvasText;
+    }
+}
