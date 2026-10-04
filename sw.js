@@ -9,7 +9,7 @@ const MODEL_CACHE =
 
 
 const STATIC_CACHE =
-    "ft-uisu-static-v37.1";
+    "ft-uisu-static-rev1";
 
 
 
