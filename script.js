@@ -1,7 +1,7 @@
 /* =========================================================
    FT UISU EXPLORER
    SCRIPT.JS
-   REVISION 37
+   REVISION 37 - REVISI 1
    NATIVE 3D VIEWER CONTROL
 ========================================================= */
 
@@ -523,7 +523,7 @@ async function registerServiceWorker(){
         await navigator
             .serviceWorker
             .register(
-                "./sw.js?v=37.1",
+                "./sw.js?v=rev1",
                 {
                     scope:"./"
                 }
@@ -1725,35 +1725,6 @@ on(
 );
 
 
-on(
-    "infoNavigationButton",
-    "click",
-    () => {
-
-        if(
-            !state.infoLocation
-        ){
-
-            return;
-
-        }
-
-
-        const location =
-            state.infoLocation;
-
-
-        closeInfo();
-
-
-        openNavigationWithDestination(
-            location
-        );
-
-    }
-);
-
-
 /* =========================================================
    BUILDING SELECT
 ========================================================= */
@@ -1777,7 +1748,9 @@ function populateBuildingSelect(
         `;
 
 
-    buildings.forEach(
+    buildings.slice()
+        .sort((a,b) => (a.modelMenuOrder ?? 99) - (b.modelMenuOrder ?? 99))
+        .forEach(
         building => {
 
             const option =
@@ -1791,7 +1764,7 @@ function populateBuildingSelect(
 
 
             option.textContent =
-                building.name;
+                building.modelMenuName || building.name;
 
 
             select.appendChild(
@@ -3162,167 +3135,70 @@ function locationForRoom(
 }
 
 
-function renderRoomList(
-    roomList,
-    container
-){
-
+function renderRoomList(roomList, container){
     if(!container){
-
         return;
-
     }
 
-
-    container.innerHTML =
-        "";
-
+    container.innerHTML = "";
 
     if(!roomList.length){
-
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="search-empty">
                 Data ruangan akan dilengkapi kemudian.
             </div>
-            `;
-
+        `;
         return;
-
     }
 
+    const grid = document.createElement("div");
+    grid.className = "room-grid";
 
-    const grid =
-        document.createElement(
-            "div"
-        );
+    roomList.forEach(room => {
+        const location = locationForRoom(room);
+        const item = document.createElement("div");
+        const actionsId = `directory-room-actions-${room.id}`;
+        item.className = "room-item";
 
+        item.innerHTML = `
+            <button
+                type="button"
+                class="room-row room-toggle-button"
+                aria-expanded="false"
+                aria-controls="${actionsId}"
+            >
+                <span class="room-name"></span>
+                <span class="room-chevron" aria-hidden="true">›</span>
+            </button>
+            <div id="${actionsId}" class="room-actions hidden">
+                <button type="button" class="room-info">Informasi</button>
+                <button type="button" class="room-nav">Petunjuk Arah</button>
+            </div>
+        `;
 
-    grid.className =
-        "room-grid";
+        item.querySelector(".room-name").textContent = room.name;
+        const toggle = item.querySelector(".room-toggle-button");
+        const actions = item.querySelector(".room-actions");
 
+        toggle.addEventListener("click", () => {
+            const expanded = toggle.getAttribute("aria-expanded") !== "true";
+            toggle.setAttribute("aria-expanded", String(expanded));
+            actions.classList.toggle("hidden", !expanded);
+            item.classList.toggle("open", expanded);
+        });
 
-    roomList.forEach(
-        room => {
+        item.querySelector(".room-info").addEventListener("click", () => {
+            openInfo(location);
+        });
 
-            const location =
-                locationForRoom(
-                    room
-                );
+        item.querySelector(".room-nav").addEventListener("click", () => {
+            openNavigationWithDestination(location);
+        });
 
+        grid.appendChild(item);
+    });
 
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "room-item";
-
-
-            item.innerHTML =
-                `
-                <div class="room-row">
-
-                    <span>
-                        ${room.name}
-                    </span>
-
-                    <button
-                        type="button"
-                        class="room-select-button"
-                    >
-                        Pilih
-                    </button>
-
-                </div>
-
-                <div class="room-actions hidden">
-
-                    <button
-                        type="button"
-                        class="room-info"
-                    >
-                        Informasi
-                    </button>
-
-                    <button
-                        type="button"
-                        class="room-nav"
-                    >
-                        Petunjuk Arah
-                    </button>
-
-                </div>
-                `;
-
-
-            const actions =
-                item.querySelector(
-                    ".room-actions"
-                );
-
-
-            item.querySelector(
-                ".room-select-button"
-            )
-                ?.addEventListener(
-                    "click",
-                    () => {
-
-                        actions
-                            ?.classList
-                            .toggle(
-                                "hidden"
-                            );
-
-                    }
-                );
-
-
-            item.querySelector(
-                ".room-info"
-            )
-                ?.addEventListener(
-                    "click",
-                    () => {
-
-                        openInfo(
-                            location
-                        );
-
-                    }
-                );
-
-
-            item.querySelector(
-                ".room-nav"
-            )
-                ?.addEventListener(
-                    "click",
-                    () => {
-
-                        openNavigationWithDestination(
-                            location
-                        );
-
-                    }
-                );
-
-
-            grid.appendChild(
-                item
-            );
-
-        }
-    );
-
-
-    container.appendChild(
-        grid
-    );
-
+    container.appendChild(grid);
 }
 
 
@@ -3485,6 +3361,8 @@ function renderDirectory(){
                 <button
                     class="building-button"
                     type="button"
+                    aria-expanded="false"
+                    aria-controls="directory-building-content-${building.id}"
                 >
 
                     <span class="building-number">
@@ -3509,7 +3387,7 @@ function renderDirectory(){
 
                 </button>
 
-                <div class="building-content">
+                <div id="directory-building-content-${building.id}" class="building-content">
                 </div>
                 `;
 
@@ -3531,9 +3409,8 @@ function renderDirectory(){
                     "click",
                     () => {
 
-                        article.classList.toggle(
-                            "open"
-                        );
+                        const expanded = article.classList.toggle("open");
+                        header.setAttribute("aria-expanded", String(expanded));
 
                     }
                 );
@@ -6912,8 +6789,7 @@ function openNavigationWithDestination(
 
 [
     "menu3D",
-    "feature3D",
-    "hero3DButton"
+    "feature3D"
 ]
     .forEach(
         id => {
@@ -6930,8 +6806,7 @@ function openNavigationWithDestination(
 
 [
     "menuAR",
-    "featureAR",
-    "heroARButton"
+    "featureAR"
 ]
     .forEach(
         id => {
@@ -6948,8 +6823,7 @@ function openNavigationWithDestination(
 
 [
     "menuNavigation",
-    "featureNav",
-    "heroNavigationButton"
+    "featureNav"
 ]
     .forEach(
         id => {
@@ -6966,8 +6840,7 @@ function openNavigationWithDestination(
 
 [
     "menuDirectory",
-    "featureDirectory",
-    "heroDirectoryButton"
+    "featureDirectory"
 ]
     .forEach(
         id => {
