@@ -1,7 +1,7 @@
 /* =========================================================
    FT UISU EXPLORER
    MAP + DATABASE
-   REVISION 37 - LATEST MODEL DESCRIPTIONS
+   REVISION 37 - REVISI 1: MODEL MENU + DESCRIPTIONS
 ========================================================= */
 
 (function(){
@@ -35,6 +35,10 @@ const buildings = [
 
 {
     id:"biro-ft",
+
+    modelMenuName:"Biro Fakultas Teknik",
+
+    modelMenuOrder:1,
 
     name:
         "Gedung Biro Fakultas Teknik",
@@ -74,7 +78,7 @@ const buildings = [
                 "./assets/models/gedung_biro_outdoor.glb",
 
             viewerDescription:
-                "Biro Fakultas Teknik berada di lantai 2 pada model 3D berikut."
+                "Model outdoor menampilkan bangunan tempat Biro Fakultas Teknik berada di lantai 2, dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3."
         },
 
         {
@@ -89,7 +93,7 @@ const buildings = [
                 "./assets/models/gedung_biro_indoor.glb",
 
             viewerDescription:
-                "Model berikut menampilkan interior ruangan di dalam Biro Fakultas Teknik."
+                "Model indoor menampilkan interior Biro Fakultas Teknik di lantai 2 beserta susunan ruangannya."
         }
 
     ]
@@ -103,6 +107,10 @@ const buildings = [
 
 {
     id:"perpustakaan-ft",
+
+    modelMenuName:"Perpustakaan Fakultas Teknik",
+
+    modelMenuOrder:5,
 
     name:
         "Perpustakaan Fakultas Teknik",
@@ -142,7 +150,7 @@ const buildings = [
                 "./assets/models/perpustakaan_indoor.glb",
 
             viewerDescription:
-                "Model berikut menampilkan interior Ruangan Perpustakaan Fakultas Teknik."
+                "Model indoor menampilkan interior Perpustakaan Fakultas Teknik yang berada di lantai 1, pada gedung di sudut seberang lapangan."
         }
 
     ]
@@ -156,6 +164,10 @@ const buildings = [
 
 {
     id:"serbaguna-ft",
+
+    modelMenuName:"Ruang Serbaguna FT",
+
+    modelMenuOrder:4,
 
     name:
         "Gedung Serbaguna Fakultas Teknik",
@@ -189,13 +201,13 @@ const buildings = [
             name:"Indoor",
 
             viewerTitle:
-                "Ruang Serbaguna Fakultas Teknik",
+                "Ruang Serbaguna FT",
 
             src:
                 "./assets/models/serbaguna_indoor.glb",
 
             viewerDescription:
-                "Model berikut menampilkan interior Ruang Serbaguna Fakultas Teknik."
+                "Model indoor menampilkan interior Ruang Serbaguna FT yang berada di lantai 1 pada gedung Fakultas Hukum."
         }
 
     ]
@@ -209,6 +221,10 @@ const buildings = [
 
 {
     id:"perkuliahan-ft",
+
+    modelMenuName:"Ruang Perkuliahan FT",
+
+    modelMenuOrder:2,
 
     name:
         "Gedung Perkuliahan Fakultas Teknik",
@@ -248,7 +264,7 @@ const buildings = [
                 "./assets/models/gedung_perkuliahan_outdoor.glb",
 
             viewerDescription:
-                "Ruang Kuliah Fakultas Teknik terletak di lantai 3 pada model 3D berikut."
+                "Model outdoor menampilkan bangunan tempat Ruang Perkuliahan FT berada di lantai 3, di seberang Gedung Biro Fakultas Teknik."
         },
 
         {
@@ -257,13 +273,13 @@ const buildings = [
             name:"Indoor",
 
             viewerTitle:
-                "Ruang Perkuliahan Fakultas Teknik",
+                "Ruang Perkuliahan FT",
 
             src:
                 "./assets/models/gedung_perkuliahan_indoor.glb",
 
             viewerDescription:
-                "Model berikut menampilkan interior Ruang Perkuliahan Fakultas Teknik dari Ruang 1 s/d Ruang 8."
+                "Model indoor menampilkan interior Ruang Perkuliahan FT di lantai 3, dari Ruang Kuliah 1 sampai Ruang Kuliah 8."
         }
 
     ]
@@ -277,6 +293,10 @@ const buildings = [
 
 {
     id:"laboratorium-ft",
+
+    modelMenuName:"Laboratorium Fakultas Teknik",
+
+    modelMenuOrder:3,
 
     name:
         "Gedung Laboratorium Fakultas Teknik",
@@ -316,7 +336,7 @@ const buildings = [
                 "./assets/models/gedung_laboratorium.glb",
 
             viewerDescription:
-                "Model berikut menampilkan Gedung Laboratorium yang berisi seluruh laboratorium di Fakultas Teknik, beserta Ruang Perkuliahan dari Ruang 9 s/d Ruang 10 yang terletak di lantai 2, serta Ruang Kuliah 11 s/d Ruang 13 yang terletak di lantai 3."
+                "Model outdoor menampilkan bangunan Laboratorium Fakultas Teknik yang terdiri dari tiga lantai, termasuk Ruang Kuliah 9 sampai Ruang Kuliah 10 di lantai 2 serta Ruang Kuliah 11 sampai Ruang Kuliah 13 di lantai 3."
         }
 
     ]
