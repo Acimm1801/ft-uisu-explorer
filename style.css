@@ -459,3 +459,6 @@ a{color:inherit;text-decoration:none;}
         color: CanvasText;
     }
 }
+:is(#menu3D,#feature3D){--r39-logo-size:280.976% auto;--r39-logo-position:52.183% 50.126%;}
+.hero-title,.slider-two-title{font-size:clamp(28px,3.6vw,46px);line-height:1.22;letter-spacing:0;gap:6px;}
+.brand{gap:7px;}
