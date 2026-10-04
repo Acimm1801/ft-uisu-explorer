@@ -1,989 +1,7280 @@
-import {
-  MAP_WIDTH,
-  MAP_HEIGHT,
-  buildings,
-  rooms,
-  routeNodes,
-  routeEdges,
-  getBuildingById
-} from "./data/map-data.js?v=12";
+/* =========================================================
+   FT UISU EXPLORER
+   SCRIPT.JS
+   REVISION 37
+   NATIVE 3D VIEWER CONTROL
+========================================================= */
 
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+(function(){
 
-const state = {
-  currentSlide: 0,
-  globalSelection: null,
-  infoLocation: null,
-  destination: null,
-  clickedPosition: null,
-  routeResult: null,
-  cameraStream: null
-};
+"use strict";
+
 
 /* =========================================================
-   LOCATION DATABASE
+   DATABASE
+========================================================= */
+
+const DATA =
+    window.FT_DATA
+    ||
+    {};
+
+
+const MAP_WIDTH =
+    DATA.MAP_WIDTH
+    ||
+    768;
+
+
+const MAP_HEIGHT =
+    DATA.MAP_HEIGHT
+    ||
+    1024;
+
+
+const buildings =
+    Array.isArray(DATA.buildings)
+    ?
+    DATA.buildings
+    :
+    [];
+
+
+const rooms =
+    Array.isArray(DATA.rooms)
+    ?
+    DATA.rooms
+    :
+    [];
+
+
+const people =
+    Array.isArray(DATA.people)
+    ?
+    DATA.people
+    :
+    [];
+
+
+const entrances =
+    Array.isArray(DATA.entrances)
+    ?
+    DATA.entrances
+    :
+    [];
+
+
+const mapNodes =
+    DATA.mapNodes
+    ||
+    {};
+
+
+const mapEdges =
+    Array.isArray(DATA.mapEdges)
+    ?
+    DATA.mapEdges
+    :
+    [];
+
+
+const mapCalibration =
+    Array.isArray(DATA.mapCalibration)
+    ?
+    DATA.mapCalibration
+    :
+    [];
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+function byId(id){
+
+    return document.getElementById(
+        id
+    );
+
+}
+
+
+function all(selector){
+
+    return Array.from(
+        document.querySelectorAll(
+            selector
+        )
+    );
+
+}
+
+
+function on(
+    id,
+    eventName,
+    handler,
+    options
+){
+
+    const element =
+        byId(id);
+
+
+    if(!element){
+
+        return;
+
+    }
+
+
+    element.addEventListener(
+        eventName,
+        handler,
+        options
+    );
+
+}
+
+
+function show(id){
+
+    const element =
+        byId(id);
+
+
+    if(element){
+
+        element.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+function hide(id){
+
+    const element =
+        byId(id);
+
+
+    if(element){
+
+        element.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+function setText(
+    id,
+    value
+){
+
+    const element =
+        byId(id);
+
+
+    if(element){
+
+        element.textContent =
+            value
+            ??
+            "";
+
+    }
+
+}
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+const state = {
+
+    currentPage:
+        "home",
+
+    pageHistory:
+        [],
+
+    currentSlide:
+        0,
+
+    landingModelIndex:
+        0,
+
+    globalSelection:
+        null,
+
+    infoLocation:
+        null,
+
+    destination:
+        null,
+
+    clickedPosition:
+        null,
+
+    routeResult:
+        null,
+
+    liveInstructions:
+        [],
+
+    gpsWatchId:
+        null,
+
+    viewerBuildingId:
+        null,
+
+    viewerModelId:
+        null,
+
+    arBuildingId:
+        null,
+
+    arModelId:
+        null,
+
+    pending3DMarker:
+        null
+
+};
+
+
+/* =========================================================
+   DATABASE HELPERS
+========================================================= */
+
+function getBuildingById(id){
+
+    if(
+        typeof DATA.getBuildingById
+        ===
+        "function"
+    ){
+
+        return DATA.getBuildingById(
+            id
+        );
+
+    }
+
+
+    return (
+        buildings.find(
+            building =>
+                building.id === id
+        )
+        ||
+        null
+    );
+
+}
+
+
+function getEntranceById(id){
+
+    if(
+        typeof DATA.getEntranceById
+        ===
+        "function"
+    ){
+
+        return DATA.getEntranceById(
+            id
+        );
+
+    }
+
+
+    return (
+        entrances.find(
+            entrance =>
+                entrance.id === id
+        )
+        ||
+        null
+    );
+
+}
+
+
+function getBuildingModels(
+    buildingId
+){
+
+    if(
+        typeof DATA.getBuildingModels
+        ===
+        "function"
+    ){
+
+        return DATA.getBuildingModels(
+            buildingId
+        );
+
+    }
+
+
+    const building =
+        getBuildingById(
+            buildingId
+        );
+
+
+    return (
+        building
+        ?
+        building.models || []
+        :
+        []
+    );
+
+}
+
+
+function getModelVariant(
+    buildingId,
+    modelId
+){
+
+    if(
+        typeof DATA.getModelVariant
+        ===
+        "function"
+    ){
+
+        return DATA.getModelVariant(
+            buildingId,
+            modelId
+        );
+
+    }
+
+
+    return (
+        getBuildingModels(
+            buildingId
+        )
+            .find(
+                model =>
+                    model.id === modelId
+            )
+        ||
+        null
+    );
+
+}
+
+
+function getDefaultModelVariant(
+    buildingId
+){
+
+    if(
+        typeof DATA.getDefaultModelVariant
+        ===
+        "function"
+    ){
+
+        return DATA.getDefaultModelVariant(
+            buildingId
+        );
+
+    }
+
+
+    const building =
+        getBuildingById(
+            buildingId
+        );
+
+
+    if(!building){
+
+        return null;
+
+    }
+
+
+    return (
+        getModelVariant(
+            building.id,
+            building.defaultModel
+        )
+        ||
+        building.models?.[0]
+        ||
+        null
+    );
+
+}
+
+
+function getNavigationEntrance(
+    location
+){
+
+    if(
+        typeof
+        DATA.getNavigationEntranceForLocation
+        ===
+        "function"
+    ){
+
+        return DATA
+            .getNavigationEntranceForLocation(
+                location
+            );
+
+    }
+
+
+    if(!location){
+
+        return null;
+
+    }
+
+
+    if(
+        location.type ===
+        "room"
+        &&
+        location.navigationEntranceId
+    ){
+
+        return getEntranceById(
+            location.navigationEntranceId
+        );
+
+    }
+
+
+    const building =
+        getBuildingById(
+            location.buildingId
+            ||
+            location.id
+        );
+
+
+    if(!building){
+
+        return null;
+
+    }
+
+
+    return getEntranceById(
+        building.defaultEntranceId
+    );
+
+}
+
+
+/* =========================================================
+   MODEL CACHE
+========================================================= */
+
+const MODEL_CACHE_NAME =
+    "ft-uisu-models-v37.1";
+
+
+const PRIORITY_MODELS = [
+
+    "./assets/models/gedung_biro_outdoor.glb",
+
+    "./assets/models/gedung_perkuliahan_outdoor.glb",
+
+    "./assets/models/gedung_laboratorium.glb",
+
+    "./assets/models/gedung_biro_indoor.glb",
+
+    "./assets/models/gedung_perkuliahan_indoor.glb"
+
+];
+
+
+async function registerServiceWorker(){
+
+    if(
+        !(
+            "serviceWorker"
+            in navigator
+        )
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+        await navigator
+            .serviceWorker
+            .register(
+                "./sw.js?v=37.1",
+                {
+                    scope:"./"
+                }
+            );
+
+
+        await navigator
+            .serviceWorker
+            .ready;
+
+    }
+
+    catch(error){
+
+        console.warn(
+            "Service Worker:",
+            error
+        );
+
+    }
+
+}
+
+
+async function cacheModel(
+    url
+){
+
+    if(
+        !url
+        ||
+        !(
+            "caches"
+            in window
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    try{
+
+        const cache =
+            await caches.open(
+                MODEL_CACHE_NAME
+            );
+
+
+        const existing =
+            await cache.match(
+                url,
+                {
+                    ignoreSearch:true
+                }
+            );
+
+
+        if(existing){
+
+            return true;
+
+        }
+
+
+        const response =
+            await fetch(
+                url,
+                {
+                    cache:"force-cache"
+                }
+            );
+
+
+        if(
+            !response.ok
+        ){
+
+            return false;
+
+        }
+
+
+        await cache.put(
+            url,
+            response.clone()
+        );
+
+
+        return true;
+
+    }
+
+    catch(error){
+
+        return false;
+
+    }
+
+}
+
+
+async function preloadPriorityModels(){
+
+    const queue =
+        PRIORITY_MODELS.slice();
+
+
+    async function worker(){
+
+        while(queue.length){
+
+            const url =
+                queue.shift();
+
+
+            await cacheModel(
+                url
+            );
+
+        }
+
+    }
+
+
+    await Promise.all([
+        worker(),
+        worker()
+    ]);
+
+}
+
+
+function preloadBuildingModels(
+    building
+){
+
+    if(
+        !building
+        ||
+        !Array.isArray(
+            building.models
+        )
+    ){
+
+        return;
+
+    }
+
+
+    building.models
+        .forEach(
+            model => {
+
+                cacheModel(
+                    model.src
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   LOCATION SEARCH DATABASE
 ========================================================= */
 
 const locations = [];
 
-buildings.forEach((building) => {
-  locations.push({
-    id: building.id,
-    type: "building",
-    name: building.name,
-    buildingId: building.id,
-    parent: "Fakultas Teknik UISU",
-    floor: building.actualFloor,
-    description: building.description
-  });
-});
 
-rooms.forEach((room) => {
-  const building = getBuildingById(room.buildingId);
-  locations.push({
-    ...room,
-    type: "room",
-    parent: building ? building.name : "Fakultas Teknik UISU",
-    description:
-      `${room.name} berada di ${building ? building.name : "Fakultas Teknik UISU"}` +
-      `${room.floor ? `, lantai ${room.floor}` : ""}. ` +
-      "Detail penanggung jawab, fungsi, dan letak spesifik ruangan akan dilengkapi kemudian."
-  });
-});
+buildings.forEach(
+    building => {
 
-function normalizeText(value) {
-  return String(value || "").toLowerCase().trim();
+        locations.push({
+
+            id:
+                building.id,
+
+            type:
+                "building",
+
+            name:
+                building.name,
+
+            buildingId:
+                building.id,
+
+            floor:
+                building.actualFloor,
+
+            parent:
+                "Fakultas Teknik UISU",
+
+            description:
+                building.description,
+
+            navigationEntranceId:
+                building.defaultEntranceId,
+
+            modelMarker:
+                null
+
+        });
+
+    }
+);
+
+
+rooms.forEach(
+    room => {
+
+        const building =
+            getBuildingById(
+                room.buildingId
+            );
+
+
+        locations.push({
+
+            id:
+                room.id,
+
+            type:
+                "room",
+
+            name:
+                room.name,
+
+            buildingId:
+                room.buildingId,
+
+            floor:
+                room.floor,
+
+            parent:
+                building
+                ?
+                building.name
+                :
+                "Fakultas Teknik UISU",
+
+            navigationEntranceId:
+                room.navigationEntranceId,
+
+            modelMarker:
+                room.modelMarker
+                ||
+                null,
+
+            description:
+                room.description
+                ||
+                (
+                    room.name
+                    +
+                    " berada di "
+                    +
+                    (
+                        building
+                        ?
+                        building.name
+                        :
+                        "Fakultas Teknik UISU"
+                    )
+                    +
+                    (
+                        room.floor
+                        ?
+                        ", lantai "
+                        +
+                        room.floor
+                        :
+                        ""
+                    )
+                    +
+                    "."
+                )
+
+        });
+
+    }
+);
+
+
+people.forEach(
+    person => {
+
+        locations.push({
+
+            ...person,
+
+            type:"person"
+
+        });
+
+    }
+);
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+function updateHeaderActive(
+    pageName
+){
+
+    all(".header-link")
+        .forEach(
+            button => {
+
+                button.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+    const button =
+        document.querySelector(
+            `.header-link[data-page="${pageName}"]`
+        );
+
+
+    if(button){
+
+        button.classList.add(
+            "active"
+        );
+
+    }
+
 }
 
-function searchLocations(value) {
-  const query = normalizeText(value);
-  if (!query) return [];
 
-  return locations
-    .filter((location) =>
-      normalizeText(`${location.name} ${location.parent}`).includes(query)
+function showPage(
+    pageName,
+    pushHistory = true
+){
+
+    const page =
+        byId(
+            pageName
+            +
+            "Page"
+        );
+
+
+    if(!page){
+
+        return;
+
+    }
+
+
+    if(
+        pushHistory
+        &&
+        state.currentPage
+        &&
+        state.currentPage !== pageName
+    ){
+
+        state.pageHistory.push(
+            state.currentPage
+        );
+
+    }
+
+
+    all(".page")
+        .forEach(
+            item => {
+
+                item.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+    page.classList.add(
+        "active"
+    );
+
+
+    state.currentPage =
+        pageName;
+
+
+    updateHeaderActive(
+        pageName
+    );
+
+
+    closeDrawer();
+
+
+    if(
+        pageName !==
+        "navigationActive"
+    ){
+
+        window.scrollTo({
+            top:0,
+            behavior:"auto"
+        });
+
+    }
+
+
+    setTimeout(
+        syncAllMapGeometry,
+        60
+    );
+
+}
+
+
+function goBack(){
+
+    stopGpsTracking();
+
+
+    const previous =
+        state.pageHistory.length
+        ?
+        state.pageHistory.pop()
+        :
+        "home";
+
+
+    showPage(
+        previous,
+        false
+    );
+
+}
+
+
+all("[data-back]")
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                goBack
+            );
+
+        }
+    );
+
+
+on(
+    "logoHome",
+    "click",
+    () => {
+
+        stopGpsTracking();
+
+
+        state.pageHistory =
+            [];
+
+
+        showPage(
+            "home",
+            false
+        );
+
+    }
+);
+
+
+all("[data-page]")
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    showPage(
+                        button.dataset.page
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   DRAWER
+========================================================= */
+
+function openDrawer(){
+
+    byId("drawer")
+        ?.classList
+        .add(
+            "open"
+        );
+
+
+    byId("drawerOverlay")
+        ?.classList
+        .add(
+            "show"
+        );
+
+
+    document.body.style.overflow =
+        "hidden";
+
+}
+
+
+function closeDrawer(){
+
+    byId("drawer")
+        ?.classList
+        .remove(
+            "open"
+        );
+
+
+    byId("drawerOverlay")
+        ?.classList
+        .remove(
+            "show"
+        );
+
+
+    document.body.style.overflow =
+        "";
+
+}
+
+
+on(
+    "hamburgerButton",
+    "click",
+    openDrawer
+);
+
+
+on(
+    "closeDrawer",
+    "click",
+    closeDrawer
+);
+
+
+on(
+    "drawerOverlay",
+    "click",
+    closeDrawer
+);
+
+
+/* =========================================================
+   SLIDER
+========================================================= */
+
+const slides =
+    all(
+        ".hero-slide"
+    );
+
+
+function showSlide(index){
+
+    if(!slides.length){
+
+        return;
+
+    }
+
+
+    if(index < 0){
+
+        index =
+            slides.length - 1;
+
+    }
+
+
+    if(
+        index >=
+        slides.length
+    ){
+
+        index = 0;
+
+    }
+
+
+    state.currentSlide =
+        index;
+
+
+    slides.forEach(
+        (slide,i) => {
+
+            slide.classList.toggle(
+                "active",
+                i === index
+            );
+
+        }
+    );
+
+
+    all(".slider-dot")
+        .forEach(
+            (dot,i) => {
+
+                dot.classList.toggle(
+                    "active",
+                    i === index
+                );
+
+            }
+        );
+
+}
+
+
+on(
+    "prevSlide",
+    "click",
+    () => {
+
+        showSlide(
+            state.currentSlide - 1
+        );
+
+    }
+);
+
+
+on(
+    "nextSlide",
+    "click",
+    () => {
+
+        showSlide(
+            state.currentSlide + 1
+        );
+
+    }
+);
+
+
+all(".slider-dot")
+    .forEach(
+        dot => {
+
+            dot.addEventListener(
+                "click",
+                () => {
+
+                    showSlide(
+                        Number(
+                            dot.dataset.slide
+                        )
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   LANDING MODEL
+========================================================= */
+
+const landingModels = [
+
+    {
+        name:
+            "Gedung Biro Fakultas Teknik",
+
+        viewer:
+            byId(
+                "landingModel0"
+            )
+    },
+
+    {
+        name:
+            "Gedung Perkuliahan Fakultas Teknik",
+
+        viewer:
+            byId(
+                "landingModel1"
+            )
+    },
+
+    {
+        name:
+            "Gedung Laboratorium Fakultas Teknik",
+
+        viewer:
+            byId(
+                "landingModel2"
+            )
+    }
+
+];
+
+
+function showLandingModel(index){
+
+    if(!landingModels.length){
+
+        return;
+
+    }
+
+
+    if(index < 0){
+
+        index =
+            landingModels.length - 1;
+
+    }
+
+
+    if(
+        index >=
+        landingModels.length
+    ){
+
+        index = 0;
+
+    }
+
+
+    state.landingModelIndex =
+        index;
+
+
+    landingModels.forEach(
+        (item,i) => {
+
+            if(!item.viewer){
+
+                return;
+
+            }
+
+
+            item.viewer
+                .classList
+                .toggle(
+                    "active",
+                    i === index
+                );
+
+        }
+    );
+
+
+    setText(
+        "landingModelName",
+        landingModels[index].name
+    );
+
+
+    setText(
+        "landingModelCounter",
+        `${index + 1} / ${landingModels.length}`
+    );
+
+}
+
+
+on(
+    "landingNextModel",
+    "click",
+    () => {
+
+        showLandingModel(
+            state.landingModelIndex + 1
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function normalize(value){
+
+    return String(
+        value
+        ||
+        ""
     )
-    .slice(0, 30);
+        .toLowerCase()
+        .trim();
+
 }
 
-function renderSearchResults(results, container, onSelect) {
-  container.innerHTML = "";
 
-  if (!results.length) {
-    container.innerHTML = `<div class="search-empty">Lokasi tidak ditemukan.</div>`;
-    container.classList.remove("hidden");
-    return;
-  }
+function searchLocations(
+    value
+){
 
-  results.forEach((location) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "search-result";
-    button.innerHTML = `
-      <span>
-        <strong>${location.name}</strong>
-        <small>${location.parent}${location.floor ? ` • Lantai ${location.floor}` : ""}</small>
-      </span>
-      <span class="search-type">${location.type === "building" ? "Gedung" : "Ruangan"}</span>
-    `;
-    button.addEventListener("click", () => onSelect(location));
-    container.appendChild(button);
-  });
+    const query =
+        normalize(
+            value
+        );
 
-  container.classList.remove("hidden");
+
+    if(!query){
+
+        return [];
+
+    }
+
+
+    return locations
+        .filter(
+            location => {
+
+                return normalize(
+                    location.name
+                    +
+                    " "
+                    +
+                    (
+                        location.parent
+                        ||
+                        ""
+                    )
+                )
+                    .includes(
+                        query
+                    );
+
+            }
+        )
+        .slice(
+            0,
+            40
+        );
+
 }
 
-/* =========================================================
-   PAGE & DRAWER
-========================================================= */
 
-function openDrawer() {
-  $("#drawer").classList.add("open");
-  $("#drawerOverlay").classList.add("show");
-  document.body.style.overflow = "hidden";
+function renderSearchResults(
+    results,
+    container,
+    onSelect
+){
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        "";
+
+
+    if(!results.length){
+
+        container.innerHTML =
+            `
+            <div class="search-empty">
+                Lokasi tidak ditemukan.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    results.forEach(
+        location => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "search-result";
+
+
+            let typeText =
+                "Ruangan";
+
+
+            if(
+                location.type ===
+                "building"
+            ){
+
+                typeText =
+                    "Gedung";
+
+            }
+
+
+            else if(
+                location.type ===
+                "person"
+            ){
+
+                typeText =
+                    "Civitas";
+
+            }
+
+
+            button.innerHTML =
+                `
+                <span>
+
+                    <strong>
+                        ${location.name}
+                    </strong>
+
+                    <small>
+                        ${location.parent || "Fakultas Teknik UISU"}
+                        ${
+                            location.floor
+                            ?
+                            " • Lantai "
+                            +
+                            location.floor
+                            :
+                            ""
+                        }
+                    </small>
+
+                </span>
+
+                <span class="search-type">
+                    ${typeText}
+                </span>
+                `;
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    onSelect(
+                        location
+                    );
+
+                }
+            );
+
+
+            container.appendChild(
+                button
+            );
+
+        }
+    );
+
 }
 
-function closeDrawer() {
-  $("#drawer").classList.remove("open");
-  $("#drawerOverlay").classList.remove("show");
-  document.body.style.overflow = "";
-}
-
-function showPage(pageName) {
-  $$(".page").forEach((page) => page.classList.remove("active"));
-
-  const target = $(`#${pageName}Page`);
-  if (target) target.classList.add("active");
-
-  $$(".header-link").forEach((button) => {
-    button.classList.toggle("active", button.dataset.page === pageName);
-  });
-
-  if (pageName !== "arNavigation") stopNavigationCamera();
-
-  closeDrawer();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-$("#hamburgerButton").addEventListener("click", openDrawer);
-$("#closeDrawer").addEventListener("click", closeDrawer);
-$("#drawerOverlay").addEventListener("click", closeDrawer);
-$("#logoHome").addEventListener("click", () => showPage("home"));
-
-$$('[data-page]').forEach((button) => {
-  button.addEventListener("click", () => showPage(button.dataset.page));
-});
-
-/* =========================================================
-   HOME SLIDER - 20 DETIK
-========================================================= */
-
-const slides = $$(".hero-slide");
-let sliderTimer;
-
-function showSlide(index) {
-  index = (index + slides.length) % slides.length;
-  state.currentSlide = index;
-
-  slides.forEach((slide, slideIndex) => {
-    slide.classList.toggle("active", slideIndex === index);
-  });
-
-  $$(".slider-dot").forEach((dot, dotIndex) => {
-    dot.classList.toggle("active", dotIndex === index);
-  });
-}
-
-function restartSlider() {
-  clearInterval(sliderTimer);
-  sliderTimer = setInterval(() => showSlide(state.currentSlide + 1), 20000);
-}
-
-$("#nextSlide").addEventListener("click", () => {
-  showSlide(state.currentSlide + 1);
-  restartSlider();
-});
-
-$("#prevSlide").addEventListener("click", () => {
-  showSlide(state.currentSlide - 1);
-  restartSlider();
-});
-
-$$(".slider-dot").forEach((dot) => {
-  dot.addEventListener("click", () => {
-    showSlide(Number(dot.dataset.slide));
-    restartSlider();
-  });
-});
-
-restartSlider();
 
 /* =========================================================
    GLOBAL SEARCH
 ========================================================= */
 
-$("#globalSearch").addEventListener("input", (event) => {
-  const value = event.target.value;
-  state.globalSelection = null;
-  $("#globalSelected").classList.add("hidden");
+const globalSearch =
+    byId(
+        "globalSearch"
+    );
 
-  if (!value) {
-    $("#globalSearchResults").classList.add("hidden");
-    return;
-  }
 
-  renderSearchResults(searchLocations(value), $("#globalSearchResults"), (location) => {
-    state.globalSelection = location;
-    $("#globalSearch").value = location.name;
-    $("#globalSelectedName").textContent = location.name;
-    $("#globalSearchResults").classList.add("hidden");
-    $("#globalSelected").classList.remove("hidden");
-  });
-});
+if(globalSearch){
 
-$("#clearGlobalSearch").addEventListener("click", () => {
-  $("#globalSearch").value = "";
-  state.globalSelection = null;
-  $("#globalSearchResults").classList.add("hidden");
-  $("#globalSelected").classList.add("hidden");
-});
+    globalSearch.addEventListener(
+        "input",
+        event => {
 
-$("#globalInfoButton").addEventListener("click", () => {
-  if (state.globalSelection) openInfo(state.globalSelection);
-});
+            const value =
+                event.target.value;
 
-$("#globalNavButton").addEventListener("click", () => {
-  if (state.globalSelection) openNavigationWithDestination(state.globalSelection);
-});
+
+            if(!value.trim()){
+
+                hide(
+                    "globalSearchResults"
+                );
+
+                return;
+
+            }
+
+
+            renderSearchResults(
+
+                searchLocations(
+                    value
+                ),
+
+                byId(
+                    "globalSearchResults"
+                ),
+
+                location => {
+
+                    state.globalSelection =
+                        location;
+
+
+                    globalSearch.value =
+                        location.name;
+
+
+                    setText(
+                        "globalSelectedName",
+                        location.name
+                    );
+
+
+                    hide(
+                        "globalSearchResults"
+                    );
+
+
+                    show(
+                        "globalSelected"
+                    );
+
+                }
+
+            );
+
+
+            show(
+                "globalSearchResults"
+            );
+
+        }
+    );
+
+}
+
+
+on(
+    "clearGlobalSearch",
+    "click",
+    () => {
+
+        if(globalSearch){
+
+            globalSearch.value =
+                "";
+
+        }
+
+
+        state.globalSelection =
+            null;
+
+
+        hide(
+            "globalSelected"
+        );
+
+
+        hide(
+            "globalSearchResults"
+        );
+
+    }
+);
+
 
 /* =========================================================
-   INFO MODAL
+   INFO
 ========================================================= */
 
-function openInfo(location) {
-  state.infoLocation = location;
-  $("#infoTitle").textContent = location.name;
-  $("#infoParent").textContent = location.parent;
-  $("#infoDescription").textContent = location.description || "Detail informasi akan dilengkapi kemudian.";
-  $("#infoModal").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
+function openInfo(
+    location
+){
+
+    if(!location){
+
+        return;
+
+    }
+
+
+    state.infoLocation =
+        location;
+
+
+    setText(
+        "infoTitle",
+        location.name
+    );
+
+
+    setText(
+        "infoParent",
+        location.parent
+        ||
+        "Fakultas Teknik UISU"
+    );
+
+
+    setText(
+        "infoDescription",
+        location.description
+        ||
+        "Informasi belum tersedia."
+    );
+
+
+    show(
+        "infoModal"
+    );
+
 }
 
-function closeInfo() {
-  $("#infoModal").classList.add("hidden");
-  document.body.style.overflow = "";
+
+function closeInfo(){
+
+    hide(
+        "infoModal"
+    );
+
 }
 
-$("#closeInfoModal").addEventListener("click", closeInfo);
-$("#infoBackdrop").addEventListener("click", closeInfo);
-$("#infoNavigationButton").addEventListener("click", () => {
-  if (!state.infoLocation) return;
-  const location = state.infoLocation;
-  closeInfo();
-  openNavigationWithDestination(location);
-});
+
+on(
+    "closeInfoModal",
+    "click",
+    closeInfo
+);
+
+
+on(
+    "infoBackdrop",
+    "click",
+    closeInfo
+);
+
+
+on(
+    "globalInfoButton",
+    "click",
+    () => {
+
+        openInfo(
+            state.globalSelection
+        );
+
+    }
+);
+
+
+on(
+    "globalNavButton",
+    "click",
+    () => {
+
+        if(
+            state.globalSelection
+        ){
+
+            openNavigationWithDestination(
+                state.globalSelection
+            );
+
+        }
+
+    }
+);
+
+
+on(
+    "infoNavigationButton",
+    "click",
+    () => {
+
+        if(
+            !state.infoLocation
+        ){
+
+            return;
+
+        }
+
+
+        const location =
+            state.infoLocation;
+
+
+        closeInfo();
+
+
+        openNavigationWithDestination(
+            location
+        );
+
+    }
+);
+
 
 /* =========================================================
-   BUILDING SELECTORS - 3D & MAIN AR
+   BUILDING SELECT
 ========================================================= */
 
-function populateBuildingSelect(selectElement) {
-  selectElement.innerHTML = `<option value="">-- Pilih Gedung --</option>`;
-  buildings.forEach((building) => {
-    const option = document.createElement("option");
-    option.value = building.id;
-    option.textContent = building.name;
-    selectElement.appendChild(option);
-  });
+function populateBuildingSelect(
+    select
+){
+
+    if(!select){
+
+        return;
+
+    }
+
+
+    select.innerHTML =
+        `
+        <option value="">
+            -- Pilih Gedung --
+        </option>
+        `;
+
+
+    buildings.forEach(
+        building => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                building.id;
+
+
+            option.textContent =
+                building.name;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
 }
 
-populateBuildingSelect($("#viewerBuildingSelect"));
-populateBuildingSelect($("#arBuildingSelect"));
 
-$("#show3DModel").addEventListener("click", () => {
-  const building = getBuildingById($("#viewerBuildingSelect").value);
+const viewerBuildingSelect =
+    byId(
+        "viewerBuildingSelect"
+    );
 
-  if (!building) {
-    $("#viewerMessage").textContent = "Pilih gedung terlebih dahulu.";
-    $("#viewerCard").classList.add("hidden");
-    return;
-  }
 
-  if (!building.modelPath) {
-    $("#viewerMessage").textContent = `Model 3D ${building.shortName} belum tersedia.`;
-    $("#viewerCard").classList.add("hidden");
-    return;
-  }
+const arBuildingSelect =
+    byId(
+        "arBuildingSelect"
+    );
 
-  $("#viewerMessage").textContent = "";
-  $("#viewerTitle").textContent = building.name;
-  $("#mainModelViewer").setAttribute("src", building.modelPath);
-  $("#viewerCard").classList.remove("hidden");
-});
 
-$("#resetCamera").addEventListener("click", () => {
-  const viewer = $("#mainModelViewer");
-  viewer.cameraOrbit = "0deg 75deg 105%";
-  viewer.cameraTarget = "auto auto auto";
-});
+populateBuildingSelect(
+    viewerBuildingSelect
+);
 
-$("#prepareMainAR").addEventListener("click", () => {
-  const building = getBuildingById($("#arBuildingSelect").value);
 
-  if (!building) {
-    $("#arMessage").textContent = "Pilih gedung terlebih dahulu.";
-    $("#arCard").classList.add("hidden");
-    return;
-  }
+populateBuildingSelect(
+    arBuildingSelect
+);
 
-  if (!building.modelPath) {
-    $("#arMessage").textContent = `Model AR ${building.shortName} belum tersedia.`;
-    $("#arCard").classList.add("hidden");
-    return;
-  }
-
-  $("#arMessage").textContent = "";
-  $("#mainARViewer").setAttribute("src", building.modelPath);
-  $("#mainARStatus").textContent = `Siap menampilkan ${building.shortName}`;
-  $("#arCard").classList.remove("hidden");
-});
-
-$("#launchMainAR").addEventListener("click", async () => {
-  try {
-    await $("#mainARViewer").activateAR();
-  } catch (error) {
-    console.error(error);
-    toast("AR utama belum dapat dibuka pada perangkat ini.");
-  }
-});
 
 /* =========================================================
-   ROUTING ENGINE
-   Network tidak pernah digambar seluruhnya. Hanya route aktif.
+   MODEL SWITCH
 ========================================================= */
 
-function pointDistance(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
+function renderModelSwitch({
 
-function pointsEqual(a, b, epsilon = 0.5) {
-  return pointDistance(a, b) <= epsilon;
-}
+    building,
 
-function polylineLength(points) {
-  let total = 0;
-  for (let i = 0; i < points.length - 1; i += 1) {
-    total += pointDistance(points[i], points[i + 1]);
-  }
-  return total;
-}
+    activeModelId,
 
-const routingEdges = routeEdges.map((edge) => {
-  const points = edge.points.map(([x, y]) => ({ x, y }));
-  const cumulative = [0];
-  let total = 0;
+    containerId,
 
-  for (let i = 0; i < points.length - 1; i += 1) {
-    total += pointDistance(points[i], points[i + 1]);
-    cumulative.push(total);
-  }
+    singleBadgeId,
 
-  return { ...edge, points, cumulative, length: total };
-});
+    onChange
 
-const edgeById = new Map(routingEdges.map((edge) => [edge.id, edge]));
+}){
 
-const routeGraph = {};
-Object.keys(routeNodes).forEach((nodeId) => { routeGraph[nodeId] = []; });
+    const container =
+        byId(
+            containerId
+        );
 
-routingEdges.forEach((edge) => {
-  routeGraph[edge.from].push({ node: edge.to, edgeId: edge.id, weight: edge.length });
-  routeGraph[edge.to].push({ node: edge.from, edgeId: edge.id, weight: edge.length });
-});
 
-function projectPointToSegment(point, a, b) {
-  const abX = b.x - a.x;
-  const abY = b.y - a.y;
-  const apX = point.x - a.x;
-  const apY = point.y - a.y;
-  const lengthSquared = abX * abX + abY * abY;
+    const badge =
+        byId(
+            singleBadgeId
+        );
 
-  let t = lengthSquared === 0 ? 0 : (apX * abX + apY * abY) / lengthSquared;
-  t = Math.max(0, Math.min(1, t));
 
-  const projected = { x: a.x + abX * t, y: a.y + abY * t };
-  return { point: projected, t, distance: pointDistance(point, projected) };
-}
+    if(
+        !container
+        ||
+        !badge
+        ||
+        !building
+    ){
 
-function snapPointToNetwork(point) {
-  let best = null;
+        return;
 
-  routingEdges.forEach((edge) => {
-    for (let i = 0; i < edge.points.length - 1; i += 1) {
-      const a = edge.points[i];
-      const b = edge.points[i + 1];
-      const projection = projectPointToSegment(point, a, b);
-      const segmentLength = pointDistance(a, b);
-      const along = edge.cumulative[i] + segmentLength * projection.t;
-
-      if (!best || projection.distance < best.distance) {
-        best = {
-          edge,
-          segmentIndex: i,
-          t: projection.t,
-          point: projection.point,
-          distance: projection.distance,
-          along,
-          distanceToFrom: along,
-          distanceToTo: edge.length - along
-        };
-      }
     }
-  });
 
-  return best;
-}
 
-function dijkstra(startNode, targetNode) {
-  const distances = {};
-  const previousNode = {};
-  const previousEdge = {};
-  const unvisited = new Set(Object.keys(routeNodes));
+    const models =
+        building.models
+        ||
+        [];
 
-  Object.keys(routeNodes).forEach((nodeId) => {
-    distances[nodeId] = Infinity;
-    previousNode[nodeId] = null;
-    previousEdge[nodeId] = null;
-  });
 
-  distances[startNode] = 0;
+    container.innerHTML =
+        "";
 
-  while (unvisited.size) {
-    let current = null;
-    let smallest = Infinity;
 
-    unvisited.forEach((nodeId) => {
-      if (distances[nodeId] < smallest) {
-        smallest = distances[nodeId];
-        current = nodeId;
-      }
-    });
+    if(
+        models.length <= 1
+    ){
 
-    if (current === null) break;
-    if (current === targetNode) break;
+        hide(
+            containerId
+        );
 
-    unvisited.delete(current);
 
-    routeGraph[current].forEach((connection) => {
-      if (!unvisited.has(connection.node)) return;
-      const candidate = distances[current] + connection.weight;
-      if (candidate < distances[connection.node]) {
-        distances[connection.node] = candidate;
-        previousNode[connection.node] = current;
-        previousEdge[connection.node] = connection.edgeId;
-      }
-    });
-  }
+        if(
+            models[0]
+        ){
 
-  if (!Number.isFinite(distances[targetNode])) return null;
+            badge.textContent =
+                models[0].name;
 
-  const nodePath = [];
-  const edgePath = [];
-  let cursor = targetNode;
 
-  while (cursor) {
-    nodePath.unshift(cursor);
-    if (cursor === startNode) break;
-    edgePath.unshift(previousEdge[cursor]);
-    cursor = previousNode[cursor];
-  }
+            show(
+                singleBadgeId
+            );
 
-  if (nodePath[0] !== startNode) return null;
-  return { distance: distances[targetNode], nodePath, edgePath };
-}
+        }
 
-function dedupePolyline(points) {
-  const output = [];
-  points.forEach((point) => {
-    if (!output.length || !pointsEqual(output[output.length - 1], point)) {
-      output.push({ x: point.x, y: point.y });
+        else{
+
+            hide(
+                singleBadgeId
+            );
+
+        }
+
+
+        return;
+
     }
-  });
-  return output;
+
+
+    hide(
+        singleBadgeId
+    );
+
+
+    show(
+        containerId
+    );
+
+
+    models.forEach(
+        model => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "model-switch-button";
+
+
+            button.textContent =
+                model.name;
+
+
+            button.classList.toggle(
+                "active",
+                model.id === activeModelId
+            );
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    onChange(
+                        model.id
+                    );
+
+                }
+            );
+
+
+            container.appendChild(
+                button
+            );
+
+        }
+    );
+
 }
 
-function snapToEndpointPolyline(snap, endpointNode) {
-  const edge = snap.edge;
-  const points = edge.points;
-  const i = snap.segmentIndex;
-  const result = [{ ...snap.point }];
 
-  if (endpointNode === edge.from) {
-    result.push(points[i]);
-    for (let j = i - 1; j >= 0; j -= 1) result.push(points[j]);
-  } else {
-    result.push(points[i + 1]);
-    for (let j = i + 2; j < points.length; j += 1) result.push(points[j]);
-  }
+/* =========================================================
+   SINGLE / NATIVE 3D VIEWER
+========================================================= */
 
-  return dedupePolyline(result);
+const main3DViewer =
+    byId(
+        "main3DViewer"
+    );
+
+
+let current3DModel = {
+
+    buildingId:null,
+
+    modelId:null,
+
+    src:null
+
+};
+
+
+/* =========================================================
+   VIEWER TEXT
+========================================================= */
+
+function updateViewerText(
+    building,
+    model
+){
+
+    const modelTitle =
+        model.viewerTitle
+        ||
+        building.name;
+
+
+    setText(
+        "viewerTitle",
+        modelTitle
+    );
+
+
+    setText(
+        "viewerCurrentModelName",
+        modelTitle
+        +
+        " - "
+        +
+        model.name
+    );
+
+
+    setText(
+        "viewerPreloadDescription",
+        model.viewerDescription
+    );
+
 }
 
-function endpointToSnapPolyline(snap, endpointNode) {
-  return snapToEndpointPolyline(snap, endpointNode).reverse();
-}
 
-function sameEdgePolyline(startSnap, targetSnap) {
-  const edge = startSnap.edge;
-  const points = edge.points;
-  const result = [{ ...startSnap.point }];
+/* =========================================================
+   VIEWER LOADING
+========================================================= */
 
-  if (startSnap.along <= targetSnap.along) {
-    for (let j = startSnap.segmentIndex + 1; j <= targetSnap.segmentIndex; j += 1) {
-      result.push(points[j]);
+function setViewerLoading(
+    building,
+    model
+){
+
+    updateViewerText(
+        building,
+        model
+    );
+
+
+    setText(
+        "viewerLoadStatus",
+        "MEMUAT MODEL 3D..."
+    );
+
+
+    const dot =
+        byId(
+            "viewerLoadingDot"
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "loading-dot loading";
+
     }
-  } else {
-    for (let j = startSnap.segmentIndex; j > targetSnap.segmentIndex; j -= 1) {
-      result.push(points[j]);
+
+
+    show(
+        "viewerLoadingOverlay"
+    );
+
+
+    hide(
+        "viewerUnavailable"
+    );
+
+}
+
+
+/* =========================================================
+   VIEWER READY
+========================================================= */
+
+function setViewerReady(
+    building,
+    model
+){
+
+    updateViewerText(
+        building,
+        model
+    );
+
+
+    setText(
+        "viewerLoadStatus",
+        "MODEL 3D SIAP"
+    );
+
+
+    const dot =
+        byId(
+            "viewerLoadingDot"
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "loading-dot ready";
+
     }
-  }
 
-  result.push({ ...targetSnap.point });
-  return dedupePolyline(result);
+
+    hide(
+        "viewerLoadingOverlay"
+    );
+
+
+    hide(
+        "viewerUnavailable"
+    );
+
 }
 
-function middlePolyline(dijkstraResult) {
-  if (!dijkstraResult || !dijkstraResult.edgePath.length) return [];
 
-  const output = [];
+/* =========================================================
+   VIEWER UNAVAILABLE
+========================================================= */
 
-  dijkstraResult.edgePath.forEach((edgeId, index) => {
-    const edge = edgeById.get(edgeId);
-    const fromNode = dijkstraResult.nodePath[index];
-    let points = edge.from === fromNode ? edge.points : [...edge.points].reverse();
-    if (output.length) points = points.slice(1);
-    output.push(...points);
-  });
+function setViewerUnavailable(
+    building,
+    model
+){
 
-  return dedupePolyline(output);
+    const modelTitle =
+        model.viewerTitle
+        ||
+        building.name;
+
+
+    setText(
+        "viewerTitle",
+        modelTitle
+    );
+
+
+    setText(
+        "viewerCurrentModelName",
+        modelTitle
+        +
+        " - "
+        +
+        model.name
+    );
+
+
+    setText(
+        "viewerPreloadDescription",
+        "Model 3D sedang dalam tahap penyelesaian"
+    );
+
+
+    setText(
+        "viewerLoadStatus",
+        "MODEL BELUM TERSEDIA"
+    );
+
+
+    const dot =
+        byId(
+            "viewerLoadingDot"
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "loading-dot error";
+
+    }
+
+
+    hide(
+        "viewerLoadingOverlay"
+    );
+
+
+    show(
+        "viewerUnavailable"
+    );
+
 }
 
-function routeBetweenSnaps(startSnap, targetSnap) {
-  const candidates = [];
 
-  if (startSnap.edge.id === targetSnap.edge.id) {
-    candidates.push({
-      distance: Math.abs(startSnap.along - targetSnap.along),
-      points: sameEdgePolyline(startSnap, targetSnap)
-    });
-  }
+/* =========================================================
+   RESET CAMERA
 
-  const startEndpoints = [startSnap.edge.from, startSnap.edge.to];
-  const targetEndpoints = [targetSnap.edge.from, targetSnap.edge.to];
+   TIDAK ADA CUSTOM CLICK-ZOOM.
+   DRAG / ROTATE / SCROLL / PINCH DIKELOLA
+   LANGSUNG OLEH MODEL-VIEWER.
+========================================================= */
 
-  startEndpoints.forEach((startNode) => {
-    targetEndpoints.forEach((targetNode) => {
-      const middle = dijkstra(startNode, targetNode);
-      if (!middle) return;
+function reset3DCamera(){
 
-      const startDistance = startNode === startSnap.edge.from
-        ? startSnap.distanceToFrom
-        : startSnap.distanceToTo;
+    if(!main3DViewer){
 
-      const targetDistance = targetNode === targetSnap.edge.from
-        ? targetSnap.distanceToFrom
-        : targetSnap.distanceToTo;
+        return;
 
-      const startPart = snapToEndpointPolyline(startSnap, startNode);
-      const middlePart = middlePolyline(middle);
-      const targetPart = endpointToSnapPolyline(targetSnap, targetNode);
+    }
 
-      candidates.push({
-        distance: startDistance + middle.distance + targetDistance,
-        points: dedupePolyline([...startPart, ...middlePart, ...targetPart])
-      });
-    });
-  });
 
-  return candidates.sort((a, b) => a.distance - b.distance)[0] || null;
+    main3DViewer.cameraOrbit =
+        "auto auto auto";
+
+
+    main3DViewer.cameraTarget =
+        "auto auto auto";
+
+
+    main3DViewer.fieldOfView =
+        "35deg";
+
+
+    if(
+        typeof
+        main3DViewer.jumpCameraToGoal
+        ===
+        "function"
+    ){
+
+        main3DViewer
+            .jumpCameraToGoal();
+
+    }
+
 }
 
-function findBestEntranceRoute(clickedPosition, building) {
-  const startSnap = snapPointToNetwork(clickedPosition);
-  if (!startSnap) return null;
 
-  let best = null;
+on(
+    "resetCamera",
+    "click",
+    reset3DCamera
+);
 
-  building.entrances.forEach((entrance) => {
-    const targetSnap = snapPointToNetwork(entrance);
-    if (!targetSnap) return;
 
-    const networkRoute = routeBetweenSnaps(startSnap, targetSnap);
-    if (!networkRoute) return;
+/* =========================================================
+   LOAD 3D MODEL
+========================================================= */
 
-    const totalDistance =
-      pointDistance(clickedPosition, startSnap.point) +
-      networkRoute.distance +
-      pointDistance(targetSnap.point, entrance);
+function load3DModel(
+    building,
+    model
+){
 
-    const points = dedupePolyline([
-      clickedPosition,
-      startSnap.point,
-      ...networkRoute.points,
-      targetSnap.point,
-      entrance
-    ]);
+    if(
+        !building
+        ||
+        !model
+        ||
+        !main3DViewer
+    ){
 
-    const candidate = {
-      entrance,
-      startSnap,
-      targetSnap,
-      distance: totalDistance,
-      points
+        return;
+
+    }
+
+
+    state.viewerBuildingId =
+        building.id;
+
+
+    state.viewerModelId =
+        model.id;
+
+
+    current3DModel = {
+
+        buildingId:
+            building.id,
+
+        modelId:
+            model.id,
+
+        src:
+            model.src
+
     };
 
-    if (!best || candidate.distance < best.distance) best = candidate;
-  });
 
-  return best;
-}
+    renderModelSwitch({
 
-/* =========================================================
-   NAVIGATION FLOW
-========================================================= */
+        building,
 
-function getDestinationBuilding() {
-  if (!state.destination) return null;
-  return getBuildingById(state.destination.buildingId);
-}
+        activeModelId:
+            model.id,
 
-function setElementPosition(element, point) {
-  element.style.left = `${(point.x / MAP_WIDTH) * 100}%`;
-  element.style.top = `${(point.y / MAP_HEIGHT) * 100}%`;
-}
+        containerId:
+            "viewerModelSwitch",
 
-function updateProgress(stage) {
-  const steps = ["stepTarget", "stepPosition", "stepRoute", "stepAR"];
-  steps.forEach((id, index) => {
-    $(`#${id}`).classList.toggle("active", index <= stage);
-  });
-}
+        singleBadgeId:
+            "viewerSingleModeBadge",
 
-function clearRouteOnly() {
-  state.clickedPosition = null;
-  state.routeResult = null;
-  $("#activeRoute").setAttribute("points", "");
-  $("#userMarker").classList.add("hidden");
-  $("#entranceMarker").classList.add("hidden");
-  $("#resetPosition").classList.add("hidden");
-  $("#routeFoundBox").classList.add("hidden");
-  $("#positionStatus").textContent = "Belum dipilih";
-  $("#routeStatus").textContent = "Menunggu posisi";
-  $("#mapHeadingTitle").textContent = "Tandai posisi Anda sekarang";
-  $("#mapInstruction").textContent = "Tap pada denah sesuai posisi Anda saat ini.";
-  updateProgress(state.destination ? 1 : 0);
-}
+        onChange:
+            nextModelId => {
 
-function resetNavigation() {
-  state.destination = null;
-  $("#navigationSearch").value = "";
-  $("#navigationSearchResults").innerHTML = `<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>`;
-  $("#selectedDestination").classList.add("hidden");
-  $("#mapSection").classList.add("hidden");
-  $("#destinationHighlight").classList.add("hidden");
-  clearRouteOnly();
-  updateProgress(0);
-}
+                const nextModel =
+                    getModelVariant(
+                        building.id,
+                        nextModelId
+                    );
 
-function selectNavigationDestination(location) {
-  state.destination = location;
-  $("#navigationSearch").value = location.name;
-  $("#navigationSearchResults").innerHTML = "";
-  $("#selectedDestinationName").textContent = location.name;
-  $("#selectedDestinationParent").textContent = location.parent;
-  $("#selectedDestination").classList.remove("hidden");
 
-  const building = getDestinationBuilding();
-  if (!building) return;
+                if(nextModel){
 
-  $("#targetStatus").textContent = location.name;
-  setElementPosition($("#destinationHighlight"), building.mapMarker);
-  $("#destinationHighlight").classList.remove("hidden");
-  $("#mapSection").classList.remove("hidden");
+                    load3DModel(
+                        building,
+                        nextModel
+                    );
 
-  clearRouteOnly();
-  updateProgress(1);
+                }
 
-  setTimeout(() => {
-    $("#mapSection").scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 120);
-}
+            }
 
-function openNavigationWithDestination(location = null) {
-  showPage("navigation");
-  resetNavigation();
-
-  if (location) {
-    selectNavigationDestination(location);
-  } else {
-    setTimeout(() => $("#navigationSearch").focus(), 180);
-  }
-}
-
-$("#navigationSearch").addEventListener("input", (event) => {
-  const value = event.target.value;
-
-  if (!value) {
-    $("#navigationSearchResults").innerHTML = `<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>`;
-    return;
-  }
-
-  renderSearchResults(searchLocations(value), $("#navigationSearchResults"), selectNavigationDestination);
-});
-
-$("#navigationMap").addEventListener("pointerdown", (event) => {
-  const building = getDestinationBuilding();
-  if (!building) {
-    toast("Pilih tujuan terlebih dahulu.");
-    return;
-  }
-
-  const rect = $("#navigationMap").getBoundingClientRect();
-  const clicked = {
-    x: ((event.clientX - rect.left) / rect.width) * MAP_WIDTH,
-    y: ((event.clientY - rect.top) / rect.height) * MAP_HEIGHT
-  };
-
-  state.clickedPosition = clicked;
-  setElementPosition($("#userMarker"), clicked);
-  $("#userMarker").classList.remove("hidden");
-
-  const routeResult = findBestEntranceRoute(clicked, building);
-  if (!routeResult) {
-    toast("Rute tidak ditemukan dari posisi tersebut.");
-    return;
-  }
-
-  state.routeResult = routeResult;
-
-  setElementPosition($("#entranceMarker"), routeResult.entrance);
-  $("#entranceLabel").textContent = `Entrance ${building.shortName}`;
-  $("#entranceMarker").classList.remove("hidden");
-
-  const pointsText = routeResult.points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
-  $("#activeRoute").setAttribute("points", pointsText);
-
-  $("#positionStatus").textContent = "Posisi dipilih";
-  $("#routeStatus").textContent = "Rute Ditemukan";
-  $("#mapHeadingTitle").textContent = "Rute menuju tujuan";
-  $("#mapInstruction").textContent = `Rute aktif menuju entrance ${building.shortName}.`;
-  $("#resetPosition").classList.remove("hidden");
-  $("#routeFoundBox").classList.remove("hidden");
-  updateProgress(2);
-});
-
-$("#resetPosition").addEventListener("click", clearRouteOnly);
-
-/* =========================================================
-   AR NAVIGATION - CAMERA + HUD
-========================================================= */
-
-function calculateInitialArrowRotation(points) {
-  if (!points || points.length < 2) return 0;
-
-  let start = points[0];
-  let next = points[1];
-
-  for (let i = 1; i < points.length; i += 1) {
-    if (pointDistance(start, points[i]) > 12) {
-      next = points[i];
-      break;
-    }
-  }
-
-  const dx = next.x - start.x;
-  const dy = next.y - start.y;
-  return Math.atan2(dx, -dy) * (180 / Math.PI);
-}
-
-async function startNavigationCamera() {
-  const video = $("#navigationCamera");
-  $("#cameraStatus").textContent = "Meminta izin kamera...";
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    $("#cameraStatus").textContent = "Browser tidak mendukung akses kamera.";
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" } },
-      audio: false
     });
 
-    state.cameraStream = stream;
-    video.srcObject = stream;
-    await video.play();
-    $("#cameraStatus").textContent = "Kamera aktif • HUD navigasi siap";
-  } catch (error) {
-    console.error(error);
-    $("#cameraStatus").textContent = "Kamera gagal dibuka. Periksa izin kamera browser.";
-  }
+
+    setViewerLoading(
+        building,
+        model
+    );
+
+
+    /*
+       Tetap gunakan cache model yang sudah kita siapkan.
+    */
+
+    cacheModel(
+        model.src
+    );
+
+
+    const currentSrc =
+        main3DViewer
+            .getAttribute(
+                "src"
+            );
+
+
+    if(
+        currentSrc !==
+        model.src
+    ){
+
+        main3DViewer
+            .setAttribute(
+                "src",
+                model.src
+            );
+
+    }
+
+    else{
+
+        setViewerReady(
+            building,
+            model
+        );
+
+    }
+
+
+    applyDestinationMarker();
+
 }
 
-function stopNavigationCamera() {
-  if (state.cameraStream) {
-    state.cameraStream.getTracks().forEach((track) => track.stop());
-    state.cameraStream = null;
-  }
 
-  const video = $("#navigationCamera");
-  if (video) video.srcObject = null;
+/* =========================================================
+   VIEWER EVENTS
+========================================================= */
+
+if(main3DViewer){
+
+    main3DViewer
+        .addEventListener(
+            "load",
+            () => {
+
+                const building =
+                    getBuildingById(
+                        current3DModel
+                            .buildingId
+                    );
+
+
+                const model =
+                    getModelVariant(
+
+                        current3DModel
+                            .buildingId,
+
+                        current3DModel
+                            .modelId
+
+                    );
+
+
+                if(
+                    building
+                    &&
+                    model
+                ){
+
+                    setViewerReady(
+                        building,
+                        model
+                    );
+
+                }
+
+            }
+        );
+
+
+    main3DViewer
+        .addEventListener(
+            "error",
+            () => {
+
+                const building =
+                    getBuildingById(
+                        current3DModel
+                            .buildingId
+                    );
+
+
+                const model =
+                    getModelVariant(
+
+                        current3DModel
+                            .buildingId,
+
+                        current3DModel
+                            .modelId
+
+                    );
+
+
+                if(
+                    building
+                    &&
+                    model
+                ){
+
+                    setViewerUnavailable(
+                        building,
+                        model
+                    );
+
+                }
+
+            }
+        );
+
 }
 
-$("#openARNavigation").addEventListener("click", async () => {
-  if (!state.routeResult || !state.destination) return;
 
-  const building = getDestinationBuilding();
-  $("#arNavigationTitle").textContent = state.destination.name;
-  $("#arNavigationDestination").textContent = `${state.destination.name} • ${building.shortName}`;
+/* =========================================================
+   PREPARE VIEWER BUILDING
+========================================================= */
 
-  const rotation = calculateInitialArrowRotation(state.routeResult.points);
-  $("#directionArrow").style.setProperty("--arrow-rotation", `${rotation}deg`);
-  $("#directionText").textContent = "Ikuti arah menuju tujuan";
+function prepareViewerBuilding(
+    buildingId,
+    preferredModelId = null,
+    scroll = true
+){
 
-  updateProgress(3);
-  showPage("arNavigation");
-  await startNavigationCamera();
-});
+    const building =
+        getBuildingById(
+            buildingId
+        );
 
-$("#closeARNavigation").addEventListener("click", () => {
-  stopNavigationCamera();
-  showPage("navigation");
-});
+
+    if(!building){
+
+        toast(
+            "Gedung tidak ditemukan."
+        );
+
+        return;
+
+    }
+
+
+    const models =
+        building.models
+        ||
+        [];
+
+
+    if(
+        !models.length
+    ){
+
+        toast(
+            "Model belum terdaftar."
+        );
+
+        return;
+
+    }
+
+
+    preloadBuildingModels(
+        building
+    );
+
+
+    show(
+        "viewerCard"
+    );
+
+
+    const model =
+        getModelVariant(
+
+            building.id,
+
+            preferredModelId
+
+        )
+
+        ||
+
+        getDefaultModelVariant(
+            building.id
+        )
+
+        ||
+
+        models[0];
+
+
+    load3DModel(
+        building,
+        model
+    );
+
+
+    if(scroll){
+
+        setTimeout(
+            () => {
+
+                byId(
+                    "viewerCard"
+                )
+                    ?.scrollIntoView({
+
+                        behavior:"smooth",
+
+                        block:"start"
+
+                    });
+
+            },
+            50
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SHOW 3D BUTTON
+========================================================= */
+
+on(
+    "show3DModel",
+    "click",
+    () => {
+
+        if(!viewerBuildingSelect){
+
+            return;
+
+        }
+
+
+        const buildingId =
+            viewerBuildingSelect.value;
+
+
+        if(!buildingId){
+
+            setText(
+                "viewerMessage",
+                "Pilih gedung terlebih dahulu."
+            );
+
+            return;
+
+        }
+
+
+        setText(
+            "viewerMessage",
+            ""
+        );
+
+
+        state.pending3DMarker =
+            null;
+
+
+        prepareViewerBuilding(
+            buildingId,
+            null,
+            true
+        );
+
+    }
+);
+
+
+/* =========================================================
+   DESTINATION 3D HOTSPOT
+========================================================= */
+
+function hideDestinationHotspot(){
+
+    hide(
+        "destination3DHotspot"
+    );
+
+}
+
+
+function applyDestinationMarker(){
+
+    hideDestinationHotspot();
+
+
+    if(
+        !state.pending3DMarker
+        ||
+        !main3DViewer
+    ){
+
+        return;
+
+    }
+
+
+    const marker =
+        state.pending3DMarker.marker;
+
+
+    const hotspot =
+        byId(
+            "destination3DHotspot"
+        );
+
+
+    if(!hotspot){
+
+        return;
+
+    }
+
+
+    hotspot.dataset.position =
+        `${marker.x}m ${marker.y}m ${marker.z}m`;
+
+
+    setText(
+        "destination3DLabel",
+        state.pending3DMarker.label
+    );
+
+
+    show(
+        "destination3DHotspot"
+    );
+
+}
+
+
+/* =========================================================
+   AR
+========================================================= */
+
+const mainARViewer =
+    byId(
+        "mainARViewer"
+    );
+
+
+function setARLoading(
+    building,
+    model
+){
+
+    const modelTitle =
+        model.viewerTitle
+        ||
+        building.name;
+
+
+    setText(
+        "arViewerTitle",
+        modelTitle
+    );
+
+
+    setText(
+        "arCurrentModelName",
+        modelTitle
+        +
+        " - "
+        +
+        model.name
+    );
+
+
+    setText(
+        "arPreloadDescription",
+        model.viewerDescription
+    );
+
+
+    setText(
+        "arLoadStatus",
+        "MEMUAT MODEL AR..."
+    );
+
+
+    const dot =
+        byId(
+            "arLoadingDot"
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "loading-dot loading";
+
+    }
+
+
+    show(
+        "arLoadingOverlay"
+    );
+
+
+    hide(
+        "arUnavailable"
+    );
+
+}
+
+
+function setARReady(
+    building,
+    model
+){
+
+    const modelTitle =
+        model.viewerTitle
+        ||
+        building.name;
+
+
+    setText(
+        "arViewerTitle",
+        modelTitle
+    );
+
+
+    setText(
+        "arCurrentModelName",
+        modelTitle
+        +
+        " - "
+        +
+        model.name
+    );
+
+
+    setText(
+        "arPreloadDescription",
+        model.viewerDescription
+    );
+
+
+    setText(
+        "arLoadStatus",
+        "MODEL AR SIAP"
+    );
+
+
+    const dot =
+        byId(
+            "arLoadingDot"
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "loading-dot ready";
+
+    }
+
+
+    hide(
+        "arLoadingOverlay"
+    );
+
+
+    hide(
+        "arUnavailable"
+    );
+
+}
+
+
+function setARUnavailable(
+    building,
+    model
+){
+
+    const modelTitle =
+        model.viewerTitle
+        ||
+        building.name;
+
+
+    setText(
+        "arViewerTitle",
+        modelTitle
+    );
+
+
+    setText(
+        "arCurrentModelName",
+        modelTitle
+        +
+        " - "
+        +
+        model.name
+    );
+
+
+    setText(
+        "arPreloadDescription",
+        "Model 3D sedang dalam tahap penyelesaian"
+    );
+
+
+    setText(
+        "arLoadStatus",
+        "MODEL BELUM TERSEDIA"
+    );
+
+
+    const dot =
+        byId(
+            "arLoadingDot"
+        );
+
+
+    if(dot){
+
+        dot.className =
+            "loading-dot error";
+
+    }
+
+
+    hide(
+        "arLoadingOverlay"
+    );
+
+
+    show(
+        "arUnavailable"
+    );
+
+}
+
+
+function loadARModel(
+    buildingId,
+    modelId
+){
+
+    const building =
+        getBuildingById(
+            buildingId
+        );
+
+
+    if(!building){
+
+        return;
+
+    }
+
+
+    const model =
+        getModelVariant(
+            building.id,
+            modelId
+        )
+        ||
+        getDefaultModelVariant(
+            building.id
+        );
+
+
+    if(!model){
+
+        return;
+
+    }
+
+
+    state.arBuildingId =
+        building.id;
+
+
+    state.arModelId =
+        model.id;
+
+
+    preloadBuildingModels(
+        building
+    );
+
+
+    show(
+        "arViewerCard"
+    );
+
+
+    renderModelSwitch({
+
+        building,
+
+        activeModelId:
+            model.id,
+
+        containerId:
+            "arModelSwitch",
+
+        singleBadgeId:
+            "arSingleModeBadge",
+
+        onChange:
+            nextModelId => {
+
+                loadARModel(
+                    building.id,
+                    nextModelId
+                );
+
+            }
+
+    });
+
+
+    setARLoading(
+        building,
+        model
+    );
+
+
+    if(mainARViewer){
+
+        mainARViewer
+            .setAttribute(
+                "src",
+                model.src
+            );
+
+    }
+
+}
+
+
+if(mainARViewer){
+
+    mainARViewer.addEventListener(
+        "load",
+        () => {
+
+            const building =
+                getBuildingById(
+                    state.arBuildingId
+                );
+
+
+            const model =
+                getModelVariant(
+                    state.arBuildingId,
+                    state.arModelId
+                );
+
+
+            if(
+                building
+                &&
+                model
+            ){
+
+                setARReady(
+                    building,
+                    model
+                );
+
+            }
+
+        }
+    );
+
+
+    mainARViewer.addEventListener(
+        "error",
+        () => {
+
+            const building =
+                getBuildingById(
+                    state.arBuildingId
+                );
+
+
+            const model =
+                getModelVariant(
+                    state.arBuildingId,
+                    state.arModelId
+                );
+
+
+            if(
+                building
+                &&
+                model
+            ){
+
+                setARUnavailable(
+                    building,
+                    model
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+on(
+    "prepareMainAR",
+    "click",
+    () => {
+
+        const buildingId =
+            arBuildingSelect
+                ?.value;
+
+
+        if(!buildingId){
+
+            setText(
+                "arMessage",
+                "Pilih gedung terlebih dahulu."
+            );
+
+            return;
+
+        }
+
+
+        const model =
+            getDefaultModelVariant(
+                buildingId
+            );
+
+
+        if(!model){
+
+            return;
+
+        }
+
+
+        setText(
+            "arMessage",
+            ""
+        );
+
+
+        loadARModel(
+            buildingId,
+            model.id
+        );
+
+    }
+);
+
 
 /* =========================================================
    DIRECTORY
 ========================================================= */
 
-function renderRoomList(roomList, container) {
-  container.innerHTML = "";
+function locationForBuilding(
+    building
+){
 
-  if (!roomList.length) {
-    container.innerHTML = `<div class="search-empty">Data ruangan akan dilengkapi kemudian.</div>`;
-    return;
-  }
+    return (
+        locations.find(
+            location =>
+                location.type ===
+                "building"
+                &&
+                location.id ===
+                building.id
+        )
+        ||
+        null
+    );
 
-  const grid = document.createElement("div");
-  grid.className = "room-grid";
-
-  roomList.forEach((room) => {
-    const item = document.createElement("div");
-    item.className = "room-item";
-    item.innerHTML = `
-      <div class="room-row">
-        <span>${room.name}</span>
-        <button type="button">Pilih</button>
-      </div>
-      <div class="room-actions hidden">
-        <button class="room-info-button" type="button">Informasi</button>
-        <button class="room-nav-button" type="button">Petunjuk Arah</button>
-      </div>
-    `;
-
-    const actions = item.querySelector(".room-actions");
-    item.querySelector(".room-row button").addEventListener("click", () => {
-      actions.classList.toggle("hidden");
-    });
-
-    const location = locations.find((candidate) => candidate.id === room.id);
-
-    item.querySelector(".room-info-button").addEventListener("click", () => {
-      if (location) openInfo(location);
-    });
-
-    item.querySelector(".room-nav-button").addEventListener("click", () => {
-      if (location) openNavigationWithDestination(location);
-    });
-
-    grid.appendChild(item);
-  });
-
-  container.appendChild(grid);
 }
 
-function renderLaboratory(buildingRooms, container) {
-  const floorButtons = document.createElement("div");
-  floorButtons.className = "floor-buttons";
-  const roomArea = document.createElement("div");
 
-  [1, 2, 3].forEach((floor) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `floor-button${floor === 1 ? " active" : ""}`;
-    button.textContent = `Lantai ${floor}`;
+function locationForRoom(
+    room
+){
 
-    button.addEventListener("click", () => {
-      floorButtons.querySelectorAll(".floor-button").forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
-      renderRoomList(buildingRooms.filter((room) => room.floor === floor), roomArea);
-    });
+    return (
+        locations.find(
+            location =>
+                location.type ===
+                "room"
+                &&
+                location.id ===
+                room.id
+        )
+        ||
+        null
+    );
 
-    floorButtons.appendChild(button);
-  });
-
-  container.appendChild(floorButtons);
-  container.appendChild(roomArea);
-  renderRoomList(buildingRooms.filter((room) => room.floor === 1), roomArea);
 }
 
-function renderDirectory() {
-  const container = $("#directoryContainer");
-  container.innerHTML = "";
 
-  buildings.forEach((building, index) => {
-    const buildingRooms = rooms.filter((room) => room.buildingId === building.id);
-    const article = document.createElement("article");
-    article.className = "building-card";
-    article.innerHTML = `
-      <button class="building-button" type="button">
-        <span class="building-number">${String(index + 1).padStart(2, "0")}</span>
-        <span>
-          <strong>${building.name}</strong>
-          <p>${building.description}</p>
-        </span>
-        <span>›</span>
-      </button>
-      <div class="building-content"></div>
-    `;
+function renderRoomList(
+    roomList,
+    container
+){
 
-    article.querySelector(".building-button").addEventListener("click", () => {
-      article.classList.toggle("open");
-    });
+    if(!container){
 
-    const content = article.querySelector(".building-content");
-    if (building.id === "laboratorium-ft") {
-      renderLaboratory(buildingRooms, content);
-    } else {
-      renderRoomList(buildingRooms, content);
+        return;
+
     }
 
-    container.appendChild(article);
-  });
+
+    container.innerHTML =
+        "";
+
+
+    if(!roomList.length){
+
+        container.innerHTML =
+            `
+            <div class="search-empty">
+                Data ruangan akan dilengkapi kemudian.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    const grid =
+        document.createElement(
+            "div"
+        );
+
+
+    grid.className =
+        "room-grid";
+
+
+    roomList.forEach(
+        room => {
+
+            const location =
+                locationForRoom(
+                    room
+                );
+
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "room-item";
+
+
+            item.innerHTML =
+                `
+                <div class="room-row">
+
+                    <span>
+                        ${room.name}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="room-select-button"
+                    >
+                        Pilih
+                    </button>
+
+                </div>
+
+                <div class="room-actions hidden">
+
+                    <button
+                        type="button"
+                        class="room-info"
+                    >
+                        Informasi
+                    </button>
+
+                    <button
+                        type="button"
+                        class="room-nav"
+                    >
+                        Petunjuk Arah
+                    </button>
+
+                </div>
+                `;
+
+
+            const actions =
+                item.querySelector(
+                    ".room-actions"
+                );
+
+
+            item.querySelector(
+                ".room-select-button"
+            )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        actions
+                            ?.classList
+                            .toggle(
+                                "hidden"
+                            );
+
+                    }
+                );
+
+
+            item.querySelector(
+                ".room-info"
+            )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        openInfo(
+                            location
+                        );
+
+                    }
+                );
+
+
+            item.querySelector(
+                ".room-nav"
+            )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        openNavigationWithDestination(
+                            location
+                        );
+
+                    }
+                );
+
+
+            grid.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    container.appendChild(
+        grid
+    );
+
 }
 
-renderDirectory();
 
-/* =========================================================
-   BUTTON BINDINGS
-========================================================= */
+function renderLaboratory(
+    roomList,
+    container
+){
 
-const openViewer = () => showPage("viewer");
-const openAR = () => showPage("ar");
-const openDirectory = () => showPage("directory");
-const openNavigation = () => openNavigationWithDestination();
+    const floorButtons =
+        document.createElement(
+            "div"
+        );
 
-$("#menu3D").addEventListener("click", openViewer);
-$("#feature3D").addEventListener("click", openViewer);
-$("#hero3DButton").addEventListener("click", openViewer);
 
-$("#menuAR").addEventListener("click", openAR);
-$("#featureAR").addEventListener("click", openAR);
+    floorButtons.className =
+        "floor-buttons";
 
-$("#menuNavigation").addEventListener("click", openNavigation);
-$("#featureNav").addEventListener("click", openNavigation);
-$("#heroNavigationButton").addEventListener("click", openNavigation);
-$("#heroNavigationButton2").addEventListener("click", openNavigation);
 
-$("#menuDirectory").addEventListener("click", openDirectory);
-$("#featureDirectory").addEventListener("click", openDirectory);
-$("#heroDirectoryButton").addEventListener("click", openDirectory);
+    const roomContainer =
+        document.createElement(
+            "div"
+        );
 
-/* =========================================================
-   TOAST & ESCAPE
-========================================================= */
 
-let toastTimer;
-function toast(message) {
-  const element = $("#toast");
-  element.textContent = message;
-  element.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => element.classList.remove("show"), 3200);
+    [1,2,3]
+        .forEach(
+            floor => {
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                button.type =
+                    "button";
+
+
+                button.className =
+                    "floor-button";
+
+
+                button.textContent =
+                    `Lantai ${floor}`;
+
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        Array.from(
+                            floorButtons.children
+                        )
+                            .forEach(
+                                item => {
+
+                                    item.classList.remove(
+                                        "active"
+                                    );
+
+                                }
+                            );
+
+
+                        button.classList.add(
+                            "active"
+                        );
+
+
+                        renderRoomList(
+
+                            roomList.filter(
+                                room =>
+                                    room.floor ===
+                                    floor
+                            ),
+
+                            roomContainer
+
+                        );
+
+                    }
+                );
+
+
+                floorButtons.appendChild(
+                    button
+                );
+
+            }
+        );
+
+
+    container.appendChild(
+        floorButtons
+    );
+
+
+    container.appendChild(
+        roomContainer
+    );
+
+
+    floorButtons
+        .firstElementChild
+        ?.click();
+
 }
 
-document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape") return;
 
-  closeDrawer();
+function renderDirectory(){
 
-  if (!$("#infoModal").classList.contains("hidden")) {
-    closeInfo();
-  }
+    const container =
+        byId(
+            "directoryContainer"
+        );
 
-  if ($("#arNavigationPage").classList.contains("active")) {
-    stopNavigationCamera();
-    showPage("navigation");
-  }
-});
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        "";
+
+
+    buildings.forEach(
+        (building,index) => {
+
+            const buildingRooms =
+                rooms.filter(
+                    room =>
+                        room.buildingId
+                        ===
+                        building.id
+                );
+
+
+            const location =
+                locationForBuilding(
+                    building
+                );
+
+
+            const article =
+                document.createElement(
+                    "article"
+                );
+
+
+            article.className =
+                "building-card";
+
+
+            article.innerHTML =
+                `
+                <button
+                    class="building-button"
+                    type="button"
+                >
+
+                    <span class="building-number">
+                        ${String(index + 1).padStart(2,"0")}
+                    </span>
+
+                    <span>
+
+                        <strong>
+                            ${building.name}
+                        </strong>
+
+                        <p>
+                            ${building.description || ""}
+                        </p>
+
+                    </span>
+
+                    <span>
+                        ›
+                    </span>
+
+                </button>
+
+                <div class="building-content">
+                </div>
+                `;
+
+
+            const header =
+                article.querySelector(
+                    ".building-button"
+                );
+
+
+            const content =
+                article.querySelector(
+                    ".building-content"
+                );
+
+
+            header
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        article.classList.toggle(
+                            "open"
+                        );
+
+                    }
+                );
+
+
+            const actions =
+                document.createElement(
+                    "div"
+                );
+
+
+            actions.className =
+                "building-actions";
+
+
+            actions.innerHTML =
+                `
+                <button
+                    class="button button-primary building-info"
+                    type="button"
+                >
+                    Informasi
+                </button>
+
+                <button
+                    class="button button-primary building-nav"
+                    type="button"
+                >
+                    Petunjuk Arah
+                </button>
+                `;
+
+
+            content.appendChild(
+                actions
+            );
+
+
+            actions
+                .querySelector(
+                    ".building-info"
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        openInfo(
+                            location
+                        );
+
+                    }
+                );
+
+
+            actions
+                .querySelector(
+                    ".building-nav"
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        openNavigationWithDestination(
+                            location
+                        );
+
+                    }
+                );
+
+
+            const roomHolder =
+                document.createElement(
+                    "div"
+                );
+
+
+            content.appendChild(
+                roomHolder
+            );
+
+
+            if(
+                building.id ===
+                "laboratorium-ft"
+            ){
+
+                renderLaboratory(
+                    buildingRooms,
+                    roomHolder
+                );
+
+            }
+
+            else{
+
+                renderRoomList(
+                    buildingRooms,
+                    roomHolder
+                );
+
+            }
+
+
+            container.appendChild(
+                article
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   NAV STEPS
+========================================================= */
+
+function setStep(
+    stepNumber
+){
+
+    const ids = [
+
+        "stepTarget",
+
+        "stepPosition",
+
+        "stepRoute",
+
+        "stepNavigation"
+
+    ];
+
+
+    ids.forEach(
+        (id,index) => {
+
+            const element =
+                byId(id);
+
+
+            if(!element){
+
+                return;
+
+            }
+
+
+            element.classList.toggle(
+                "active",
+                index + 1
+                <=
+                stepNumber
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MAP GEOMETRY
+========================================================= */
+
+function getImageContentBox(
+    container,
+    image
+){
+
+    if(
+        !container
+        ||
+        !image
+    ){
+
+        return null;
+
+    }
+
+
+    const containerWidth =
+        container.clientWidth;
+
+
+    const containerHeight =
+        container.clientHeight;
+
+
+    const naturalWidth =
+        image.naturalWidth
+        ||
+        containerWidth;
+
+
+    const naturalHeight =
+        image.naturalHeight
+        ||
+        containerHeight;
+
+
+    if(
+        !containerWidth
+        ||
+        !containerHeight
+        ||
+        !naturalWidth
+        ||
+        !naturalHeight
+    ){
+
+        return null;
+
+    }
+
+
+    const scale =
+        Math.min(
+
+            containerWidth
+            /
+            naturalWidth,
+
+            containerHeight
+            /
+            naturalHeight
+
+        );
+
+
+    const width =
+        naturalWidth
+        *
+        scale;
+
+
+    const height =
+        naturalHeight
+        *
+        scale;
+
+
+    const left =
+        (
+            containerWidth
+            -
+            width
+        )
+        /
+        2;
+
+
+    const top =
+        (
+            containerHeight
+            -
+            height
+        )
+        /
+        2;
+
+
+    return {
+
+        left,
+
+        top,
+
+        width,
+
+        height,
+
+        naturalWidth,
+
+        naturalHeight
+
+    };
+
+}
+
+
+function fitContainerToImage(
+    container,
+    image
+){
+
+    if(
+        !container
+        ||
+        !image
+        ||
+        !image.naturalWidth
+        ||
+        !image.naturalHeight
+    ){
+
+        return;
+
+    }
+
+
+    container.style.aspectRatio =
+        `${image.naturalWidth} / ${image.naturalHeight}`;
+
+}
+
+
+function fitSvgToImage(
+    svg,
+    container,
+    image
+){
+
+    if(
+        !svg
+        ||
+        !container
+        ||
+        !image
+    ){
+
+        return;
+
+    }
+
+
+    const box =
+        getImageContentBox(
+            container,
+            image
+        );
+
+
+    if(!box){
+
+        return;
+
+    }
+
+
+    svg.style.inset =
+        "auto";
+
+
+    svg.style.left =
+        box.left
+        +
+        "px";
+
+
+    svg.style.top =
+        box.top
+        +
+        "px";
+
+
+    svg.style.width =
+        box.width
+        +
+        "px";
+
+
+    svg.style.height =
+        box.height
+        +
+        "px";
+
+
+    svg.setAttribute(
+        "viewBox",
+        `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`
+    );
+
+
+    svg.setAttribute(
+        "preserveAspectRatio",
+        "none"
+    );
+
+}
+
+
+function syncNavigationMapGeometry(){
+
+    const container =
+        byId(
+            "navigationMap"
+        );
+
+
+    const image =
+        byId(
+            "navigationMapImage"
+        );
+
+
+    if(
+        !container
+        ||
+        !image
+    ){
+
+        return;
+
+    }
+
+
+    fitContainerToImage(
+        container,
+        image
+    );
+
+
+    fitSvgToImage(
+
+        container.querySelector(
+            ".route-svg"
+        ),
+
+        container,
+
+        image
+
+    );
+
+
+    if(
+        state.routeResult
+    ){
+
+        positionSelectionMapElement(
+
+            byId(
+                "userMarker"
+            ),
+
+            state.routeResult
+                .startSnap
+                .point
+
+        );
+
+
+        positionSelectionMapElement(
+
+            byId(
+                "entranceMarker"
+            ),
+
+            state.routeResult
+                .entrance
+
+        );
+
+    }
+
+}
+
+
+function syncLiveMapGeometry(){
+
+    const container =
+        byId(
+            "liveMapContent"
+        );
+
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    const image =
+        container.querySelector(
+            ".live-map-background"
+        );
+
+
+    if(!image){
+
+        return;
+
+    }
+
+
+    fitContainerToImage(
+        container,
+        image
+    );
+
+
+    fitSvgToImage(
+
+        container.querySelector(
+            ".live-route-svg"
+        ),
+
+        container,
+
+        image
+
+    );
+
+
+    if(
+        state.routeResult
+    ){
+
+        positionLiveMapElement(
+
+            byId(
+                "liveUserMarker"
+            ),
+
+            state.routeResult
+                .startSnap
+                .point
+
+        );
+
+
+        positionLiveMapElement(
+
+            byId(
+                "liveDestinationMarker"
+            ),
+
+            state.routeResult
+                .entrance
+
+        );
+
+
+        renderLiveBuildingMarkers();
+
+    }
+
+}
+
+
+function syncAllMapGeometry(){
+
+    syncNavigationMapGeometry();
+
+    syncLiveMapGeometry();
+
+}
+
+
+/* =========================================================
+   MAP ELEMENT POSITION
+========================================================= */
+
+function positionElementOnImage(
+    element,
+    point,
+    container,
+    image
+){
+
+    if(
+        !element
+        ||
+        !point
+        ||
+        !container
+        ||
+        !image
+    ){
+
+        return;
+
+    }
+
+
+    const box =
+        getImageContentBox(
+            container,
+            image
+        );
+
+
+    if(!box){
+
+        return;
+
+    }
+
+
+    element.style.left =
+
+        (
+            box.left
+            +
+            (
+                point.x
+                /
+                MAP_WIDTH
+            )
+            *
+            box.width
+        )
+        +
+        "px";
+
+
+    element.style.top =
+
+        (
+            box.top
+            +
+            (
+                point.y
+                /
+                MAP_HEIGHT
+            )
+            *
+            box.height
+        )
+        +
+        "px";
+
+}
+
+
+function positionSelectionMapElement(
+    element,
+    point
+){
+
+    positionElementOnImage(
+
+        element,
+
+        point,
+
+        byId(
+            "navigationMap"
+        ),
+
+        byId(
+            "navigationMapImage"
+        )
+
+    );
+
+}
+
+
+function positionLiveMapElement(
+    element,
+    point
+){
+
+    const container =
+        byId(
+            "liveMapContent"
+        );
+
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    positionElementOnImage(
+
+        element,
+
+        point,
+
+        container,
+
+        container.querySelector(
+            ".live-map-background"
+        )
+
+    );
+
+}
+
+
+/* =========================================================
+   RESET NAV
+========================================================= */
+
+function resetNavigation(){
+
+    stopGpsTracking();
+
+
+    state.destination =
+        null;
+
+
+    state.clickedPosition =
+        null;
+
+
+    state.routeResult =
+        null;
+
+
+    const search =
+        byId(
+            "navigationSearch"
+        );
+
+
+    if(search){
+
+        search.value =
+            "";
+
+    }
+
+
+    byId(
+        "activeRoute"
+    )
+        ?.setAttribute(
+            "points",
+            ""
+        );
+
+
+    hide(
+        "mapSection"
+    );
+
+
+    hide(
+        "selectedDestination"
+    );
+
+
+    hide(
+        "routeFoundBox"
+    );
+
+
+    hide(
+        "userMarker"
+    );
+
+
+    hide(
+        "entranceMarker"
+    );
+
+
+    hide(
+        "resetPosition"
+    );
+
+
+    show(
+        "mapInstructionArea"
+    );
+
+
+    setStep(
+        1
+    );
+
+
+    const results =
+        byId(
+            "navigationSearchResults"
+        );
+
+
+    if(results){
+
+        results.innerHTML =
+            `
+            <div class="search-empty">
+                Ketik nama gedung atau ruangan tujuan.
+            </div>
+            `;
+
+    }
+
+}
+
+
+/* =========================================================
+   SELECT DESTINATION
+========================================================= */
+
+function selectDestination(
+    location
+){
+
+    if(!location){
+
+        return;
+
+    }
+
+
+    state.destination =
+        location;
+
+
+    const search =
+        byId(
+            "navigationSearch"
+        );
+
+
+    if(search){
+
+        search.value =
+            location.name;
+
+    }
+
+
+    setText(
+        "selectedDestinationName",
+        location.name
+    );
+
+
+    setText(
+        "selectedDestinationParent",
+        location.parent
+        ||
+        "Fakultas Teknik UISU"
+    );
+
+
+    show(
+        "selectedDestination"
+    );
+
+
+    const results =
+        byId(
+            "navigationSearchResults"
+        );
+
+
+    if(results){
+
+        results.innerHTML =
+            "";
+
+    }
+
+
+    setText(
+
+        "mapHeadingTitle",
+
+        `Tap pada denah sesuai posisi Anda sekarang, lalu sistem akan memberikan jalur terdekat menuju ${location.name}.`
+
+    );
+
+
+    show(
+        "mapInstructionArea"
+    );
+
+
+    show(
+        "mapSection"
+    );
+
+
+    hide(
+        "routeFoundBox"
+    );
+
+
+    hide(
+        "userMarker"
+    );
+
+
+    hide(
+        "entranceMarker"
+    );
+
+
+    hide(
+        "resetPosition"
+    );
+
+
+    byId(
+        "activeRoute"
+    )
+        ?.setAttribute(
+            "points",
+            ""
+        );
+
+
+    setStep(
+        2
+    );
+
+
+    setTimeout(
+        () => {
+
+            syncNavigationMapGeometry();
+
+
+            byId(
+                "mapSection"
+            )
+                ?.scrollIntoView({
+
+                    behavior:"smooth",
+
+                    block:"start"
+
+                });
+
+        },
+        80
+    );
+
+}
+
+
+/* =========================================================
+   NAV SEARCH
+========================================================= */
+
+const navigationSearch =
+    byId(
+        "navigationSearch"
+    );
+
+
+if(navigationSearch){
+
+    navigationSearch.addEventListener(
+        "input",
+        () => {
+
+            const value =
+                navigationSearch.value;
+
+
+            const container =
+                byId(
+                    "navigationSearchResults"
+                );
+
+
+            if(!value.trim()){
+
+                container.innerHTML =
+                    `
+                    <div class="search-empty">
+                        Ketik nama gedung atau ruangan tujuan.
+                    </div>
+                    `;
+
+                return;
+
+            }
+
+
+            renderSearchResults(
+
+                searchLocations(
+                    value
+                ),
+
+                container,
+
+                selectDestination
+
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ROUTE GRAPH
+========================================================= */
+
+function pointDistance(
+    a,
+    b
+){
+
+    return Math.hypot(
+
+        a.x - b.x,
+
+        a.y - b.y
+
+    );
+
+}
+
+
+const graph = {};
+
+
+Object.keys(
+    mapNodes
+)
+    .forEach(
+        nodeId => {
+
+            graph[nodeId] =
+                [];
+
+        }
+    );
+
+
+const preparedEdges =
+    mapEdges.map(
+        edge => {
+
+            const points =
+                edge.points.map(
+                    point => ({
+
+                        x:
+                            point[0],
+
+                        y:
+                            point[1]
+
+                    })
+                );
+
+
+            let length =
+                0;
+
+
+            const cumulative =
+                [0];
+
+
+            for(
+                let i = 0;
+                i < points.length - 1;
+                i++
+            ){
+
+                length +=
+                    pointDistance(
+
+                        points[i],
+
+                        points[i + 1]
+
+                    );
+
+
+                cumulative.push(
+                    length
+                );
+
+            }
+
+
+            return {
+
+                id:
+                    edge.id,
+
+                from:
+                    edge.from,
+
+                to:
+                    edge.to,
+
+                points,
+
+                length,
+
+                cumulative
+
+            };
+
+        }
+    );
+
+
+const edgeById = {};
+
+
+preparedEdges.forEach(
+    edge => {
+
+        edgeById[
+            edge.id
+        ] =
+            edge;
+
+
+        graph[
+            edge.from
+        ]
+            .push({
+
+                node:
+                    edge.to,
+
+                edgeId:
+                    edge.id,
+
+                weight:
+                    edge.length
+
+            });
+
+
+        graph[
+            edge.to
+        ]
+            .push({
+
+                node:
+                    edge.from,
+
+                edgeId:
+                    edge.id,
+
+                weight:
+                    edge.length
+
+            });
+
+    }
+);
+
+
+/* =========================================================
+   SNAP
+========================================================= */
+
+function projectPointToSegment(
+    point,
+    a,
+    b
+){
+
+    const abX =
+        b.x - a.x;
+
+
+    const abY =
+        b.y - a.y;
+
+
+    const apX =
+        point.x - a.x;
+
+
+    const apY =
+        point.y - a.y;
+
+
+    const lengthSquared =
+        (
+            abX * abX
+        )
+        +
+        (
+            abY * abY
+        );
+
+
+    let t =
+        lengthSquared
+        ?
+        (
+            (
+                apX * abX
+            )
+            +
+            (
+                apY * abY
+            )
+        )
+        /
+        lengthSquared
+        :
+        0;
+
+
+    t =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                t
+            )
+        );
+
+
+    const projected = {
+
+        x:
+            a.x
+            +
+            abX * t,
+
+        y:
+            a.y
+            +
+            abY * t
+
+    };
+
+
+    return {
+
+        point:
+            projected,
+
+        t,
+
+        distance:
+            pointDistance(
+                point,
+                projected
+            )
+
+    };
+
+}
+
+
+function snapToRoute(
+    point
+){
+
+    let best =
+        null;
+
+
+    preparedEdges.forEach(
+        edge => {
+
+            for(
+                let i = 0;
+                i < edge.points.length - 1;
+                i++
+            ){
+
+                const a =
+                    edge.points[i];
+
+
+                const b =
+                    edge.points[
+                        i + 1
+                    ];
+
+
+                const projection =
+                    projectPointToSegment(
+                        point,
+                        a,
+                        b
+                    );
+
+
+                const segmentLength =
+                    pointDistance(
+                        a,
+                        b
+                    );
+
+
+                const along =
+                    edge.cumulative[i]
+                    +
+                    segmentLength
+                    *
+                    projection.t;
+
+
+                if(
+                    !best
+                    ||
+                    projection.distance
+                    <
+                    best.distance
+                ){
+
+                    best = {
+
+                        edge,
+
+                        segmentIndex:
+                            i,
+
+                        point:
+                            projection.point,
+
+                        distance:
+                            projection.distance,
+
+                        along,
+
+                        distanceToFrom:
+                            along,
+
+                        distanceToTo:
+                            edge.length
+                            -
+                            along
+
+                    };
+
+                }
+
+            }
+
+        }
+    );
+
+
+    return best;
+
+}
+
+
+/* =========================================================
+   DIJKSTRA
+========================================================= */
+
+function dijkstra(
+    start,
+    target
+){
+
+    const nodeIds =
+        Object.keys(
+            graph
+        );
+
+
+    if(
+        !nodeIds.includes(
+            start
+        )
+        ||
+        !nodeIds.includes(
+            target
+        )
+    ){
+
+        return null;
+
+    }
+
+
+    const distances = {};
+
+    const previous = {};
+
+    const previousEdge = {};
+
+
+    nodeIds.forEach(
+        id => {
+
+            distances[id] =
+                Infinity;
+
+
+            previous[id] =
+                null;
+
+
+            previousEdge[id] =
+                null;
+
+        }
+    );
+
+
+    distances[start] =
+        0;
+
+
+    const unvisited =
+        new Set(
+            nodeIds
+        );
+
+
+    while(
+        unvisited.size
+    ){
+
+        let current =
+            null;
+
+
+        let smallest =
+            Infinity;
+
+
+        unvisited.forEach(
+            id => {
+
+                if(
+                    distances[id]
+                    <
+                    smallest
+                ){
+
+                    smallest =
+                        distances[id];
+
+
+                    current =
+                        id;
+
+                }
+
+            }
+        );
+
+
+        if(
+            current === null
+            ||
+            smallest === Infinity
+        ){
+
+            break;
+
+        }
+
+
+        if(
+            current === target
+        ){
+
+            break;
+
+        }
+
+
+        unvisited.delete(
+            current
+        );
+
+
+        graph[current]
+            .forEach(
+                connection => {
+
+                    if(
+                        !unvisited.has(
+                            connection.node
+                        )
+                    ){
+
+                        return;
+
+                    }
+
+
+                    const candidate =
+                        distances[current]
+                        +
+                        connection.weight;
+
+
+                    if(
+                        candidate
+                        <
+                        distances[
+                            connection.node
+                        ]
+                    ){
+
+                        distances[
+                            connection.node
+                        ] =
+                            candidate;
+
+
+                        previous[
+                            connection.node
+                        ] =
+                            current;
+
+
+                        previousEdge[
+                            connection.node
+                        ] =
+                            connection.edgeId;
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    if(
+        distances[target]
+        ===
+        Infinity
+    ){
+
+        return null;
+
+    }
+
+
+    const nodes = [];
+
+    const edges = [];
+
+
+    let cursor =
+        target;
+
+
+    while(cursor){
+
+        nodes.unshift(
+            cursor
+        );
+
+
+        if(
+            cursor === start
+        ){
+
+            break;
+
+        }
+
+
+        edges.unshift(
+            previousEdge[cursor]
+        );
+
+
+        cursor =
+            previous[cursor];
+
+    }
+
+
+    return {
+
+        distance:
+            distances[target],
+
+        nodes,
+
+        edges
+
+    };
+
+}
+
+
+/* =========================================================
+   ROUTE POLYLINE
+========================================================= */
+
+function pointsFromSnapToEndpoint(
+    snap,
+    endpoint
+){
+
+    const points =
+        snap.edge.points;
+
+
+    const output = [
+
+        {
+            x:
+                snap.point.x,
+
+            y:
+                snap.point.y
+        }
+
+    ];
+
+
+    if(
+        endpoint ===
+        snap.edge.from
+    ){
+
+        output.push(
+            points[
+                snap.segmentIndex
+            ]
+        );
+
+
+        for(
+            let i =
+                snap.segmentIndex - 1;
+
+            i >= 0;
+
+            i--
+        ){
+
+            output.push(
+                points[i]
+            );
+
+        }
+
+    }
+
+    else{
+
+        output.push(
+            points[
+                snap.segmentIndex + 1
+            ]
+        );
+
+
+        for(
+            let i =
+                snap.segmentIndex + 2;
+
+            i <
+            points.length;
+
+            i++
+        ){
+
+            output.push(
+                points[i]
+            );
+
+        }
+
+    }
+
+
+    return output;
+
+}
+
+
+function routeNodePolyline(
+    route
+){
+
+    const output =
+        [];
+
+
+    route.edges.forEach(
+        (edgeId,index) => {
+
+            const edge =
+                edgeById[
+                    edgeId
+                ];
+
+
+            if(!edge){
+
+                return;
+
+            }
+
+
+            const fromNode =
+                route.nodes[
+                    index
+                ];
+
+
+            let points;
+
+
+            if(
+                edge.from ===
+                fromNode
+            ){
+
+                points =
+                    edge.points.slice();
+
+            }
+
+            else{
+
+                points =
+                    edge.points
+                        .slice()
+                        .reverse();
+
+            }
+
+
+            if(
+                output.length
+            ){
+
+                points =
+                    points.slice(
+                        1
+                    );
+
+            }
+
+
+            output.push(
+                ...points
+            );
+
+        }
+    );
+
+
+    return output;
+
+}
+
+
+function dedupePoints(
+    points
+){
+
+    const output =
+        [];
+
+
+    points.forEach(
+        point => {
+
+            const previous =
+                output[
+                    output.length - 1
+                ];
+
+
+            if(
+                !previous
+                ||
+                pointDistance(
+                    previous,
+                    point
+                )
+                >
+                0.5
+            ){
+
+                output.push(
+                    point
+                );
+
+            }
+
+        }
+    );
+
+
+    return output;
+
+}
+
+
+/* =========================================================
+   BUILD ROUTE
+========================================================= */
+
+function buildRoute(
+    clickedPoint
+){
+
+    if(
+        !state.destination
+    ){
+
+        return null;
+
+    }
+
+
+    const entrance =
+        getNavigationEntrance(
+            state.destination
+        );
+
+
+    if(!entrance){
+
+        toast(
+            "Entrance tujuan belum tersedia."
+        );
+
+        return null;
+
+    }
+
+
+    const snap =
+        snapToRoute(
+            clickedPoint
+        );
+
+
+    if(!snap){
+
+        return null;
+
+    }
+
+
+    const fromRoute =
+        dijkstra(
+            snap.edge.from,
+            entrance.nodeId
+        );
+
+
+    const toRoute =
+        dijkstra(
+            snap.edge.to,
+            entrance.nodeId
+        );
+
+
+    const candidates =
+        [];
+
+
+    if(fromRoute){
+
+        candidates.push({
+
+            endpoint:
+                snap.edge.from,
+
+            route:
+                fromRoute,
+
+            cost:
+                snap.distanceToFrom
+                +
+                fromRoute.distance
+
+        });
+
+    }
+
+
+    if(toRoute){
+
+        candidates.push({
+
+            endpoint:
+                snap.edge.to,
+
+            route:
+                toRoute,
+
+            cost:
+                snap.distanceToTo
+                +
+                toRoute.distance
+
+        });
+
+    }
+
+
+    if(
+        !candidates.length
+    ){
+
+        return null;
+
+    }
+
+
+    candidates.sort(
+        (a,b) =>
+            a.cost - b.cost
+    );
+
+
+    const best =
+        candidates[0];
+
+
+    const startPart =
+        pointsFromSnapToEndpoint(
+            snap,
+            best.endpoint
+        );
+
+
+    const graphPart =
+        routeNodePolyline(
+            best.route
+        );
+
+
+    const routePoints =
+        dedupePoints(
+
+            startPart
+
+                .concat(
+                    graphPart
+                )
+
+                .concat([
+
+                    {
+                        x:
+                            entrance.x,
+
+                        y:
+                            entrance.y
+                    }
+
+                ])
+
+        );
+
+
+    return {
+
+        startSnap:
+            snap,
+
+        entrance,
+
+        graphDistance:
+            best.cost,
+
+        points:
+            routePoints
+
+    };
+
+}
+
+
+/* =========================================================
+   MAP CLICK
+========================================================= */
+
+const navigationMap =
+    byId(
+        "navigationMap"
+    );
+
+
+if(navigationMap){
+
+    navigationMap.addEventListener(
+        "pointerdown",
+        event => {
+
+            if(
+                !state.destination
+            ){
+
+                toast(
+                    "Pilih tujuan terlebih dahulu."
+                );
+
+                return;
+
+            }
+
+
+            const image =
+                byId(
+                    "navigationMapImage"
+                );
+
+
+            const rect =
+                navigationMap
+                    .getBoundingClientRect();
+
+
+            const box =
+                getImageContentBox(
+                    navigationMap,
+                    image
+                );
+
+
+            if(!box){
+
+                return;
+
+            }
+
+
+            const clickX =
+                event.clientX
+                -
+                rect.left;
+
+
+            const clickY =
+                event.clientY
+                -
+                rect.top;
+
+
+            if(
+                clickX < box.left
+                ||
+                clickX > box.left + box.width
+                ||
+                clickY < box.top
+                ||
+                clickY > box.top + box.height
+            ){
+
+                return;
+
+            }
+
+
+            const clickedPoint = {
+
+                x:
+                    (
+                        (
+                            clickX - box.left
+                        )
+                        /
+                        box.width
+                    )
+                    *
+                    MAP_WIDTH,
+
+                y:
+                    (
+                        (
+                            clickY - box.top
+                        )
+                        /
+                        box.height
+                    )
+                    *
+                    MAP_HEIGHT
+
+            };
+
+
+            const route =
+                buildRoute(
+                    clickedPoint
+                );
+
+
+            if(!route){
+
+                toast(
+                    "Rute belum dapat ditemukan."
+                );
+
+                return;
+
+            }
+
+
+            state.clickedPosition =
+                clickedPoint;
+
+
+            state.routeResult =
+                route;
+
+
+            byId(
+                "activeRoute"
+            )
+                ?.setAttribute(
+
+                    "points",
+
+                    route.points
+                        .map(
+                            point =>
+                                `${point.x},${point.y}`
+                        )
+                        .join(
+                            " "
+                        )
+
+                );
+
+
+            positionSelectionMapElement(
+
+                byId(
+                    "userMarker"
+                ),
+
+                route.startSnap.point
+
+            );
+
+
+            positionSelectionMapElement(
+
+                byId(
+                    "entranceMarker"
+                ),
+
+                route.entrance
+
+            );
+
+
+            show(
+                "userMarker"
+            );
+
+
+            show(
+                "entranceMarker"
+            );
+
+
+            hide(
+                "mapInstructionArea"
+            );
+
+
+            show(
+                "routeFoundBox"
+            );
+
+
+            show(
+                "resetPosition"
+            );
+
+
+            setStep(
+                3
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   RESET POSITION
+========================================================= */
+
+on(
+    "resetPosition",
+    "click",
+    () => {
+
+        state.clickedPosition =
+            null;
+
+
+        state.routeResult =
+            null;
+
+
+        byId(
+            "activeRoute"
+        )
+            ?.setAttribute(
+                "points",
+                ""
+            );
+
+
+        hide(
+            "userMarker"
+        );
+
+
+        hide(
+            "entranceMarker"
+        );
+
+
+        hide(
+            "routeFoundBox"
+        );
+
+
+        hide(
+            "resetPosition"
+        );
+
+
+        show(
+            "mapInstructionArea"
+        );
+
+
+        setStep(
+            2
+        );
+
+    }
+);
+
+
+/* =========================================================
+   TURN INSTRUCTIONS
+========================================================= */
+
+function turnAngle(
+    a,
+    b,
+    c
+){
+
+    const ax =
+        b.x - a.x;
+
+
+    const ay =
+        b.y - a.y;
+
+
+    const bx =
+        c.x - b.x;
+
+
+    const by =
+        c.y - b.y;
+
+
+    const cross =
+        ax * by
+        -
+        ay * bx;
+
+
+    const dot =
+        ax * bx
+        +
+        ay * by;
+
+
+    return (
+        Math.atan2(
+            cross,
+            dot
+        )
+        *
+        180
+        /
+        Math.PI
+    );
+
+}
+
+
+function simplifyInstructionPoints(
+    points
+){
+
+    if(
+        !points
+        ||
+        points.length <= 2
+    ){
+
+        return points
+        ?
+        points.slice()
+        :
+        [];
+
+    }
+
+
+    const output =
+        [
+            points[0]
+        ];
+
+
+    for(
+        let i = 1;
+        i < points.length - 1;
+        i++
+    ){
+
+        const angle =
+            turnAngle(
+
+                points[i - 1],
+
+                points[i],
+
+                points[i + 1]
+
+            );
+
+
+        if(
+            Math.abs(
+                angle
+            )
+            >=
+            28
+        ){
+
+            output.push(
+                points[i]
+            );
+
+        }
+
+    }
+
+
+    output.push(
+        points[
+            points.length - 1
+        ]
+    );
+
+
+    return output;
+
+}
+
+
+function createNavigationInstructions(){
+
+    if(
+        !state.routeResult
+        ||
+        !state.destination
+    ){
+
+        return [];
+
+    }
+
+
+    const points =
+        simplifyInstructionPoints(
+            state.routeResult.points
+        );
+
+
+    const instructions = [
+
+        {
+            icon:"●",
+
+            title:
+                "Lokasi Anda saat ini",
+
+            description:
+                "Mulai dari posisi yang Anda tandai pada denah."
+        }
+
+    ];
+
+
+    for(
+        let i = 1;
+        i < points.length - 1;
+        i++
+    ){
+
+        const angle =
+            turnAngle(
+
+                points[i - 1],
+
+                points[i],
+
+                points[i + 1]
+
+            );
+
+
+        if(
+            angle > 28
+        ){
+
+            instructions.push({
+
+                icon:"↱",
+
+                title:
+                    "Belok kanan",
+
+                description:
+                    "Ikuti jalur hingga persimpangan berikutnya."
+
+            });
+
+        }
+
+
+        else if(
+            angle < -28
+        ){
+
+            instructions.push({
+
+                icon:"↰",
+
+                title:
+                    "Belok kiri",
+
+                description:
+                    "Ikuti jalur hingga persimpangan berikutnya."
+
+            });
+
+        }
+
+    }
+
+
+    instructions.push({
+
+        icon:"◎",
+
+        title:
+            "Entrance tujuan di depan",
+
+        description:
+            state.routeResult
+                .entrance
+                .name
+
+    });
+
+
+    instructions.push({
+
+        icon:"✓",
+
+        title:
+            "Anda sudah tiba",
+
+        description:
+            `Anda sudah tiba di entrance menuju ${state.destination.name}.`
+
+    });
+
+
+    return instructions;
+
+}
+
+
+/* =========================================================
+   LIVE BUILDINGS
+========================================================= */
+
+function renderLiveBuildingMarkers(){
+
+    const container =
+        byId(
+            "liveBuildingMarkers"
+        );
+
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        "";
+
+
+    buildings.forEach(
+        building => {
+
+            if(
+                !building.liveMarker
+            ){
+
+                return;
+
+            }
+
+
+            const marker =
+                document.createElement(
+                    "div"
+                );
+
+
+            marker.className =
+                "live-building-marker";
+
+
+            marker.innerHTML =
+                `
+                <span></span>
+
+                <label>
+                    ${building.name}
+                </label>
+                `;
+
+
+            container.appendChild(
+                marker
+            );
+
+
+            positionLiveMapElement(
+                marker,
+                building.liveMarker
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ROUTE DETAIL
+========================================================= */
+
+function renderRouteDetail(){
+
+    const container =
+        byId(
+            "routeInstructionList"
+        );
+
+
+    if(!container){
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        "";
+
+
+    state.liveInstructions
+        .forEach(
+            step => {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                item.className =
+                    "route-instruction-item";
+
+
+                item.innerHTML =
+                    `
+                    <div class="route-step-icon">
+                        ${step.icon}
+                    </div>
+
+                    <div class="route-step-copy">
+
+                        <strong>
+                            ${step.title}
+                        </strong>
+
+                        <span>
+                            ${step.description}
+                        </span>
+
+                    </div>
+                    `;
+
+
+                container.appendChild(
+                    item
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   LIVE NAVIGATION
+========================================================= */
+
+function renderLiveNavigation(){
+
+    if(
+        !state.routeResult
+        ||
+        !state.destination
+    ){
+
+        return;
+
+    }
+
+
+    const route =
+        state.routeResult;
+
+
+    byId(
+        "liveRoute"
+    )
+        ?.setAttribute(
+
+            "points",
+
+            route.points
+                .map(
+                    point =>
+                        `${point.x},${point.y}`
+                )
+                .join(
+                    " "
+                )
+
+        );
+
+
+    syncLiveMapGeometry();
+
+
+    positionLiveMapElement(
+
+        byId(
+            "liveUserMarker"
+        ),
+
+        route.startSnap.point
+
+    );
+
+
+    show(
+        "liveUserMarker"
+    );
+
+
+    positionLiveMapElement(
+
+        byId(
+            "liveDestinationMarker"
+        ),
+
+        route.entrance
+
+    );
+
+
+    show(
+        "liveDestinationMarker"
+    );
+
+
+    setText(
+        "liveDestinationMarkerLabel",
+        state.destination.name
+    );
+
+
+    setText(
+        "liveTargetName",
+        state.destination.name
+    );
+
+
+    setText(
+        "liveRouteDestination",
+        state.destination.name
+    );
+
+
+    setText(
+        "liveRouteEntrance",
+        route.entrance.name
+    );
+
+
+    renderLiveBuildingMarkers();
+
+
+    state.liveInstructions =
+        createNavigationInstructions();
+
+
+    renderRouteDetail();
+
+
+    const next =
+        state.liveInstructions.find(
+            item =>
+                item.title !==
+                "Lokasi Anda saat ini"
+        );
+
+
+    if(next){
+
+        setText(
+            "liveNextInstruction",
+            next.title
+        );
+
+
+        setText(
+            "liveDirectionIcon",
+            next.icon
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   GPS
+========================================================= */
+
+function solveAffine(
+    calibration,
+    lat,
+    lon
+){
+
+    if(
+        !Array.isArray(
+            calibration
+        )
+        ||
+        calibration.length < 3
+    ){
+
+        return null;
+
+    }
+
+
+    const p1 =
+        calibration[0];
+
+
+    const p2 =
+        calibration[1];
+
+
+    const p3 =
+        calibration[2];
+
+
+    const determinant =
+
+        p1.lon
+        *
+        (
+            p2.lat - p3.lat
+        )
+
+        -
+
+        p1.lat
+        *
+        (
+            p2.lon - p3.lon
+        )
+
+        +
+
+        (
+            p2.lon * p3.lat
+            -
+            p3.lon * p2.lat
+        );
+
+
+    if(
+        Math.abs(
+            determinant
+        )
+        <
+        1e-12
+    ){
+
+        return null;
+
+    }
+
+
+    function coefficients(
+        v1,
+        v2,
+        v3
+    ){
+
+        const a =
+
+            (
+                v1
+                *
+                (
+                    p2.lat - p3.lat
+                )
+
+                +
+
+                v2
+                *
+                (
+                    p3.lat - p1.lat
+                )
+
+                +
+
+                v3
+                *
+                (
+                    p1.lat - p2.lat
+                )
+            )
+            /
+            determinant;
+
+
+        const b =
+
+            (
+                v1
+                *
+                (
+                    p3.lon - p2.lon
+                )
+
+                +
+
+                v2
+                *
+                (
+                    p1.lon - p3.lon
+                )
+
+                +
+
+                v3
+                *
+                (
+                    p2.lon - p1.lon
+                )
+            )
+            /
+            determinant;
+
+
+        const c =
+
+            (
+                v1
+                *
+                (
+                    p2.lon * p3.lat
+                    -
+                    p3.lon * p2.lat
+                )
+
+                +
+
+                v2
+                *
+                (
+                    p3.lon * p1.lat
+                    -
+                    p1.lon * p3.lat
+                )
+
+                +
+
+                v3
+                *
+                (
+                    p1.lon * p2.lat
+                    -
+                    p2.lon * p1.lat
+                )
+            )
+            /
+            determinant;
+
+
+        return {
+
+            a,
+            b,
+            c
+
+        };
+
+    }
+
+
+    const cx =
+        coefficients(
+            p1.x,
+            p2.x,
+            p3.x
+        );
+
+
+    const cy =
+        coefficients(
+            p1.y,
+            p2.y,
+            p3.y
+        );
+
+
+    return {
+
+        x:
+            cx.a * lon
+            +
+            cx.b * lat
+            +
+            cx.c,
+
+        y:
+            cy.a * lon
+            +
+            cy.b * lat
+            +
+            cy.c
+
+    };
+
+}
+
+
+function stopGpsTracking(){
+
+    if(
+        state.gpsWatchId !== null
+        &&
+        navigator.geolocation
+    ){
+
+        navigator.geolocation
+            .clearWatch(
+                state.gpsWatchId
+            );
+
+    }
+
+
+    state.gpsWatchId =
+        null;
+
+}
+
+
+function startGpsTracking(){
+
+    stopGpsTracking();
+
+
+    if(
+        mapCalibration.length < 3
+    ){
+
+        console.info(
+            "GPS siap. Koordinat kalibrasi belum tersedia."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        !navigator.geolocation
+    ){
+
+        return;
+
+    }
+
+
+    state.gpsWatchId =
+        navigator.geolocation
+            .watchPosition(
+
+                position => {
+
+                    const projected =
+                        solveAffine(
+
+                            mapCalibration,
+
+                            position.coords.latitude,
+
+                            position.coords.longitude
+
+                        );
+
+
+                    if(!projected){
+
+                        return;
+
+                    }
+
+
+                    const snap =
+                        snapToRoute(
+                            projected
+                        );
+
+
+                    positionLiveMapElement(
+
+                        byId(
+                            "liveUserMarker"
+                        ),
+
+                        snap
+                        ?
+                        snap.point
+                        :
+                        projected
+
+                    );
+
+                },
+
+                error => {
+
+                    console.warn(
+                        "GPS:",
+                        error
+                    );
+
+                },
+
+                {
+                    enableHighAccuracy:true,
+
+                    maximumAge:1000,
+
+                    timeout:10000
+                }
+
+            );
+
+}
+
+
+/* =========================================================
+   START NAVIGATION
+========================================================= */
+
+on(
+    "startNavigation",
+    "click",
+    () => {
+
+        if(
+            !state.routeResult
+            ||
+            !state.destination
+        ){
+
+            toast(
+                "Pilih posisi terlebih dahulu."
+            );
+
+            return;
+
+        }
+
+
+        showPage(
+            "navigationActive"
+        );
+
+
+        setTimeout(
+            () => {
+
+                syncLiveMapGeometry();
+
+
+                renderLiveNavigation();
+
+
+                startGpsTracking();
+
+            },
+            80
+        );
+
+
+        setStep(
+            4
+        );
+
+    }
+);
+
+
+on(
+    "toggleRouteDetail",
+    "click",
+    () => {
+
+        byId(
+            "routeDetailPanel"
+        )
+            ?.classList
+            .toggle(
+                "hidden"
+            );
+
+    }
+);
+
+
+on(
+    "endRoute",
+    "click",
+    () => {
+
+        stopGpsTracking();
+
+
+        resetNavigation();
+
+
+        state.pageHistory =
+            [];
+
+
+        showPage(
+            "navigation",
+            false
+        );
+
+
+        toast(
+            "Navigasi telah diakhiri."
+        );
+
+    }
+);
+
+
+/* =========================================================
+   NAVIGATION → 3D
+========================================================= */
+
+function showDestinationIn3D(){
+
+    if(
+        !state.destination
+    ){
+
+        return;
+
+    }
+
+
+    const destination =
+        state.destination;
+
+
+    const buildingId =
+        destination.buildingId
+        ||
+        destination.id;
+
+
+    const building =
+        getBuildingById(
+            buildingId
+        );
+
+
+    if(!building){
+
+        return;
+
+    }
+
+
+    let model =
+        null;
+
+
+    if(
+        destination.type ===
+        "room"
+    ){
+
+        model =
+            getModelVariant(
+                building.id,
+                "indoor"
+            );
+
+    }
+
+
+    if(!model){
+
+        model =
+            getDefaultModelVariant(
+                building.id
+            );
+
+    }
+
+
+    showPage(
+        "viewer"
+    );
+
+
+    if(
+        viewerBuildingSelect
+    ){
+
+        viewerBuildingSelect.value =
+            building.id;
+
+    }
+
+
+    state.pending3DMarker =
+
+        destination.modelMarker
+
+        ?
+
+        {
+            marker:
+                destination.modelMarker,
+
+            label:
+                destination.name
+        }
+
+        :
+
+        null;
+
+
+    prepareViewerBuilding(
+
+        building.id,
+
+        model?.id,
+
+        false
+
+    );
+
+}
+
+
+on(
+    "showDestination3D",
+    "click",
+    showDestinationIn3D
+);
+
+
+/* =========================================================
+   PAGE OPENERS
+========================================================= */
+
+function openViewer(){
+
+    showPage(
+        "viewer"
+    );
+
+}
+
+
+function openAR(){
+
+    showPage(
+        "ar"
+    );
+
+}
+
+
+function openNavigation(){
+
+    openNavigationWithDestination();
+
+}
+
+
+function openDirectory(){
+
+    showPage(
+        "directory"
+    );
+
+}
+
+
+function openNavigationWithDestination(
+    location = null
+){
+
+    showPage(
+        "navigation"
+    );
+
+
+    resetNavigation();
+
+
+    if(location){
+
+        selectDestination(
+            location
+        );
+
+    }
+
+}
+
+
+[
+    "menu3D",
+    "feature3D",
+    "hero3DButton"
+]
+    .forEach(
+        id => {
+
+            on(
+                id,
+                "click",
+                openViewer
+            );
+
+        }
+    );
+
+
+[
+    "menuAR",
+    "featureAR",
+    "heroARButton"
+]
+    .forEach(
+        id => {
+
+            on(
+                id,
+                "click",
+                openAR
+            );
+
+        }
+    );
+
+
+[
+    "menuNavigation",
+    "featureNav",
+    "heroNavigationButton"
+]
+    .forEach(
+        id => {
+
+            on(
+                id,
+                "click",
+                openNavigation
+            );
+
+        }
+    );
+
+
+[
+    "menuDirectory",
+    "featureDirectory",
+    "heroDirectoryButton"
+]
+    .forEach(
+        id => {
+
+            on(
+                id,
+                "click",
+                openDirectory
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+let toastTimer =
+    null;
+
+
+function toast(
+    message
+){
+
+    const element =
+        byId(
+            "toast"
+        );
+
+
+    if(!element){
+
+        return;
+
+    }
+
+
+    element.textContent =
+        message;
+
+
+    element.classList.add(
+        "show"
+    );
+
+
+    clearTimeout(
+        toastTimer
+    );
+
+
+    toastTimer =
+        setTimeout(
+            () => {
+
+                element.classList.remove(
+                    "show"
+                );
+
+            },
+            2600
+        );
+
+}
+
+
+/* =========================================================
+   ESC
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if(
+            event.key !==
+            "Escape"
+        ){
+
+            return;
+
+        }
+
+
+        closeDrawer();
+
+
+        if(
+            !byId(
+                "infoModal"
+            )
+                ?.classList
+                .contains(
+                    "hidden"
+                )
+        ){
+
+            closeInfo();
+
+            return;
+
+        }
+
+
+        if(
+            state.currentPage !==
+            "home"
+        ){
+
+            goBack();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   MAP IMAGE EVENTS
+========================================================= */
+
+function registerMapImageEvents(){
+
+    const selectionImage =
+        byId(
+            "navigationMapImage"
+        );
+
+
+    if(selectionImage){
+
+        if(
+            selectionImage.complete
+            &&
+            selectionImage.naturalWidth
+        ){
+
+            syncNavigationMapGeometry();
+
+        }
+
+        else{
+
+            selectionImage.addEventListener(
+                "load",
+                syncNavigationMapGeometry
+            );
+
+        }
+
+    }
+
+
+    const liveImage =
+        byId(
+            "liveMapContent"
+        )
+            ?.querySelector(
+                ".live-map-background"
+            );
+
+
+    if(liveImage){
+
+        if(
+            liveImage.complete
+            &&
+            liveImage.naturalWidth
+        ){
+
+            syncLiveMapGeometry();
+
+        }
+
+        else{
+
+            liveImage.addEventListener(
+                "load",
+                syncLiveMapGeometry
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+let resizeTimer =
+    null;
+
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        clearTimeout(
+            resizeTimer
+        );
+
+
+        resizeTimer =
+            setTimeout(
+                syncAllMapGeometry,
+                80
+            );
+
+    }
+);
+
+
+window.addEventListener(
+    "orientationchange",
+    () => {
+
+        setTimeout(
+            syncAllMapGeometry,
+            250
+        );
+
+    }
+);
+
+
+/* =========================================================
+   START APP
+========================================================= */
+
+async function startApp(){
+
+    renderDirectory();
+
+
+    showSlide(
+        0
+    );
+
+
+    showLandingModel(
+        0
+    );
+
+
+    showPage(
+        "home",
+        false
+    );
+
+
+    registerMapImageEvents();
+
+
+    registerServiceWorker();
+
+
+    const warmCache =
+        () => {
+
+            preloadPriorityModels();
+
+        };
+
+
+    if(
+        "requestIdleCallback"
+        in window
+    ){
+
+        requestIdleCallback(
+            warmCache,
+            {
+                timeout:2000
+            }
+        );
+
+    }
+
+    else{
+
+        setTimeout(
+            warmCache,
+            1000
+        );
+
+    }
+
+
+    setTimeout(
+        syncAllMapGeometry,
+        120
+    );
+
+
+    console.log(
+        "FT UISU Explorer Revision 37 - Native 3D Viewer loaded"
+    );
+
+}
+
+
+startApp();
+
+
+})();
