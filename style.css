@@ -4375,3 +4375,4 @@ a{
     }
 
 }
+.brand-copy strong{font-family:inherit;background:linear-gradient(135deg,#087f72,#1898d5);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
