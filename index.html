@@ -13,140 +13,158 @@
 <body>
 
 <header class="site-header">
-<div class="header-inner">
-<button id="logoHome" class="brand" type="button" aria-label="Kembali ke Beranda">
-    <span class="brand-icon revision39-brand-icon" aria-hidden="true">
-        <img class="r39-logo-img"
-             src="./assets/images/logo-ft-uisu.png?v=39-fix1"
-             alt=""
-             width="1200"
-             height="1200"
-             loading="eager"
-             decoding="sync"
-             fetchpriority="high">
-    </span>
-    <span class="brand-copy"><strong>FT UISU Explorer</strong></span>
-</button>
-<nav class="drawer-menu">
-    <button id="menu3D" class="drawer-item" type="button">
-        <span class="drawer-icon" aria-hidden="true">
-            <img class="r39-logo-img"
-                 src="./assets/images/logo_3d.png?v=39-fix1"
-                 alt=""
-                 width="1920"
-                 height="1080"
-                 loading="eager"
-                 decoding="sync">
-        </span>
-        <span>
-            <strong>3D Objek</strong>
-            <small>3D Model Viewer Fakultas Teknik</small>
-        </span>
-        <b>›</b>
-    </button>
+    <div class="header-inner">
+        <button id="logoHome" class="brand" type="button"
+                aria-label="Kembali ke Beranda">
+            <span class="brand-icon revision39-brand-icon" aria-hidden="true">
+                <img class="r39-logo-img"
+                     src="./assets/images/logo-ft-uisu.png?v=39-fix1"
+                     alt=""
+                     width="1200"
+                     height="1200"
+                     loading="eager"
+                     decoding="sync"
+                     fetchpriority="high">
+            </span>
+            <span class="brand-copy">
+                <strong>FT UISU Explorer</strong>
+            </span>
+        </button>
 
-    <button id="menuAR" class="drawer-item" type="button">
-        <span class="drawer-icon" aria-hidden="true">
-            <img class="r39-logo-img"
-                 src="./assets/images/logo_ar.png?v=39-fix1"
-                 alt=""
-                 width="1920"
-                 height="1080"
-                 loading="eager"
-                 decoding="sync">
-        </span>
-        <span>
-            <strong>AR (Markerless)</strong>
-            <small>Augmented Reality Markerless</small>
-        </span>
-        <b>›</b>
-    </button>
+        <nav class="header-nav">
+            <button class="header-link active"
+                    data-page="home"
+                    type="button">Beranda</button>
 
-    <button id="menuNavigation" class="drawer-item" type="button">
-        <span class="drawer-icon" aria-hidden="true">
-            <img class="r39-logo-img"
-                 src="./assets/images/logo_navigasi.png?v=39-fix1"
-                 alt=""
-                 width="1000"
-                 height="1000"
-                 loading="eager"
-                 decoding="sync">
-        </span>
-        <span>
-            <strong>Navigasi</strong>
-            <small>Denah & Petunjuk Arah</small>
-        </span>
-        <b>›</b>
-    </button>
+            <button class="header-link"
+                    data-page="help"
+                    type="button">Bantuan</button>
 
-    <button id="menuDirectory" class="drawer-item" type="button">
-        <span class="drawer-icon directory-icon" aria-hidden="true">
-            <img class="r39-logo-img"
-                 src="./assets/images/logo_direktori.png?v=39-fix1"
-                 alt=""
-                 width="1254"
-                 height="1254"
-                 loading="eager"
-                 decoding="sync">
-        </span>
-        <span>
-            <strong>Direktori</strong>
-            <small>Gedung, Ruangan, Civitas Akademik</small>
-        </span>
-        <b>›</b>
-    </button>
-</nav>
-<button id="hamburgerButton" class="hamburger" type="button" aria-label="Buka Menu">
-<span></span><span></span><span></span>
-</button>
-</div>
+            <button class="header-link"
+                    data-page="about"
+                    type="button">Tentang</button>
+        </nav>
+
+        <button id="hamburgerButton" class="hamburger" type="button"
+                aria-label="Buka Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
 </header>
 
 <div id="drawerOverlay" class="drawer-overlay"></div>
+
 <aside id="drawer" class="drawer">
-<div class="drawer-header">
-<div><small>MENU UTAMA</small><h2>FT UISU Explorer</h2></div>
-<button id="closeDrawer" class="close-button" type="button">×</button>
-</div>
-<div class="drawer-search-wrap">
-<label for="globalSearch">Cari Gedung / Ruangan</label>
-<div class="search-box">
-<span class="search-symbol">⌕</span>
-<input id="globalSearch" type="search" placeholder="Contoh: Teknik Informatika" autocomplete="off">
-<button id="clearGlobalSearch" type="button">×</button>
-</div>
-<div id="globalSearchResults" class="search-results hidden"></div>
-<div id="globalSelected" class="global-selected hidden">
-<small>LOKASI DIPILIH</small>
-<strong id="globalSelectedName">-</strong>
-<div class="global-selected-actions">
-<button id="globalInfoButton" class="button button-primary" type="button">Informasi</button>
-<button id="globalNavButton" class="button button-primary" type="button">Petunjuk Arah</button>
-</div>
-</div>
-</div>
-<nav class="drawer-menu">
-<button id="menu3D" class="drawer-item" type="button">
-<span class="drawer-icon">3D</span>
-<span><strong>3D Objek</strong><small>3D Model Viewer Fakultas Teknik</small></span>
-<b>›</b>
-</button>
-<button id="menuAR" class="drawer-item" type="button">
-<span class="drawer-icon">AR</span>
-<span><strong>AR (Markerless)</strong><small>Augmented Reality Markerless</small></span>
-<b>›</b>
-</button>
-<button id="menuNavigation" class="drawer-item" type="button">
-<span class="drawer-icon">↗</span>
-<span><strong>Navigasi</strong><small>Denah & Petunjuk Arah</small></span>
-<b>›</b>
-</button>
-<button id="menuDirectory" class="drawer-item" type="button">
-<span class="drawer-icon directory-icon">▦</span>
-<span><strong>Direktori</strong><small>Gedung, Ruangan, Civitas Akademik</small></span>
-<b>›</b>
-</button>
-</nav>
+    <div class="drawer-header">
+        <div>
+            <small>MENU UTAMA</small>
+            <h2>FT UISU Explorer</h2>
+        </div>
+        <button id="closeDrawer" class="close-button" type="button">×</button>
+    </div>
+
+    <div class="drawer-search-wrap">
+        <label for="globalSearch">Cari Gedung / Ruangan</label>
+
+        <div class="search-box">
+            <span class="search-symbol">⌕</span>
+            <input id="globalSearch"
+                   type="search"
+                   placeholder="Contoh: Teknik Informatika"
+                   autocomplete="off">
+            <button id="clearGlobalSearch" type="button">×</button>
+        </div>
+
+        <div id="globalSearchResults"
+             class="search-results hidden"></div>
+
+        <div id="globalSelected" class="global-selected hidden">
+            <small>LOKASI DIPILIH</small>
+            <strong id="globalSelectedName">-</strong>
+
+            <div class="global-selected-actions">
+                <button id="globalInfoButton"
+                        class="button button-primary"
+                        type="button">Informasi</button>
+
+                <button id="globalNavButton"
+                        class="button button-primary"
+                        type="button">Petunjuk Arah</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="drawer-menu">
+        <button id="menu3D" class="drawer-item" type="button">
+            <span class="drawer-icon" aria-hidden="true">
+                <img class="r39-logo-img"
+                     src="./assets/images/logo_3d.png?v=39-fix1"
+                     alt=""
+                     width="1920"
+                     height="1080"
+                     loading="eager"
+                     decoding="sync">
+            </span>
+            <span>
+                <strong>3D Objek</strong>
+                <small>3D Model Viewer Fakultas Teknik</small>
+            </span>
+            <b>›</b>
+        </button>
+
+        <button id="menuAR" class="drawer-item" type="button">
+            <span class="drawer-icon" aria-hidden="true">
+                <img class="r39-logo-img"
+                     src="./assets/images/logo_ar.png?v=39-fix1"
+                     alt=""
+                     width="1920"
+                     height="1080"
+                     loading="eager"
+                     decoding="sync">
+            </span>
+            <span>
+                <strong>AR (Markerless)</strong>
+                <small>Augmented Reality Markerless</small>
+            </span>
+            <b>›</b>
+        </button>
+
+        <button id="menuNavigation" class="drawer-item" type="button">
+            <span class="drawer-icon" aria-hidden="true">
+                <img class="r39-logo-img"
+                     src="./assets/images/logo_navigasi.png?v=39-fix1"
+                     alt=""
+                     width="1000"
+                     height="1000"
+                     loading="eager"
+                     decoding="sync">
+            </span>
+            <span>
+                <strong>Navigasi</strong>
+                <small>Denah & Petunjuk Arah</small>
+            </span>
+            <b>›</b>
+        </button>
+
+        <button id="menuDirectory" class="drawer-item" type="button">
+            <span class="drawer-icon directory-icon" aria-hidden="true">
+                <img class="r39-logo-img"
+                     src="./assets/images/logo_direktori.png?v=39-fix1"
+                     alt=""
+                     width="1254"
+                     height="1254"
+                     loading="eager"
+                     decoding="sync">
+            </span>
+            <span>
+                <strong>Direktori</strong>
+                <small>Gedung, Ruangan, Civitas Akademik</small>
+            </span>
+            <b>›</b>
+        </button>
+    </nav>
 </aside>
 
 <main>
