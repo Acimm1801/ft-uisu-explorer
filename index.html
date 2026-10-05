@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#075f59">
 <title>FT UISU Explorer</title>
-<link rel="stylesheet" href="./style.css?v=39-fix3">
+<link rel="stylesheet" href="./style.css?v=39-fix5">
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js"></script>
 <script defer src="./data/map-data.js?v=rev1"></script>
 <script defer src="./script.js?v=rev1"></script>
@@ -15,13 +15,86 @@
 <header class="site-header">
 <div class="header-inner">
 <button id="logoHome" class="brand" type="button" aria-label="Kembali ke Beranda">
-<span class="brand-icon revision39-brand-icon" aria-hidden="true"></span>
-<span class="brand-copy"><strong>FT UISU Explorer</strong></span>
+    <span class="brand-icon revision39-brand-icon" aria-hidden="true">
+        <img class="r39-logo-img"
+             src="./assets/images/logo-ft-uisu.png?v=39-fix1"
+             alt=""
+             width="1200"
+             height="1200"
+             loading="eager"
+             decoding="sync"
+             fetchpriority="high">
+    </span>
+    <span class="brand-copy"><strong>FT UISU Explorer</strong></span>
 </button>
-<nav class="header-nav">
-<button class="header-link active" data-page="home" type="button">Beranda</button>
-<button class="header-link" data-page="help" type="button">Bantuan</button>
-<button class="header-link" data-page="about" type="button">Tentang</button>
+<nav class="drawer-menu">
+    <button id="menu3D" class="drawer-item" type="button">
+        <span class="drawer-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_3d.png?v=39-fix1"
+                 alt=""
+                 width="1920"
+                 height="1080"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <span>
+            <strong>3D Objek</strong>
+            <small>3D Model Viewer Fakultas Teknik</small>
+        </span>
+        <b>›</b>
+    </button>
+
+    <button id="menuAR" class="drawer-item" type="button">
+        <span class="drawer-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_ar.png?v=39-fix1"
+                 alt=""
+                 width="1920"
+                 height="1080"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <span>
+            <strong>AR (Markerless)</strong>
+            <small>Augmented Reality Markerless</small>
+        </span>
+        <b>›</b>
+    </button>
+
+    <button id="menuNavigation" class="drawer-item" type="button">
+        <span class="drawer-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_navigasi.png?v=39-fix1"
+                 alt=""
+                 width="1000"
+                 height="1000"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <span>
+            <strong>Navigasi</strong>
+            <small>Denah & Petunjuk Arah</small>
+        </span>
+        <b>›</b>
+    </button>
+
+    <button id="menuDirectory" class="drawer-item" type="button">
+        <span class="drawer-icon directory-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_direktori.png?v=39-fix1"
+                 alt=""
+                 width="1254"
+                 height="1254"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <span>
+            <strong>Direktori</strong>
+            <small>Gedung, Ruangan, Civitas Akademik</small>
+        </span>
+        <b>›</b>
+    </button>
 </nav>
 <button id="hamburgerButton" class="hamburger" type="button" aria-label="Buka Menu">
 <span></span><span></span><span></span>
@@ -139,26 +212,73 @@
 
 <section class="feature-section">
 <div class="feature-grid">
-<button id="feature3D" class="feature-card" type="button">
-<span class="feature-icon">3D</span>
-<div><h3>3D OBJEK</h3><p>Lihat Bangunan Fakultas Teknik melalui 3D Model Viewer yang bisa di-<em>drag</em>, <em>pinch</em> dan <em>zoom</em>.</p></div>
-<strong>Buka 3D →</strong>
-</button>
-<button id="featureAR" class="feature-card" type="button">
-<span class="feature-icon">AR</span>
-<div><h3>AR (Markerless)</h3><p>Rasakan pengalaman baru melihat objek 3D dengan Teknologi Augmented Reality Markerless.</p></div>
-<strong>Buka AR →</strong>
-</button>
-<button id="featureNav" class="feature-card" type="button">
-<span class="feature-icon">↗</span>
-<div><h3>NAVIGASI</h3><p>Dapatkan arah menuju Ruang Kelas, Laboratorium, atau Ruangan lainnya dengan memilih tujuan anda.</p></div>
-<strong>Buka Navigasi →</strong>
-</button>
-<button id="featureDirectory" class="feature-card" type="button">
-<span class="feature-icon directory-feature-icon">▦</span>
-<div><h3>DIREKTORI</h3><p>Informasi mengenai Bangunan & Civitas Akademik dilingkungan Fakultas Teknik UISU.</p></div>
-<strong>Buka Direktori →</strong>
-</button>
+    <button id="feature3D" class="feature-card" type="button">
+        <span class="feature-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_3d.png?v=39-fix1"
+                 alt=""
+                 width="1920"
+                 height="1080"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <div>
+            <h3>3D OBJEK</h3>
+            <p>Lihat Bangunan Fakultas Teknik melalui 3D Model Viewer yang bisa di-<em>drag</em>, <em>pinch</em> dan <em>zoom</em>.</p>
+        </div>
+        <strong>Buka 3D →</strong>
+    </button>
+
+    <button id="featureAR" class="feature-card" type="button">
+        <span class="feature-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_ar.png?v=39-fix1"
+                 alt=""
+                 width="1920"
+                 height="1080"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <div>
+            <h3>AR (Markerless)</h3>
+            <p>Rasakan pengalaman baru melihat objek 3D dengan Teknologi Augmented Reality Markerless.</p>
+        </div>
+        <strong>Buka AR →</strong>
+    </button>
+
+    <button id="featureNav" class="feature-card" type="button">
+        <span class="feature-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_navigasi.png?v=39-fix1"
+                 alt=""
+                 width="1000"
+                 height="1000"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <div>
+            <h3>NAVIGASI</h3>
+            <p>Dapatkan arah menuju Ruang Kelas, Laboratorium, atau Ruangan lainnya dengan memilih tujuan anda.</p>
+        </div>
+        <strong>Buka Navigasi →</strong>
+    </button>
+
+    <button id="featureDirectory" class="feature-card" type="button">
+        <span class="feature-icon directory-feature-icon" aria-hidden="true">
+            <img class="r39-logo-img"
+                 src="./assets/images/logo_direktori.png?v=39-fix1"
+                 alt=""
+                 width="1254"
+                 height="1254"
+                 loading="eager"
+                 decoding="sync">
+        </span>
+        <div>
+            <h3>DIREKTORI</h3>
+            <p>Informasi mengenai Bangunan & Civitas Akademik dilingkungan Fakultas Teknik UISU.</p>
+        </div>
+        <strong>Buka Direktori →</strong>
+    </button>
 </div>
 </section>
 </section>
