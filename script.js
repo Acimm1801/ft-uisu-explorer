@@ -1161,3 +1161,223 @@ console.log("FT UISU Explorer Revision 37 - Native 3D Viewer loaded");
 }
 startApp();
 })();
+
+/* Revisi 40: fullscreen khusus kontainer 3D Objek. */
+(function () {
+    "use strict";
+
+    const card = document.getElementById("viewerCard");
+    const page = document.getElementById("viewerPage");
+    const viewer = document.getElementById("main3DViewer");
+    const status = document.getElementById("viewerLoadingDot");
+    const openButton = document.getElementById("viewerFullscreenButton");
+    const closeButton = document.getElementById("viewerFullscreenExit");
+
+    if (!card || !page || !viewer || !status || !openButton || !closeButton) return;
+    if (card.dataset.fullscreenInitialized) return;
+    card.dataset.fullscreenInitialized = "true";
+
+    let session = null;
+    const root = document.documentElement;
+
+    const nativeElement = () =>
+        document.fullscreenElement || document.webkitFullscreenElement;
+
+    const visible = () =>
+        page.classList.contains("active") && !card.classList.contains("hidden");
+
+    const ready = () =>
+        visible() && status.classList.contains("ready");
+
+    function updateButtons() {
+        if (session && !visible()) {
+            closeFullscreen(false);
+            return;
+        }
+
+        openButton.classList.toggle("hidden", !ready() || !!session);
+        closeButton.classList.toggle("hidden", !session);
+        closeButton.disabled = !!session?.closing;
+    }
+
+    function finish(current) {
+        if (session !== current) return;
+
+        session = null;
+        card.classList.remove("viewer-is-fullscreen");
+        root.classList.remove("viewer-fullscreen-open");
+        root.style.removeProperty("--viewer-fullscreen-scroll-top");
+        card.removeAttribute("role");
+        card.removeAttribute("aria-modal");
+        card.removeAttribute("aria-labelledby");
+        updateButtons();
+
+        if (current.restore && visible()) {
+            window.scrollTo({
+                left: current.x,
+                top: current.y,
+                behavior: "instant"
+            });
+
+            (ready() ? openButton : viewer).focus({ preventScroll: true });
+        }
+    }
+
+    function exitNativeQuietly() {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+
+        if (exit && nativeElement() === card) {
+            try {
+                Promise.resolve(exit.call(document)).catch(() => {});
+            } catch (_) {}
+        }
+    }
+
+    async function openFullscreen() {
+        if (session || !ready() || nativeElement()) return;
+
+        const current = {
+            x: window.scrollX,
+            y: window.scrollY,
+            pending: true,
+            fallback: false,
+            closing: false,
+            restore: true
+        };
+
+        session = current;
+        root.style.setProperty("--viewer-fullscreen-scroll-top", `${-current.y}px`);
+        root.classList.add("viewer-fullscreen-open");
+        card.classList.add("viewer-is-fullscreen");
+        card.setAttribute("role", "dialog");
+        card.setAttribute("aria-modal", "true");
+        card.setAttribute("aria-labelledby", "viewerTitle");
+        updateButtons();
+        closeButton.focus({ preventScroll: true });
+
+        const request = card.requestFullscreen || card.webkitRequestFullscreen;
+        const enabled =
+            document.fullscreenEnabled ??
+            document.webkitFullscreenEnabled ??
+            true;
+
+        if (!request || !enabled) {
+            current.pending = false;
+            current.fallback = true;
+            return;
+        }
+
+        try {
+            await request.call(card);
+
+            if (session !== current) {
+                if (!session) exitNativeQuietly();
+                return;
+            }
+
+            current.pending = false;
+            current.fallback = nativeElement() !== card;
+        } catch (_) {
+            if (session !== current) return;
+
+            current.pending = false;
+            current.fallback = true;
+        }
+
+        closeButton.focus({ preventScroll: true });
+        updateButtons();
+    }
+
+    async function closeFullscreen(restore = true) {
+        const current = session;
+        if (!current) return;
+
+        if (!restore) current.restore = false;
+        if (current.closing) return;
+
+        current.closing = true;
+        updateButtons();
+
+        if (nativeElement() === card) {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+
+            try {
+                if (!exit) throw new Error("Fullscreen exit unavailable");
+                await exit.call(document);
+            } catch (_) {
+                if (session === current && nativeElement() === card) {
+                    current.closing = false;
+                    closeButton.disabled = false;
+                    return;
+                }
+            }
+        }
+
+        finish(current);
+    }
+
+    function onNativeChange() {
+        if (nativeElement() === card) {
+            if (!session) {
+                exitNativeQuietly();
+                return;
+            }
+
+            session.pending = false;
+            session.fallback = false;
+        } else if (session && !session.pending && !session.fallback) {
+            if (!visible()) session.restore = false;
+            finish(session);
+        }
+    }
+
+    openButton.addEventListener("click", openFullscreen);
+    closeButton.addEventListener("click", () => closeFullscreen());
+    document.addEventListener("fullscreenchange", onNativeChange);
+    document.addEventListener("webkitfullscreenchange", onNativeChange);
+
+    document.addEventListener("keydown", event => {
+        if (!session) return;
+
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            closeFullscreen();
+        } else if (event.key === "Tab") {
+            const controls = Array.from(card.querySelectorAll(
+                "button:not([disabled]), select:not([disabled]), a[href], [tabindex], model-viewer"
+            )).filter(element =>
+                element.tabIndex >= 0 && element.getClientRects().length
+            );
+
+            if (!controls.length) return;
+
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            } else if (!card.contains(document.activeElement)) {
+                event.preventDefault();
+                closeButton.focus();
+            }
+        }
+    }, true);
+
+    const observer = new MutationObserver(updateButtons);
+
+    [page, card, status].forEach(element => {
+        observer.observe(element, {
+            attributes: true,
+            attributeFilter: ["class"]
+        });
+    });
+
+    viewer.addEventListener("load", updateButtons);
+    viewer.addEventListener("error", updateButtons);
+    updateButtons();
+})();
