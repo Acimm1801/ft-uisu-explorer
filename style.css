@@ -161,7 +161,7 @@ a{color:inherit;text-decoration:none;}
 @keyframes targetPulse{
 0%{box-shadow:0 0 0 3px rgba(24,152,213,.24);}
 70%{box-shadow:0 0 0 13px rgba(24,152,213,0);}
-100%{box-shadow:0 0 0 3px rgba(24,152,213,0);}
+100%{box-shadow:0 0 0 3px rgba(24,152,213,.24);}
 }
 .native-ar-button{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);min-height:40px;padding:0 17px;border:1px solid var(--green);border-radius:10px;background:var(--green);color:#fff;font-size:9px;font-weight:900;}
 
@@ -459,12 +459,14 @@ a{color:inherit;text-decoration:none;}
         color: CanvasText;
     }
 }
+
 :is(#menu3D,#feature3D){--r39-logo-size:280.976% auto;--r39-logo-position:52.183% 50.126%;}
 .hero-title,.slider-two-title{font-size:clamp(28px,3.6vw,46px);line-height:1.22;letter-spacing:0;gap:6px;}
 .brand{gap:7px;}
 .slider-two-title{font-size:clamp(18px,2.7vw,36px);line-height:1.24;letter-spacing:0;gap:6px;white-space:nowrap;}
 @media(max-width:900px){.slider-two-title{font-size:clamp(18px,6.3vw,36px);}}
 .drawer-header h2{width:fit-content;max-width:100%;background:linear-gradient(135deg,#087f72,#1898d5);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+
 /* Revisi 39 fix5: logo menggunakan elemen gambar */
 .site-header {
     background: #fff;
@@ -528,4 +530,113 @@ a{color:inherit;text-decoration:none;}
     --r39-img-width: 118.681%;
     --r39-img-left: -10.477799%;
     --r39-img-top: -9.439322%;
+}
+
+/* Revisi 40: kontrol fullscreen khusus 3D Objek. */
+#viewerCard .viewer-fullscreen-button,
+#viewerCard .viewer-fullscreen-exit {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--green);
+    border-radius: 9px;
+    font-weight: 800;
+}
+
+#viewerCard .viewer-fullscreen-button {
+    gap: 6px;
+    padding: 0 12px;
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    color: #fff;
+    font-size: 9px;
+}
+
+#viewerCard .viewer-fullscreen-button span {
+    font-size: 18px;
+}
+
+#viewerCard .viewer-fullscreen-exit {
+    width: 36px;
+    padding: 0;
+    background: #fff;
+    color: var(--green);
+    font-size: 20px;
+}
+
+#viewerCard .viewer-fullscreen-button:hover {
+    background: #fff;
+    color: var(--green);
+}
+
+#viewerCard .viewer-fullscreen-exit:hover {
+    background: var(--green);
+    color: #fff;
+}
+
+#viewerCard .viewer-fullscreen-button:focus-visible,
+#viewerCard .viewer-fullscreen-exit:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 3px;
+}
+
+html.viewer-fullscreen-open {
+    overflow: hidden !important;
+}
+
+html.viewer-fullscreen-open body {
+    position: fixed;
+    top: var(--viewer-fullscreen-scroll-top, 0px);
+    left: 0;
+    width: 100%;
+    overflow: hidden !important;
+}
+
+#viewerCard.viewer-is-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    width: 100%;
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+             env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+}
+
+#viewerCard.viewer-is-fullscreen .viewer-toolbar {
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+#viewerCard.viewer-is-fullscreen .viewer-toolbar-right {
+    width: auto;
+    max-width: 100%;
+    margin-left: auto;
+}
+
+#viewerCard.viewer-is-fullscreen .viewer-preload-info,
+#viewerCard.viewer-is-fullscreen .viewer-interaction-info {
+    flex: 0 0 auto;
+}
+
+#viewerCard.viewer-is-fullscreen #modelViewerStage {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+}
+
+#viewerCard.viewer-is-fullscreen #main3DViewer {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
 }
