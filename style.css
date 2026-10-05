@@ -465,3 +465,67 @@ a{color:inherit;text-decoration:none;}
 .slider-two-title{font-size:clamp(18px,2.7vw,36px);line-height:1.24;letter-spacing:0;gap:6px;white-space:nowrap;}
 @media(max-width:900px){.slider-two-title{font-size:clamp(18px,6.3vw,36px);}}
 .drawer-header h2{width:fit-content;max-width:100%;background:linear-gradient(135deg,#087f72,#1898d5);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+/* Revisi 39 fix5: logo menggunakan elemen gambar */
+.site-header {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+#logoHome > .revision39-brand-icon,
+:is(#menu3D, #menuAR, #menuNavigation, #menuDirectory) > .drawer-icon,
+:is(#feature3D, #featureAR, #featureNav, #featureDirectory) > .feature-icon {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    padding: 0;
+    background: none;
+    transform: none;
+    will-change: auto;
+}
+
+.r39-logo-img {
+    position: absolute;
+    display: block;
+    width: var(--r39-img-width);
+    max-width: none;
+    height: auto;
+    left: var(--r39-img-left);
+    top: var(--r39-img-top);
+    pointer-events: none;
+    user-select: none;
+}
+
+#menu3D,
+#feature3D {
+    --r39-img-width: 280.976%;
+    --r39-img-left: -94.438706%;
+    --r39-img-top: -29.097642%;
+}
+
+#menuAR,
+#featureAR {
+    --r39-img-width: 198.330%;
+    --r39-img-left: -51.953639%;
+    --r39-img-top: -13.785930%;
+}
+
+#menuNavigation,
+#featureNav {
+    --r39-img-width: 97.950%;
+    --r39-img-left: 1.025000%;
+    --r39-img-top: 3.473602%;
+}
+
+#menuDirectory,
+#featureDirectory {
+    --r39-img-width: 92.017%;
+    --r39-img-left: 5.312367%;
+    --r39-img-top: 6.339620%;
+}
+
+#logoHome {
+    --r39-img-width: 118.681%;
+    --r39-img-left: -10.477799%;
+    --r39-img-top: -9.439322%;
+}
