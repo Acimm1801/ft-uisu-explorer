@@ -444,7 +444,7 @@ function getNavigationEntrance(
 ========================================================= */
 
 const MODEL_CACHE_NAME =
-    "ft-uisu-models-v41";
+    "ft-uisu-models-v42";
 
 
 const PRIORITY_MODELS = [
@@ -482,7 +482,7 @@ async function registerServiceWorker(){
         await navigator
             .serviceWorker
             .register(
-                "./sw.js?v=41",
+                "./sw.js?v=42",
                 {
                     scope:"./"
                 }
@@ -732,6 +732,24 @@ rooms.forEach(
 
                 navigationEntranceId:
                     room.navigationEntranceId,
+
+                units:
+                    Array.isArray(
+                        room.units
+                    )
+                    ?
+                    room.units
+                    :
+                    [],
+
+                tendik:
+                    Array.isArray(
+                        room.tendik
+                    )
+                    ?
+                    room.tendik
+                    :
+                    [],
 
                 modelMarker:
                     room.modelMarker
@@ -1323,6 +1341,134 @@ on(
 
 
 /* =========================================================
+   REVISI 42 - WARNA UNIT
+========================================================= */
+
+const UNIT_CLASS = {
+
+    "Teknik Informatika":
+        "room-unit-informatika",
+
+    "Teknik Mesin":
+        "room-unit-mesin",
+
+    "Teknik Sipil":
+        "room-unit-sipil",
+
+    "Teknik Industri":
+        "room-unit-industri",
+
+    "Teknik Elektro":
+        "room-unit-elektro",
+
+    "Fakultas Teknik":
+        "room-unit-fakultas"
+
+};
+
+
+function escapeHtml(value){
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+function renderUnitMarkup(
+    units
+){
+
+    if(
+        !Array.isArray(
+            units
+        )
+        ||
+        !units.length
+    ){
+
+        return "";
+
+    }
+
+
+    const content =
+        units.map(
+            (
+                unit,
+                index
+            ) => {
+
+                const className =
+                    UNIT_CLASS[unit]
+                    ||
+                    "room-unit-fakultas";
+
+
+                const comma =
+                    index <
+                    units.length - 1
+                    ?
+                    '<span class="room-unit-punctuation">, </span>'
+                    :
+                    "";
+
+
+                return (
+                    `<span class="room-unit ${className}">`
+                    +
+                    `${escapeHtml(unit)}`
+                    +
+                    `</span>`
+                    +
+                    comma
+                );
+
+            }
+        )
+        .join(
+            ""
+        );
+
+
+    return (
+        '<span class="room-unit-group">'
+        +
+        '<span class="room-unit-punctuation">(</span>'
+        +
+        content
+        +
+        '<span class="room-unit-punctuation">)</span>'
+        +
+        '</span>'
+    );
+
+}
+
+
+
+/* =========================================================
    SEARCH
 ========================================================= */
 
@@ -1361,6 +1507,17 @@ function searchLocations(
 
                 return normalize(
                     location.name
+                    +
+                    " "
+                    +
+                    (
+                        location.units
+                        ||
+                        []
+                    )
+                    .join(
+                        " "
+                    )
                     +
                     " "
                     +
@@ -1464,11 +1621,19 @@ function renderSearchResults(
             button.innerHTML =
                 `
                 <span>
-                    <strong>
-                        ${location.name}
+
+                    <strong class="search-result-title">
+
+                        <span>
+                            ${escapeHtml(location.name)}
+                        </span>
+
+                        ${renderUnitMarkup(location.units)}
+
                     </strong>
 
                     <small>
+
                         ${
                             location.parent
                             ||
@@ -1484,7 +1649,9 @@ function renderSearchResults(
                             :
                             ""
                         }
+
                     </small>
+
                 </span>
 
                 <span class="search-type">
@@ -1651,6 +1818,32 @@ function openInfo(
     );
 
 
+    const infoUnits =
+        byId(
+            "infoUnits"
+        );
+
+
+    if(infoUnits){
+
+        infoUnits.innerHTML =
+            renderUnitMarkup(
+                location.units
+            );
+
+
+        infoUnits.classList.toggle(
+            "hidden",
+            !Array.isArray(
+                location.units
+            )
+            ||
+            !location.units.length
+        );
+
+    }
+
+
     setText(
         "infoParent",
         location.parent
@@ -1726,6 +1919,266 @@ on(
         }
 
     }
+);
+
+
+
+/* =========================================================
+   REVISI 42 - TENDIK BIRO
+========================================================= */
+
+function normalizeWhatsappNumber(
+    phone
+){
+
+    let digits =
+        String(
+            phone || ""
+        )
+        .replace(
+            /\D/g,
+            ""
+        );
+
+
+    if(!digits){
+
+        return "";
+
+    }
+
+
+    if(
+        digits.startsWith(
+            "0"
+        )
+    ){
+
+        digits =
+            "62"
+            +
+            digits.slice(
+                1
+            );
+
+    }
+
+
+    return digits;
+
+}
+
+
+function whatsappUrl(
+    phone
+){
+
+    const number =
+        normalizeWhatsappNumber(
+            phone
+        );
+
+
+    return (
+        number
+        ?
+        `https://wa.me/${number}`
+        :
+        ""
+    );
+
+}
+
+
+function openTendik(
+    room
+){
+
+    if(
+        !room
+        ||
+        room.buildingId !==
+        "biro-ft"
+    ){
+
+        return;
+
+    }
+
+
+    setText(
+        "tendikRoomTitle",
+        room.name
+    );
+
+
+    setText(
+        "tendikRoomParent",
+        "Biro Fakultas Teknik"
+    );
+
+
+    const list =
+        byId(
+            "tendikList"
+        );
+
+
+    if(!list){
+
+        return;
+
+    }
+
+
+    const contacts =
+        Array.isArray(
+            room.tendik
+        )
+        ?
+        room.tendik
+        :
+        [];
+
+
+    list.innerHTML =
+        "";
+
+
+    if(
+        !contacts.length
+    ){
+
+        list.innerHTML =
+            `
+            <div class="tendik-empty">
+                Data Tendik belum tersedia.
+            </div>
+            `;
+
+
+        show(
+            "tendikModal"
+        );
+
+
+        return;
+
+    }
+
+
+    contacts.forEach(
+        contact => {
+
+            const card =
+                document.createElement(
+                    "article"
+                );
+
+
+            card.className =
+                "tendik-card";
+
+
+            const wa =
+                whatsappUrl(
+                    contact.phone
+                );
+
+
+            card.innerHTML =
+                `
+                <h3>
+                    ${escapeHtml(contact.name || "-")}
+                </h3>
+
+                <div class="tendik-detail">
+
+                    <div class="tendik-detail-row">
+
+                        <strong>
+                            Nomor Handphone
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(contact.phone || "-")}
+                        </span>
+
+                    </div>
+
+                    <div class="tendik-detail-row">
+
+                        <strong>
+                            Alamat
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(contact.address || "-")}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                ${
+                    wa
+                    ?
+                    `
+                    <a
+                    class="tendik-whatsapp"
+                    href="${wa}"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                        WhatsApp
+                    </a>
+                    `
+                    :
+                    `
+                    <span
+                    class="tendik-whatsapp"
+                    aria-disabled="true">
+                        WhatsApp
+                    </span>
+                    `
+                }
+                `;
+
+
+            list.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    show(
+        "tendikModal"
+    );
+
+}
+
+
+function closeTendik(){
+
+    hide(
+        "tendikModal"
+    );
+
+}
+
+
+on(
+    "closeTendikModal",
+    "click",
+    closeTendik
+);
+
+
+on(
+    "tendikBackdrop",
+    "click",
+    closeTendik
 );
 
 
@@ -3248,33 +3701,56 @@ function renderRoomList(
                     aria-expanded="false"
                     aria-controls="${actionsId}"
                 >
-                    <span class="room-name"></span>
+
+                    <span class="room-name-wrap">
+
+                        <span class="room-name">
+                        </span>
+
+                        <span class="room-unit-slot">
+                        </span>
+
+                    </span>
 
                     <span
                         class="room-chevron"
-                        aria-hidden="true"
-                    >
+                        aria-hidden="true">
                         ›
                     </span>
+
                 </button>
 
                 <div
                     id="${actionsId}"
-                    class="room-actions hidden"
-                >
+                    class="room-actions hidden">
+
                     <button
                         type="button"
-                        class="room-info"
-                    >
+                        class="room-info">
                         Informasi
                     </button>
 
                     <button
                         type="button"
-                        class="room-nav"
-                    >
+                        class="room-nav">
                         Petunjuk Arah
                     </button>
+
+                    ${
+                        room.buildingId ===
+                        "biro-ft"
+                        ?
+                        `
+                        <button
+                            type="button"
+                            class="room-tendik">
+                            Tendik
+                        </button>
+                        `
+                        :
+                        ""
+                    }
+
                 </div>
                 `;
 
@@ -3285,6 +3761,22 @@ function renderRoomList(
                 )
                 .textContent =
                     room.name;
+
+
+            const unitSlot =
+                item.querySelector(
+                    ".room-unit-slot"
+                );
+
+
+            if(unitSlot){
+
+                unitSlot.innerHTML =
+                    renderUnitMarkup(
+                        room.units
+                    );
+
+            }
 
 
             const toggle =
@@ -3364,6 +3856,22 @@ function renderRoomList(
 
                         openNavigationWithDestination(
                             location
+                        );
+
+                    }
+                );
+
+
+            item
+                .querySelector(
+                    ".room-tendik"
+                )
+                ?.addEventListener(
+                    "click",
+                    () => {
+
+                        openTendik(
+                            room
                         );
 
                     }
@@ -3559,6 +4067,7 @@ function renderDirectory(){
                     </span>
 
                     <span>
+
                         <strong>
                             ${building.name}
                         </strong>
@@ -3566,6 +4075,7 @@ function renderDirectory(){
                         <p>
                             ${building.description || ""}
                         </p>
+
                     </span>
 
                     <span>
@@ -3576,8 +4086,7 @@ function renderDirectory(){
 
                 <div
                     id="directory-building-content-${building.id}"
-                    class="building-content"
-                >
+                    class="building-content">
                 </div>
                 `;
 
@@ -3630,15 +4139,13 @@ function renderDirectory(){
                 `
                 <button
                     class="button button-primary building-info"
-                    type="button"
-                >
+                    type="button">
                     Informasi
                 </button>
 
                 <button
                     class="button button-primary building-nav"
-                    type="button"
-                >
+                    type="button">
                     Petunjuk Arah
                 </button>
                 `;
@@ -4712,10 +5219,6 @@ preparedEdges.forEach(
 
 
 
-/* =========================================================
-   SNAP POINT TO ROUTE
-========================================================= */
-
 function projectPointToSegment(
     point,
     a,
@@ -4902,10 +5405,6 @@ function snapToRoute(
 }
 
 
-
-/* =========================================================
-   DIJKSTRA
-========================================================= */
 
 function dijkstra(
     start,
@@ -5147,10 +5646,6 @@ function dijkstra(
 }
 
 
-
-/* =========================================================
-   ROUTE POLYLINE
-========================================================= */
 
 function pointsFromSnapToEndpoint(
     snap,
@@ -7107,6 +7602,23 @@ document.addEventListener(
 
         if(
             !byId(
+                "tendikModal"
+            )
+            ?.classList
+            .contains(
+                "hidden"
+            )
+        ){
+
+            closeTendik();
+
+            return;
+
+        }
+
+
+        if(
+            !byId(
                 "infoModal"
             )
             ?.classList
@@ -7311,7 +7823,7 @@ async function startApp(){
 
 
     console.log(
-        "FT UISU Explorer Revision 41 loaded"
+        "FT UISU Explorer Revision 42 loaded"
     );
 
 }
