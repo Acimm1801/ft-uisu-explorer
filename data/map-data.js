@@ -1,7 +1,7 @@
 /* =========================================================
    FT UISU EXPLORER
    MAP + DATABASE
-   REVISION 41 - LABORATORIUM MODEL + DEFAULT CAMERA + ROOM DATABASE
+   REVISION 42
 ========================================================= */
 
 (function(){
@@ -32,10 +32,6 @@ const FULL_DETAIL_REFERENCE =
 
 const buildings = [
 
-
-/* =========================================================
-   BIRO FT
-========================================================= */
 
 {
     id:"biro-ft",
@@ -125,11 +121,6 @@ const buildings = [
 },
 
 
-
-/* =========================================================
-   PERPUSTAKAAN
-========================================================= */
-
 {
     id:"perpustakaan-ft",
 
@@ -145,7 +136,7 @@ const buildings = [
         "Perpustakaan FT",
 
     description:
-        "Perpustakaan Fakultas Teknik berada di lantai 1 pada gedung yang berbeda dan terletak di sudut seberang lapangan.",
+        "Ruang belajar dan mencari referensi yang menyediakan bahan bacaan serta sumber informasi untuk mendukung perkuliahan, tugas, dan penelitian skripsi mahasiswa.",
 
     actualFloor:1,
 
@@ -193,11 +184,6 @@ const buildings = [
 },
 
 
-
-/* =========================================================
-   SERBAGUNA
-========================================================= */
-
 {
     id:"serbaguna-ft",
 
@@ -207,13 +193,13 @@ const buildings = [
     modelMenuOrder:4,
 
     name:
-        "Gedung Serbaguna Fakultas Teknik",
+        "Ruang Serbaguna Fakultas Teknik",
 
     shortName:
         "Serbaguna FT",
 
     description:
-        "Gedung Serbaguna Fakultas Teknik berada di lantai 1 pada gedung yang berbeda yaitu gedung Fakultas Hukum.",
+        "Ruang yang digunakan untuk berbagai kegiatan fakultas seperti seminar, sidang, rapat, presentasi, pelatihan, kegiatan mahasiswa, dan acara akademik lainnya.",
 
     actualFloor:1,
 
@@ -260,11 +246,6 @@ const buildings = [
     ]
 },
 
-
-
-/* =========================================================
-   PERKULIAHAN
-========================================================= */
 
 {
     id:"perkuliahan-ft",
@@ -353,11 +334,6 @@ const buildings = [
     ]
 },
 
-
-
-/* =========================================================
-   LABORATORIUM
-========================================================= */
 
 {
     id:"laboratorium-ft",
@@ -568,11 +544,8 @@ const entrances = [
     deadEnd:true,
 
     accessOnly:[
-
         "lab-hidrolika",
-
         "lab-teknologi-mekanik"
-
     ]
 
 },
@@ -638,8 +611,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang kerja dosen untuk menyiapkan kegiatan perkuliahan, berdiskusi, melakukan bimbingan, serta melayani kebutuhan akademik mahasiswa.",
 
     modelMarker:null
 
@@ -657,8 +635,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang penyimpanan perlengkapan dan barang penunjang kegiatan operasional Fakultas Teknik.",
 
     modelMarker:null
 
@@ -676,8 +659,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan akademik Program Studi Teknik Industri sekaligus tempat mahasiswa mendapatkan informasi dan layanan terkait perkuliahan, kurikulum, serta kegiatan prodi.",
 
     modelMarker:null
 
@@ -695,8 +683,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan akademik Program Studi Teknik Mesin dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang keilmuan teknik mesin.",
 
     modelMarker:null
 
@@ -714,8 +707,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan akademik Program Studi Teknik Sipil dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang konstruksi dan infrastruktur.",
 
     modelMarker:null
 
@@ -733,8 +731,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan akademik Program Studi Teknik Elektro dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang kelistrikan dan elektronika.",
 
     modelMarker:null
 
@@ -752,8 +755,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan akademik Program Studi Teknik Informatika dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang komputasi dan teknologi informasi.",
 
     modelMarker:null
 
@@ -764,15 +772,20 @@ const rooms = [
     id:"lpmf",
 
     name:
-        "Lembaga Penjamin Mutu Fakultas-LPMF",
+        "Lembaga Penjamin Mutu Fakultas (LPMF)",
 
     buildingId:
         "biro-ft",
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Unit yang membantu menjaga dan meningkatkan mutu kegiatan akademik melalui pemantauan, evaluasi, dokumentasi mutu, dan persiapan akreditasi di tingkat fakultas.",
 
     modelMarker:null
 
@@ -783,15 +796,20 @@ const rooms = [
     id:"wakil-dekan-adi",
 
     name:
-        "Wakil Dekan ADI",
+        "Wakil Dekan Akademik dan Dakwah Islamiyah (WD-1 ADI)",
 
     buildingId:
         "biro-ft",
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang Wakil Dekan bidang Akademik dan Dakwah Islamiyah yang membantu mengoordinasikan kegiatan akademik serta pelaksanaan nilai dan kegiatan dakwah Islamiyah di lingkungan fakultas.",
 
     modelMarker:null
 
@@ -802,15 +820,20 @@ const rooms = [
     id:"wakil-dekan-stk",
 
     name:
-        "Wakil Dekan STK",
+        "Wakil Dekan Sumber Daya dan Tata Kelola (WD-2 STK)",
 
     buildingId:
         "biro-ft",
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang Wakil Dekan bidang Sumber Daya dan Tata Kelola yang membantu mengelola sumber daya, administrasi, sarana, dan tata kelola fakultas.",
 
     modelMarker:null
 
@@ -821,15 +844,20 @@ const rooms = [
     id:"wakil-dekan-kak",
 
     name:
-        "Wakil Dekan KAK - Kewirausahaan, Alumni dan Kemahasiswaan",
+        "Wakil Dekan Kewirausahaan, Alumni dan Kemahasiswaan (WD-3 KAK)",
 
     buildingId:
         "biro-ft",
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang Wakil Dekan yang menangani kegiatan mahasiswa, hubungan dengan alumni, pengembangan kewirausahaan, serta berbagai kegiatan kemahasiswaan fakultas.",
 
     modelMarker:null
 
@@ -847,8 +875,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang kerja pimpinan Fakultas Teknik yang mengoordinasikan kegiatan akademik, administrasi, pengembangan fakultas, serta pelaksanaan program kerja secara keseluruhan.",
 
     modelMarker:null
 
@@ -866,8 +899,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Tempat mahasiswa memperoleh layanan dan informasi yang berkaitan dengan pembayaran serta administrasi keuangan perkuliahan.",
 
     modelMarker:null
 
@@ -885,8 +923,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang bagian yang menangani administrasi keuangan, anggaran, pembayaran, pencatatan, serta kebutuhan keuangan Fakultas Teknik.",
 
     modelMarker:null
 
@@ -904,8 +947,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan layanan akademik, dukungan sistem dan teknologi informasi, serta administrasi kegiatan kerja sama fakultas.",
 
     modelMarker:null
 
@@ -923,8 +971,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang yang menangani administrasi dan layanan kegiatan mahasiswa, organisasi kemahasiswaan, prestasi, serta kebutuhan kemahasiswaan lainnya.",
 
     modelMarker:null
 
@@ -942,8 +995,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang pengelolaan Sistem Informasi Akademik yang membantu menangani data mahasiswa, mata kuliah, nilai, jadwal, dan administrasi akademik berbasis sistem.",
 
     modelMarker:null
 
@@ -961,8 +1019,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang yang menangani kebutuhan umum, perlengkapan, fasilitas, inventaris, dan berbagai kebutuhan operasional Fakultas Teknik.",
 
     modelMarker:null
 
@@ -980,8 +1043,13 @@ const rooms = [
 
     floor:2,
 
+    tendik:[],
+
     navigationEntranceId:
         "biro-main-e1",
+
+    description:
+        "Ruang Kepala Tata Usaha yang mengoordinasikan layanan administrasi, akademik, keuangan, dokumen, sarana, dan kegiatan tata usaha fakultas.",
 
     modelMarker:null
 
@@ -990,7 +1058,7 @@ const rooms = [
 
 
 /* =========================================================
-   GEDUNG PERKULIAHAN FAKULTAS TEKNIK
+   GEDUNG PERKULIAHAN
 ========================================================= */
 
 {
@@ -1004,8 +1072,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1023,8 +1098,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1042,8 +1124,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1061,8 +1150,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1080,8 +1176,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Informatika"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1099,8 +1202,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Informatika"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1118,8 +1228,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Informatika"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1137,8 +1254,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Informatika"
+    ],
+
     navigationEntranceId:
         "class-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1161,11 +1285,18 @@ const rooms = [
 
     floor:1,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     sharedLocationGroup:
         "lab-l1-hidrolika-teknologi-mekanik",
 
     navigationEntranceId:
         "lab-west-e1",
+
+    description:
+        "Laboratorium untuk mempelajari perilaku dan aliran air melalui praktikum seperti pengukuran debit, tekanan, saluran terbuka, dan berbagai fenomena hidrolika.",
 
     modelMarker:null
 
@@ -1183,11 +1314,18 @@ const rooms = [
 
     floor:1,
 
+    units:[
+        "Teknik Mesin"
+    ],
+
     sharedLocationGroup:
         "lab-l1-hidrolika-teknologi-mekanik",
 
     navigationEntranceId:
         "lab-west-e1",
+
+    description:
+        "Laboratorium untuk praktik proses manufaktur dan pengerjaan material menggunakan berbagai mesin seperti bubut, milling, bor, dan peralatan mekanik lainnya.",
 
     modelMarker:null
 
@@ -1205,11 +1343,18 @@ const rooms = [
 
     floor:1,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     sharedLocationGroup:
         "lab-l1-beton-jalan-raya",
 
     navigationEntranceId:
         "lab-south-e1",
+
+    description:
+        "Laboratorium untuk praktikum dan pengujian bahan beton, semen, agregat, campuran beton, serta pengujian kekuatan material konstruksi.",
 
     modelMarker:null
 
@@ -1227,11 +1372,18 @@ const rooms = [
 
     floor:1,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     sharedLocationGroup:
         "lab-l1-beton-jalan-raya",
 
     navigationEntranceId:
         "lab-south-e1",
+
+    description:
+        "Laboratorium untuk mempelajari serta menguji material perkerasan jalan seperti agregat dan aspal dalam kegiatan praktikum maupun penelitian.",
 
     modelMarker:null
 
@@ -1249,11 +1401,18 @@ const rooms = [
 
     floor:1,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     sharedLocationGroup:
         "lab-l1-mekanika-tanah-ilmu-ukur-tanah",
 
     navigationEntranceId:
         "lab-south-e1",
+
+    description:
+        "Laboratorium untuk mempelajari karakteristik dan daya dukung tanah melalui pengujian kadar air, pemadatan, CBR, geser tanah, dan pengujian geoteknik lainnya.",
 
     modelMarker:null
 
@@ -1271,11 +1430,18 @@ const rooms = [
 
     floor:1,
 
+    units:[
+        "Teknik Sipil"
+    ],
+
     sharedLocationGroup:
         "lab-l1-mekanika-tanah-ilmu-ukur-tanah",
 
     navigationEntranceId:
         "lab-south-e1",
+
+    description:
+        "Laboratorium yang mendukung kegiatan survei dan pemetaan, seperti pengukuran luas, kontur, elevasi, serta penggunaan alat ukur lapangan.",
 
     modelMarker:null
 
@@ -1298,8 +1464,15 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Industri"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1317,8 +1490,15 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Industri"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1336,8 +1516,15 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Industri"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari proses pengecoran logam, mulai dari persiapan cetakan dan material hingga proses peleburan, penuangan, dan pemeriksaan hasil cor.",
 
     modelMarker:null
 
@@ -1355,11 +1542,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Fakultas Teknik"
+    ],
+
     sharedLocationGroup:
         "lab-l2-komputasi-sistem-digital",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium berbasis komputer yang digunakan untuk praktikum, pemodelan, simulasi, pengolahan data, serta penggunaan perangkat lunak pendukung bidang teknik.",
 
     modelMarker:null
 
@@ -1377,11 +1571,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Informatika"
+    ],
+
     sharedLocationGroup:
         "lab-l2-komputasi-sistem-digital",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari dasar sistem digital, logika digital, rangkaian digital, serta penerapannya pada perangkat dan sistem komputasi.",
 
     modelMarker:null
 
@@ -1399,11 +1600,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Industri"
+    ],
+
     sharedLocationGroup:
         "lab-l2-terintegrasi-faktor-manusia-sistem-produksi",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk praktikum Teknik Industri yang menggabungkan beberapa bidang keilmuan dalam satu rangkaian proses perancangan, analisis, dan penyelesaian masalah industri.",
 
     modelMarker:null
 
@@ -1421,11 +1629,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Industri"
+    ],
+
     sharedLocationGroup:
         "lab-l2-terintegrasi-faktor-manusia-sistem-produksi",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari hubungan manusia dengan sistem kerja, termasuk ergonomi, antropometri, beban kerja, lingkungan kerja, dan keselamatan kerja.",
 
     modelMarker:null
 
@@ -1443,11 +1658,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Industri"
+    ],
+
     sharedLocationGroup:
         "lab-l2-terintegrasi-faktor-manusia-sistem-produksi",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari perencanaan dan pengendalian produksi, penjadwalan, tata letak fasilitas, keseimbangan lini, serta peningkatan efisiensi proses produksi.",
 
     modelMarker:null
 
@@ -1465,11 +1687,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk memahami dasar rangkaian listrik melalui praktik pengukuran tegangan, arus, daya, serta analisis berbagai konfigurasi rangkaian.",
 
     modelMarker:null
 
@@ -1487,11 +1716,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari dasar pengiriman dan penerimaan informasi melalui sinyal, sistem komunikasi, dan perangkat telekomunikasi.",
 
     modelMarker:null
 
@@ -1509,11 +1745,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mengenal dan menggunakan alat ukur listrik serta melakukan pengukuran tegangan, arus, hambatan, daya, dan besaran listrik lainnya.",
 
     modelMarker:null
 
@@ -1531,11 +1774,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari sistem kendali dan otomasi seperti sensor, aktuator, kontrol digital, mikrokontroler, dan penerapan sistem pengaturan otomatis.",
 
     modelMarker:null
 
@@ -1553,11 +1803,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari komponen dan rangkaian elektronika dasar seperti dioda, transistor, sensor, serta rangkaian analog dan digital.",
 
     modelMarker:null
 
@@ -1575,11 +1832,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari Programable Logic Controller atau PLC, penggunaan sensor dan aktuator, serta pengendalian mesin dan sistem otomasi industri.",
 
     modelMarker:null
 
@@ -1597,11 +1861,18 @@ const rooms = [
 
     floor:2,
 
+    units:[
+        "Teknik Elektro"
+    ],
+
     sharedLocationGroup:
         "lab-l2-elektro",
 
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk praktik merancang, memasang, mengukur, dan menguji instalasi listrik seperti rangkaian penerangan, tenaga, dan kontrol.",
 
     modelMarker:null
 
@@ -1624,8 +1895,16 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Mesin",
+        "Teknik Elektro"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1643,8 +1922,16 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Mesin",
+        "Teknik Elektro"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1662,8 +1949,16 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Mesin",
+        "Teknik Elektro"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Ruang yang digunakan untuk kegiatan perkuliahan, diskusi kelas, presentasi, dan kegiatan pembelajaran mahasiswa.",
 
     modelMarker:null
 
@@ -1681,8 +1976,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Fakultas Teknik"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk memahami konsep dasar fisika melalui eksperimen seperti mekanika, listrik, gelombang, optika, pengukuran, dan termodinamika.",
 
     modelMarker:null
 
@@ -1700,8 +2002,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Informatika"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk praktik jaringan komputer seperti konfigurasi jaringan, router dan switch, komunikasi data, monitoring jaringan, serta pengembangan sistem berbasis komputer.",
 
     modelMarker:null
 
@@ -1719,8 +2028,15 @@ const rooms = [
 
     floor:3,
 
+    units:[
+        "Teknik Mesin"
+    ],
+
     navigationEntranceId:
         "lab-main-e1",
+
+    description:
+        "Laboratorium untuk mempelajari gambar teknik dan gambar kerja, baik secara manual maupun menggunakan perangkat lunak CAD sebagai dasar perancangan teknik.",
 
     modelMarker:null
 
@@ -2571,11 +2887,6 @@ const mapEdges = [
 
 ];
 
-
-
-/* =========================================================
-   GPS CALIBRATION
-========================================================= */
 
 const mapCalibration = [];
 
