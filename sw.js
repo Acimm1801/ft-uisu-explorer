@@ -1,15 +1,15 @@
 /* =========================================================
    FT UISU EXPLORER
    SERVICE WORKER
-   REVISION 42
+   REVISION 43
 ========================================================= */
 
 const MODEL_CACHE =
-    "ft-uisu-models-v42";
+    "ft-uisu-models-v43";
 
 
 const STATIC_CACHE =
-    "ft-uisu-static-v42";
+    "ft-uisu-static-v43";
 
 
 
@@ -127,6 +127,10 @@ self.addEventListener(
                 request.url
             );
 
+
+        /*
+           Range request tidak diintersep.
+        */
 
         if(
             request.headers.has(
@@ -290,6 +294,7 @@ async function modelStaleWhileRevalidate(
         "",
         {
             status:504,
+
             statusText:
                 "Model unavailable"
         }
