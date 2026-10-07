@@ -1,15 +1,15 @@
 /* =========================================================
    FT UISU EXPLORER
    SERVICE WORKER
-   REVISION 43
+   REVISION 44
 ========================================================= */
 
 const MODEL_CACHE =
-    "ft-uisu-models-v43";
+    "ft-uisu-models-v44";
 
 
 const STATIC_CACHE =
-    "ft-uisu-static-v43";
+    "ft-uisu-static-v44";
 
 
 
@@ -54,8 +54,7 @@ self.addEventListener(
                                     "ft-uisu-models-"
                                 )
                                 &&
-                                name !==
-                                MODEL_CACHE
+                                name !== MODEL_CACHE
                             ){
 
                                 return caches.delete(
@@ -70,8 +69,7 @@ self.addEventListener(
                                     "ft-uisu-static-"
                                 )
                                 &&
-                                name !==
-                                STATIC_CACHE
+                                name !== STATIC_CACHE
                             ){
 
                                 return caches.delete(
@@ -129,7 +127,7 @@ self.addEventListener(
 
 
         /*
-           Range request tidak diintersep.
+           Jangan intersep range requests.
         */
 
         if(
@@ -243,30 +241,30 @@ async function modelStaleWhileRevalidate(
         fetch(
             request
         )
-        .then(
-            async response => {
+            .then(
+                async response => {
 
-                if(
-                    response
-                    &&
-                    response.ok
-                ){
+                    if(
+                        response
+                        &&
+                        response.ok
+                    ){
 
-                    await cache.put(
-                        request,
-                        response.clone()
-                    );
+                        await cache.put(
+                            request,
+                            response.clone()
+                        );
+
+                    }
+
+
+                    return response;
 
                 }
-
-
-                return response;
-
-            }
-        )
-        .catch(
-            () => null
-        );
+            )
+            .catch(
+                () => null
+            );
 
 
     if(cached){
@@ -294,9 +292,7 @@ async function modelStaleWhileRevalidate(
         "",
         {
             status:504,
-
-            statusText:
-                "Model unavailable"
+            statusText:"Model unavailable"
         }
     );
 
