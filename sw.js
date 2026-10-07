@@ -1,15 +1,15 @@
 /* =========================================================
    FT UISU EXPLORER
    SERVICE WORKER
-   REVISION 41
+   REVISION 42
 ========================================================= */
 
 const MODEL_CACHE =
-    "ft-uisu-models-v41";
+    "ft-uisu-models-v42";
 
 
 const STATIC_CACHE =
-    "ft-uisu-static-v41";
+    "ft-uisu-static-v42";
 
 
 
@@ -127,10 +127,6 @@ self.addEventListener(
                 request.url
             );
 
-
-        /*
-           Jangan intersep range requests.
-        */
 
         if(
             request.headers.has(
@@ -270,10 +266,6 @@ async function modelStaleWhileRevalidate(
 
 
     if(cached){
-
-        /*
-           Update cache di background.
-        */
 
         networkPromise;
 
