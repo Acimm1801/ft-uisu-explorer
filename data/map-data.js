@@ -1,7 +1,7 @@
 /* =========================================================
    FT UISU EXPLORER
    MAP + DATABASE
-   REVISION 42
+   REVISION 43
 ========================================================= */
 
 (function(){
@@ -33,22 +33,26 @@ const FULL_DETAIL_REFERENCE =
 const buildings = [
 
 
+/* =========================================================
+   BIRO FT
+========================================================= */
+
 {
     id:"biro-ft",
 
     modelMenuName:
-        "Biro Fakultas Teknik",
+        "Biro Fakultas Teknik UISU",
 
     modelMenuOrder:1,
 
     name:
-        "Gedung Biro Fakultas Teknik",
+        "Biro Fakultas Teknik UISU",
 
     shortName:
         "Biro FT",
 
     description:
-        "Gedung Biro Fakultas Teknik berada di lantai 2 pada gedung yang sama dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3.",
+        "Biro Fakultas Teknik UISU berada di lantai 2 pada gedung yang sama dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3.",
 
     actualFloor:2,
 
@@ -74,7 +78,7 @@ const buildings = [
                 "Outdoor",
 
             viewerTitle:
-                "Gedung Biro Fakultas Teknik",
+                "Biro Fakultas Teknik UISU",
 
             src:
                 "./assets/models/gedung_biro_outdoor.glb",
@@ -89,7 +93,7 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model outdoor menampilkan bangunan tempat Biro Fakultas Teknik berada di lantai 2, dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3."
+                "Model outdoor menampilkan bangunan tempat Biro Fakultas Teknik UISU berada di lantai 2, dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3."
         },
 
         {
@@ -99,7 +103,7 @@ const buildings = [
                 "Indoor",
 
             viewerTitle:
-                "Biro Fakultas Teknik",
+                "Biro Fakultas Teknik UISU",
 
             src:
                 "./assets/models/gedung_biro_indoor.glb",
@@ -114,23 +118,28 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model indoor menampilkan interior Biro Fakultas Teknik di lantai 2 beserta susunan ruangannya."
+                "Model indoor menampilkan interior Biro Fakultas Teknik UISU di lantai 2 beserta susunan ruangannya."
         }
 
     ]
 },
 
 
+
+/* =========================================================
+   PERPUSTAKAAN
+========================================================= */
+
 {
     id:"perpustakaan-ft",
 
     modelMenuName:
-        "Perpustakaan Fakultas Teknik",
+        "Perpustakaan Fakultas Teknik UISU",
 
     modelMenuOrder:5,
 
     name:
-        "Perpustakaan Fakultas Teknik",
+        "Perpustakaan Fakultas Teknik UISU",
 
     shortName:
         "Perpustakaan FT",
@@ -141,6 +150,20 @@ const buildings = [
     actualFloor:1,
 
     floorCount:1,
+
+    /*
+       REVISI 43:
+       Data Tendik Perpustakaan disiapkan di sini.
+
+       Format:
+       {
+           name:"Nama Lengkap",
+           phone:"081234567890",
+           photo:"./assets/images/tendik/nama.jpg"
+       }
+    */
+
+    tendik:[],
 
     defaultEntranceId:
         "library-e1",
@@ -162,7 +185,7 @@ const buildings = [
                 "Indoor",
 
             viewerTitle:
-                "Perpustakaan Fakultas Teknik",
+                "Perpustakaan Fakultas Teknik UISU",
 
             src:
                 "./assets/models/perpustakaan_indoor.glb",
@@ -177,23 +200,28 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model indoor menampilkan interior Perpustakaan Fakultas Teknik yang berada di lantai 1, pada gedung di sudut seberang lapangan."
+                "Model indoor menampilkan interior Perpustakaan Fakultas Teknik UISU yang berada di lantai 1, pada gedung di sudut seberang lapangan."
         }
 
     ]
 },
 
 
+
+/* =========================================================
+   SERBAGUNA
+========================================================= */
+
 {
     id:"serbaguna-ft",
 
     modelMenuName:
-        "Ruang Serbaguna FT",
+        "Ruang Serbaguna Fakultas Teknik UISU",
 
     modelMenuOrder:4,
 
     name:
-        "Ruang Serbaguna Fakultas Teknik",
+        "Ruang Serbaguna Fakultas Teknik UISU",
 
     shortName:
         "Serbaguna FT",
@@ -225,7 +253,7 @@ const buildings = [
                 "Indoor",
 
             viewerTitle:
-                "Ruang Serbaguna FT",
+                "Ruang Serbaguna Fakultas Teknik UISU",
 
             src:
                 "./assets/models/serbaguna_indoor.glb",
@@ -240,29 +268,34 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model indoor menampilkan interior Ruang Serbaguna FT yang berada di lantai 1 pada gedung Fakultas Hukum."
+                "Model indoor menampilkan interior Ruang Serbaguna Fakultas Teknik UISU yang berada di lantai 1 pada gedung Fakultas Hukum."
         }
 
     ]
 },
 
 
+
+/* =========================================================
+   PERKULIAHAN
+========================================================= */
+
 {
     id:"perkuliahan-ft",
 
     modelMenuName:
-        "Ruang Perkuliahan FT",
+        "Gedung Perkuliahan Fakultas Teknik UISU",
 
     modelMenuOrder:2,
 
     name:
-        "Gedung Perkuliahan Fakultas Teknik",
+        "Gedung Perkuliahan Fakultas Teknik UISU",
 
     shortName:
         "Perkuliahan FT",
 
     description:
-        "Gedung Perkuliahan Fakultas Teknik berada di lantai 3 pada gedung di seberang Gedung Biro Fakultas Teknik.",
+        "Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3 pada gedung di seberang Biro Fakultas Teknik UISU.",
 
     actualFloor:3,
 
@@ -288,7 +321,7 @@ const buildings = [
                 "Outdoor",
 
             viewerTitle:
-                "Gedung Perkuliahan Fakultas Teknik",
+                "Gedung Perkuliahan Fakultas Teknik UISU",
 
             src:
                 "./assets/models/gedung_perkuliahan_outdoor.glb",
@@ -303,7 +336,7 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model outdoor menampilkan bangunan tempat Ruang Perkuliahan FT berada di lantai 3, di seberang Gedung Biro Fakultas Teknik."
+                "Model outdoor menampilkan bangunan tempat Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3, di seberang Biro Fakultas Teknik UISU."
         },
 
         {
@@ -313,7 +346,7 @@ const buildings = [
                 "Indoor",
 
             viewerTitle:
-                "Ruang Perkuliahan FT",
+                "Gedung Perkuliahan Fakultas Teknik UISU",
 
             src:
                 "./assets/models/gedung_perkuliahan_indoor.glb",
@@ -328,29 +361,34 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model indoor menampilkan interior Ruang Perkuliahan FT di lantai 3, dari Ruang Kuliah 1 sampai Ruang Kuliah 8."
+                "Model indoor menampilkan interior Gedung Perkuliahan Fakultas Teknik UISU di lantai 3, dari Ruang Kuliah 1 sampai Ruang Kuliah 8."
         }
 
     ]
 },
 
 
+
+/* =========================================================
+   LABORATORIUM
+========================================================= */
+
 {
     id:"laboratorium-ft",
 
     modelMenuName:
-        "Laboratorium Fakultas Teknik",
+        "Laboratorium Fakultas Teknik UISU",
 
     modelMenuOrder:3,
 
     name:
-        "Gedung Laboratorium Fakultas Teknik",
+        "Laboratorium Fakultas Teknik UISU",
 
     shortName:
         "Laboratorium FT",
 
     description:
-        "Gedung Laboratorium Fakultas Teknik terdiri dari tiga lantai dan berada di dekat Gedung Perkuliahan Fakultas Teknik.",
+        "Laboratorium Fakultas Teknik UISU terdiri dari tiga lantai dan berada di dekat Gedung Perkuliahan Fakultas Teknik UISU.",
 
     actualFloor:null,
 
@@ -376,7 +414,7 @@ const buildings = [
                 "Outdoor",
 
             viewerTitle:
-                "Gedung Laboratorium Fakultas Teknik",
+                "Laboratorium Fakultas Teknik UISU",
 
             src:
                 "./assets/models/laboratorium_outdoor.glb",
@@ -391,7 +429,7 @@ const buildings = [
                 "35deg",
 
             viewerDescription:
-                "Model outdoor menampilkan Gedung Laboratorium Fakultas Teknik tiga lantai beserta area laboratorium dan ruang kuliah di dalamnya."
+                "Model outdoor menampilkan Laboratorium Fakultas Teknik UISU tiga lantai beserta area laboratorium dan ruang kuliah di dalamnya."
         }
 
     ]
@@ -408,6 +446,7 @@ const buildings = [
 
 const entrances = [
 
+
 {
     id:"serbaguna-e1",
 
@@ -415,7 +454,7 @@ const entrances = [
         "serbaguna-ft",
 
     name:
-        "Entrance Gedung Serbaguna Fakultas Teknik",
+        "Entrance Ruang Serbaguna Fakultas Teknik UISU",
 
     floor:1,
 
@@ -438,7 +477,7 @@ const entrances = [
         "perpustakaan-ft",
 
     name:
-        "Entrance Perpustakaan Fakultas Teknik",
+        "Entrance Perpustakaan Fakultas Teknik UISU",
 
     floor:1,
 
@@ -461,7 +500,7 @@ const entrances = [
         "biro-ft",
 
     name:
-        "Entrance Gedung Biro Fakultas Teknik",
+        "Entrance Biro Fakultas Teknik UISU",
 
     floor:2,
 
@@ -484,7 +523,7 @@ const entrances = [
         "perkuliahan-ft",
 
     name:
-        "Entrance Gedung Perkuliahan Fakultas Teknik",
+        "Entrance Gedung Perkuliahan Fakultas Teknik UISU",
 
     floor:3,
 
@@ -507,7 +546,7 @@ const entrances = [
         "laboratorium-ft",
 
     name:
-        "Entrance Utama Gedung Laboratorium",
+        "Entrance Utama Laboratorium Fakultas Teknik UISU",
 
     floor:1,
 
@@ -530,7 +569,7 @@ const entrances = [
         "laboratorium-ft",
 
     name:
-        "Entrance Barat Gedung Laboratorium",
+        "Entrance Barat Laboratorium Fakultas Teknik UISU",
 
     floor:1,
 
@@ -558,7 +597,7 @@ const entrances = [
         "laboratorium-ft",
 
     name:
-        "Entrance Selatan Gedung Laboratorium",
+        "Entrance Selatan Laboratorium Fakultas Teknik UISU",
 
     floor:1,
 
@@ -591,9 +630,22 @@ const entrances = [
 
 /* =========================================================
    ROOM DATABASE
+
+   TENDIK:
+   FOTO + NAMA + NOMOR WHATSAPP
+
+   Format:
+   tendik:[
+       {
+           name:"Nama Lengkap Pegawai",
+           phone:"081234567890",
+           photo:"./assets/images/tendik/nama-file.jpg"
+       }
+   ]
 ========================================================= */
 
 const rooms = [
+
 
 
 /* =========================================================
@@ -2045,6 +2097,7 @@ const rooms = [
 ];
 
 
+
 const people = [];
 
 
@@ -2216,14 +2269,13 @@ const mapNodes = {
 
 const mapEdges = [
 
+
 {
     id:"R01",
 
-    from:
-        "GATE_MAIN",
+    from:"GATE_MAIN",
 
-    to:
-        "PARKING_WEST",
+    to:"PARKING_WEST",
 
     points:[
         [61,488],
@@ -2236,11 +2288,9 @@ const mapEdges = [
 {
     id:"R02",
 
-    from:
-        "PARKING_WEST",
+    from:"PARKING_WEST",
 
-    to:
-        "PARKING_CENTER",
+    to:"PARKING_CENTER",
 
     points:[
         [165,492],
@@ -2253,11 +2303,9 @@ const mapEdges = [
 {
     id:"R03",
 
-    from:
-        "PARKING_WEST",
+    from:"PARKING_WEST",
 
-    to:
-        "PARKING_SOUTHWEST",
+    to:"PARKING_SOUTHWEST",
 
     points:[
         [165,492],
@@ -2270,11 +2318,9 @@ const mapEdges = [
 {
     id:"R04",
 
-    from:
-        "PARKING_SOUTHWEST",
+    from:"PARKING_SOUTHWEST",
 
-    to:
-        "PARKING_CENTER",
+    to:"PARKING_CENTER",
 
     points:[
         [283,555],
@@ -2286,11 +2332,9 @@ const mapEdges = [
 {
     id:"R05",
 
-    from:
-        "PARKING_CENTER",
+    from:"PARKING_CENTER",
 
-    to:
-        "PARKING_SOUTHEAST",
+    to:"PARKING_SOUTHEAST",
 
     points:[
         [326,505],
@@ -2302,11 +2346,9 @@ const mapEdges = [
 {
     id:"R06",
 
-    from:
-        "PARKING_SOUTHEAST",
+    from:"PARKING_SOUTHEAST",
 
-    to:
-        "PARKING_EAST",
+    to:"PARKING_EAST",
 
     points:[
         [350,562],
@@ -2318,11 +2360,9 @@ const mapEdges = [
 {
     id:"R07",
 
-    from:
-        "PARKING_CENTER",
+    from:"PARKING_CENTER",
 
-    to:
-        "PARKING_EAST",
+    to:"PARKING_EAST",
 
     points:[
         [326,505],
@@ -2334,11 +2374,9 @@ const mapEdges = [
 {
     id:"R08",
 
-    from:
-        "NORTH_WEST",
+    from:"NORTH_WEST",
 
-    to:
-        "NORTH_JUNCTION_A",
+    to:"NORTH_JUNCTION_A",
 
     points:[
         [97,198],
@@ -2351,11 +2389,9 @@ const mapEdges = [
 {
     id:"R09",
 
-    from:
-        "NORTH_JUNCTION_A",
+    from:"NORTH_JUNCTION_A",
 
-    to:
-        "NORTH_JUNCTION_B",
+    to:"NORTH_JUNCTION_B",
 
     points:[
         [333,222],
@@ -2367,11 +2403,9 @@ const mapEdges = [
 {
     id:"R10",
 
-    from:
-        "NORTH_JUNCTION_B",
+    from:"NORTH_JUNCTION_B",
 
-    to:
-        "NORTH_RIGHT",
+    to:"NORTH_RIGHT",
 
     points:[
         [397,217],
@@ -2385,11 +2419,9 @@ const mapEdges = [
 {
     id:"R11",
 
-    from:
-        "GATE_EXIT",
+    from:"GATE_EXIT",
 
-    to:
-        "NORTH_JUNCTION_B",
+    to:"NORTH_JUNCTION_B",
 
     points:[
         [390,31],
@@ -2402,11 +2434,9 @@ const mapEdges = [
 {
     id:"R12",
 
-    from:
-        "NORTH_JUNCTION_A",
+    from:"NORTH_JUNCTION_A",
 
-    to:
-        "PARKING_CENTER",
+    to:"PARKING_CENTER",
 
     points:[
         [333,222],
@@ -2419,11 +2449,9 @@ const mapEdges = [
 {
     id:"R13",
 
-    from:
-        "NORTH_JUNCTION_B",
+    from:"NORTH_JUNCTION_B",
 
-    to:
-        "PARKING_EAST",
+    to:"PARKING_EAST",
 
     points:[
         [397,217],
@@ -2436,11 +2464,9 @@ const mapEdges = [
 {
     id:"R14",
 
-    from:
-        "NORTH_JUNCTION_B",
+    from:"NORTH_JUNCTION_B",
 
-    to:
-        "E_SERBAGUNA",
+    to:"E_SERBAGUNA",
 
     points:[
         [397,217],
@@ -2453,11 +2479,9 @@ const mapEdges = [
 {
     id:"R15",
 
-    from:
-        "E_SERBAGUNA",
+    from:"E_SERBAGUNA",
 
-    to:
-        "NORTH_RIGHT",
+    to:"NORTH_RIGHT",
 
     points:[
         [644,210],
@@ -2470,11 +2494,9 @@ const mapEdges = [
 {
     id:"R16",
 
-    from:
-        "NORTH_RIGHT",
+    from:"NORTH_RIGHT",
 
-    to:
-        "E_LIBRARY",
+    to:"E_LIBRARY",
 
     points:[
         [744,230],
@@ -2488,11 +2510,9 @@ const mapEdges = [
 {
     id:"R17",
 
-    from:
-        "COURT_TOP_LEFT",
+    from:"COURT_TOP_LEFT",
 
-    to:
-        "COURT_TOP_RIGHT",
+    to:"COURT_TOP_RIGHT",
 
     points:[
         [505,356],
@@ -2505,11 +2525,9 @@ const mapEdges = [
 {
     id:"R18",
 
-    from:
-        "COURT_TOP_RIGHT",
+    from:"COURT_TOP_RIGHT",
 
-    to:
-        "E_LIBRARY",
+    to:"E_LIBRARY",
 
     points:[
         [630,356],
@@ -2521,11 +2539,9 @@ const mapEdges = [
 {
     id:"R19",
 
-    from:
-        "PARKING_EAST",
+    from:"PARKING_EAST",
 
-    to:
-        "COURT_TOP_LEFT",
+    to:"COURT_TOP_LEFT",
 
     points:[
         [400,527],
@@ -2538,11 +2554,9 @@ const mapEdges = [
 {
     id:"R20",
 
-    from:
-        "PARKING_EAST",
+    from:"PARKING_EAST",
 
-    to:
-        "COURT_TOP_RIGHT",
+    to:"COURT_TOP_RIGHT",
 
     points:[
         [400,527],
@@ -2555,11 +2569,9 @@ const mapEdges = [
 {
     id:"R21",
 
-    from:
-        "PARKING_EAST",
+    from:"PARKING_EAST",
 
-    to:
-        "COURT_CENTER_LEFT",
+    to:"COURT_CENTER_LEFT",
 
     points:[
         [400,527],
@@ -2571,11 +2583,9 @@ const mapEdges = [
 {
     id:"R22",
 
-    from:
-        "COURT_CENTER_LEFT",
+    from:"COURT_CENTER_LEFT",
 
-    to:
-        "COURT_CENTER_RIGHT",
+    to:"COURT_CENTER_RIGHT",
 
     points:[
         [495,527],
@@ -2588,11 +2598,9 @@ const mapEdges = [
 {
     id:"R23",
 
-    from:
-        "COURT_CENTER_RIGHT",
+    from:"COURT_CENTER_RIGHT",
 
-    to:
-        "E_BIRO",
+    to:"E_BIRO",
 
     points:[
         [631,527],
@@ -2604,11 +2612,9 @@ const mapEdges = [
 {
     id:"R24",
 
-    from:
-        "COURT_TOP_LEFT",
+    from:"COURT_TOP_LEFT",
 
-    to:
-        "COURT_CENTER_LEFT",
+    to:"COURT_CENTER_LEFT",
 
     points:[
         [505,356],
@@ -2621,11 +2627,9 @@ const mapEdges = [
 {
     id:"R25",
 
-    from:
-        "COURT_TOP_RIGHT",
+    from:"COURT_TOP_RIGHT",
 
-    to:
-        "COURT_CENTER_RIGHT",
+    to:"COURT_CENTER_RIGHT",
 
     points:[
         [630,356],
@@ -2638,11 +2642,9 @@ const mapEdges = [
 {
     id:"R26",
 
-    from:
-        "COURT_CENTER_LEFT",
+    from:"COURT_CENTER_LEFT",
 
-    to:
-        "COURT_BOTTOM_LEFT",
+    to:"COURT_BOTTOM_LEFT",
 
     points:[
         [495,527],
@@ -2655,11 +2657,9 @@ const mapEdges = [
 {
     id:"R27",
 
-    from:
-        "COURT_CENTER_RIGHT",
+    from:"COURT_CENTER_RIGHT",
 
-    to:
-        "COURT_BOTTOM_RIGHT",
+    to:"COURT_BOTTOM_RIGHT",
 
     points:[
         [631,527],
@@ -2672,11 +2672,9 @@ const mapEdges = [
 {
     id:"R28",
 
-    from:
-        "COURT_BOTTOM_LEFT",
+    from:"COURT_BOTTOM_LEFT",
 
-    to:
-        "COURT_BOTTOM_RIGHT",
+    to:"COURT_BOTTOM_RIGHT",
 
     points:[
         [494,730],
@@ -2689,11 +2687,9 @@ const mapEdges = [
 {
     id:"R29",
 
-    from:
-        "PARKING_SOUTHWEST",
+    from:"PARKING_SOUTHWEST",
 
-    to:
-        "MOSQUE_EAST",
+    to:"MOSQUE_EAST",
 
     points:[
         [283,555],
@@ -2706,11 +2702,9 @@ const mapEdges = [
 {
     id:"R30",
 
-    from:
-        "PARKING_WEST",
+    from:"PARKING_WEST",
 
-    to:
-        "MOSQUE_EAST",
+    to:"MOSQUE_EAST",
 
     points:[
         [165,492],
@@ -2723,11 +2717,9 @@ const mapEdges = [
 {
     id:"R31",
 
-    from:
-        "MOSQUE_EAST",
+    from:"MOSQUE_EAST",
 
-    to:
-        "MOSQUE_SOUTHWEST",
+    to:"MOSQUE_SOUTHWEST",
 
     points:[
         [283,683],
@@ -2740,11 +2732,9 @@ const mapEdges = [
 {
     id:"R32",
 
-    from:
-        "MOSQUE_SOUTHWEST",
+    from:"MOSQUE_SOUTHWEST",
 
-    to:
-        "MOSQUE_WEST",
+    to:"MOSQUE_WEST",
 
     points:[
         [198,817],
@@ -2757,11 +2747,9 @@ const mapEdges = [
 {
     id:"R33",
 
-    from:
-        "MOSQUE_EAST",
+    from:"MOSQUE_EAST",
 
-    to:
-        "CLASS_LAB_WEST",
+    to:"CLASS_LAB_WEST",
 
     points:[
         [283,683],
@@ -2773,11 +2761,9 @@ const mapEdges = [
 {
     id:"R34",
 
-    from:
-        "CLASS_LAB_WEST",
+    from:"CLASS_LAB_WEST",
 
-    to:
-        "CLASS_LAB_CENTER",
+    to:"CLASS_LAB_CENTER",
 
     points:[
         [341,684],
@@ -2790,11 +2776,9 @@ const mapEdges = [
 {
     id:"R35",
 
-    from:
-        "CLASS_LAB_CENTER",
+    from:"CLASS_LAB_CENTER",
 
-    to:
-        "E_CLASS",
+    to:"E_CLASS",
 
     points:[
         [421,686],
@@ -2806,11 +2790,9 @@ const mapEdges = [
 {
     id:"R36",
 
-    from:
-        "CLASS_LAB_CENTER",
+    from:"CLASS_LAB_CENTER",
 
-    to:
-        "E_LAB_MAIN",
+    to:"E_LAB_MAIN",
 
     points:[
         [421,686],
@@ -2822,11 +2804,9 @@ const mapEdges = [
 {
     id:"R37",
 
-    from:
-        "CLASS_LAB_WEST",
+    from:"CLASS_LAB_WEST",
 
-    to:
-        "E_LAB_WEST",
+    to:"E_LAB_WEST",
 
     points:[
         [341,684],
@@ -2839,11 +2819,9 @@ const mapEdges = [
 {
     id:"R38",
 
-    from:
-        "CLASS_LAB_WEST",
+    from:"CLASS_LAB_WEST",
 
-    to:
-        "LAB_WEST_LOWER",
+    to:"LAB_WEST_LOWER",
 
     points:[
         [341,684],
@@ -2856,11 +2834,9 @@ const mapEdges = [
 {
     id:"R39",
 
-    from:
-        "LAB_WEST_LOWER",
+    from:"LAB_WEST_LOWER",
 
-    to:
-        "LAB_SOUTH_CENTER",
+    to:"LAB_SOUTH_CENTER",
 
     points:[
         [341,944],
@@ -2873,11 +2849,9 @@ const mapEdges = [
 {
     id:"R40",
 
-    from:
-        "LAB_SOUTH_CENTER",
+    from:"LAB_SOUTH_CENTER",
 
-    to:
-        "E_LAB_SOUTH",
+    to:"E_LAB_SOUTH",
 
     points:[
         [460,944],
@@ -2887,6 +2861,11 @@ const mapEdges = [
 
 ];
 
+
+
+/* =========================================================
+   GPS CALIBRATION
+========================================================= */
 
 const mapCalibration = [];
 
@@ -2948,13 +2927,11 @@ function getBuildingModels(
         );
 
 
-    return (
-        building
+    return building
         ?
         building.models || []
         :
-        []
-    );
+        [];
 
 }
 
@@ -2990,9 +2967,7 @@ function getDefaultModelVariant(
 
 
     if(!building){
-
         return null;
-
     }
 
 
@@ -3015,9 +2990,7 @@ function getNavigationEntranceForLocation(
 ){
 
     if(!location){
-
         return null;
-
     }
 
 
@@ -3044,9 +3017,7 @@ function getNavigationEntranceForLocation(
 
 
     if(!building){
-
         return null;
-
     }
 
 
