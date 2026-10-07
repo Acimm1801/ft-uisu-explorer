@@ -2145,14 +2145,8 @@ a{
     font-size:20px;
 }
 
-/*
-   REVISI 43:
-   Info modal tidak lagi mempunyai
-   tulisan parent hijau "Fakultas Teknik UISU".
-*/
-
 .info-description{
-    margin:17px 0 0;
+    margin:17px 0;
     color:#61767d;
     font-size:9px;
     line-height:1.7;
@@ -3239,7 +3233,6 @@ html.viewer-fullscreen-open body{
 
 /* =========================================================
    REVISI 42
-   UNIT RUANGAN
 ========================================================= */
 
 .room-name-wrap{
@@ -3375,10 +3368,6 @@ html.viewer-fullscreen-open body{
 }
 
 
-/* =========================================================
-   MODAL TENDIK DASAR
-========================================================= */
-
 .tendik-modal{
 
     position:relative;
@@ -3489,10 +3478,6 @@ html.viewer-fullscreen-open body{
 }
 
 
-/* =========================================================
-   BUTTON TENDIK BIRO + PERPUSTAKAAN
-========================================================= */
-
 .directory .room-tendik,
 .directory .building-tendik{
 
@@ -3525,11 +3510,6 @@ html.viewer-fullscreen-open body{
 
 }
 
-
-/* =========================================================
-   TENDIK:
-   FOTO -> NAMA -> NOMOR WHATSAPP
-========================================================= */
 
 .tendik-card{
 
@@ -3744,3 +3724,13 @@ html.viewer-fullscreen-open body{
     }
 
 }
+
+
+/* =========================================================
+   REVISI 44
+
+   Single accordion Direktori dikendalikan di script.js:
+   - hanya satu gedung terbuka,
+   - hanya satu ruangan terbuka,
+   - Perpustakaan dan Serbaguna tanpa placeholder ruangan.
+========================================================= */
