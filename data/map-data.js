@@ -1,9 +1,9 @@
 /* =========================================================
-   FT UISU EXPLORER — REVISI 2 (NO NAVIGATION)
+   FT UISU EXPLORER — REVISI 4 (NO NAVIGATION)
 
    Seluruh database Revisi 44 dipertahankan:
    - 5 gedung
-   - 7 varian model 3D
+   - 7 model 3D
    - Database ruangan dan Tendik
    - Entrance
    - Graph navigasi
@@ -20,10 +20,6 @@ const MAP_HEIGHT=1024;
 
 const NAVIGATION_MAP="./assets/maps/denah-v1.png";
 const FULL_DETAIL_REFERENCE="./assets/maps/denah-full-detail.png";
-
-/* =========================================================
-   BUILDINGS
-========================================================= */
 
 const buildings=[
     {
@@ -174,9 +170,7 @@ const buildings=[
     }
 ];
 
-/* =========================================================
-   ENTRANCES — TETAP ADA
-========================================================= */
+/* ENTRANCE NAVIGASI TETAP DIPERTAHANKAN */
 
 const entrances=[
     {
@@ -266,8 +260,6 @@ const entrances=[
            photo:"./assets/images/tendik/nama-file.jpg"
        }
    ]
-
-   WhatsApp langsung ditangani oleh script.js.
 ========================================================= */
 
 const rooms=[
@@ -933,9 +925,7 @@ const mapEdges=[
 
 const mapCalibration=[];
 
-/* =========================================================
-   HELPERS
-========================================================= */
+/* HELPERS */
 
 function getBuildingById(id){
     return buildings.find(building=>building.id===id)||null;
@@ -972,9 +962,7 @@ function getNavigationEntranceForLocation(location){
     return getEntranceById(building.defaultEntranceId);
 }
 
-/* =========================================================
-   GLOBAL DATABASE
-========================================================= */
+/* GLOBAL DATABASE */
 
 window.FT_DATA={
     MAP_WIDTH,
