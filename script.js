@@ -1,10 +1,12 @@
+
 (function(){
 "use strict";
 
-/* =========================================================
-   FT UISU EXPLORER — REVISI 6 NO NAVIGATE
-   false = sembunyikan navigasi tanpa menghapus mesinnya.
-========================================================= */
+/* =====================================================
+   FT UISU EXPLORER - REV 7 (NO NAVIGATE)
+   Semua menu dan database tetap dipertahankan.
+===================================================== */
+
 const NAVIGATION_ENABLED=false;
 const DATA=window.FT_DATA||{};
 const MAP_WIDTH=DATA.MAP_WIDTH||768;
@@ -17,52 +19,43 @@ const mapNodes=DATA.mapNodes||{};
 const mapEdges=Array.isArray(DATA.mapEdges)?DATA.mapEdges:[];
 const mapCalibration=Array.isArray(DATA.mapCalibration)?DATA.mapCalibration:[];
 
-function byId(id){return document.getElementById(id);}
-function all(selector){return Array.from(document.querySelectorAll(selector));}
-function on(id,eventName,handler,options){
-    const element=byId(id);
-    if(!element)return;
-    element.addEventListener(eventName,handler,options);
+const byId=id=>document.getElementById(id);
+const all=selector=>Array.from(document.querySelectorAll(selector));
+function on(id,type,callback,options){
+    byId(id)?.addEventListener(type,callback,options);
 }
 function show(id){byId(id)?.classList.remove("hidden");}
 function hide(id){byId(id)?.classList.add("hidden");}
-function setText(id,value){
+function setText(id,text){
     const element=byId(id);
-    if(element)element.textContent=value??"";
+    if(element)element.textContent=text??"";
 }
-
+function escapeHtml(value){
+    return String(value??"")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+}
 function applyFeatureVisibility(){
     document.documentElement.classList.toggle(
         "navigation-disabled",!NAVIGATION_ENABLED
     );
-    const selectors="#menuNavigation,#featureNav,#globalNavButton,.room-nav,.building-nav";
-    document.querySelectorAll(selectors).forEach(element=>{
+    document.querySelectorAll(
+        "#menuNavigation,#featureNav,#globalNavButton,.room-nav,.building-nav"
+    ).forEach(element=>{
         element.disabled=!NAVIGATION_ENABLED;
-        if(NAVIGATION_ENABLED){
-            element.removeAttribute("aria-hidden");
-        }else{
-            element.setAttribute("aria-hidden","true");
-        }
+        if(NAVIGATION_ENABLED)element.removeAttribute("aria-hidden");
+        else element.setAttribute("aria-hidden","true");
     });
 
-    const copy={
-        landingNavigationDescription:
-            "Lihat daftar gedung dan ruangan melalui fitur Direktori untuk menemukan informasi lokasi yang Anda cari.",
-        landingNavigationHeading:"Informasi Gedung & Ruangan",
-        landingNavigationFooter:"Cari Gedung • Ruangan • Informasi",
-        directoryNavigationDescription:
-            "Pilih gedung dan ruangan untuk melihat informasi atau data tenaga kependidikan."
-    };
-    Object.entries(copy).forEach(([id,disabledText])=>{
-        const element=byId(id);
-        if(!element)return;
-        if(!element.dataset.navigationEnabledText){
-            element.dataset.navigationEnabledText=element.textContent;
-        }
-        element.textContent=NAVIGATION_ENABLED
-            ?element.dataset.navigationEnabledText
-            :disabledText;
-    });
+    const description=byId("directoryNavigationDescription");
+    if(description){
+        description.textContent=NAVIGATION_ENABLED
+            ?"Pilih gedung dan ruangan untuk melihat informasi atau membuka Petunjuk Arah."
+            :"Pilih gedung dan ruangan untuk melihat informasi atau data tenaga kependidikan.";
+    }
 }
 
 const state={
@@ -85,29 +78,24 @@ const state={
 };
 
 function getBuildingById(id){
-    if(typeof DATA.getBuildingById==="function"){
-        return DATA.getBuildingById(id);
-    }
-    return buildings.find(building=>building.id===id)||null;
+    return typeof DATA.getBuildingById==="function"
+        ?DATA.getBuildingById(id)
+        :buildings.find(item=>item.id===id)||null;
 }
 function getEntranceById(id){
-    if(typeof DATA.getEntranceById==="function"){
-        return DATA.getEntranceById(id);
-    }
-    return entrances.find(entrance=>entrance.id===id)||null;
+    return typeof DATA.getEntranceById==="function"
+        ?DATA.getEntranceById(id)
+        :entrances.find(item=>item.id===id)||null;
 }
-function getBuildingModels(buildingId){
-    if(typeof DATA.getBuildingModels==="function"){
-        return DATA.getBuildingModels(buildingId);
-    }
-    return getBuildingById(buildingId)?.models||[];
+function getBuildingModels(id){
+    return typeof DATA.getBuildingModels==="function"
+        ?DATA.getBuildingModels(id)
+        :getBuildingById(id)?.models||[];
 }
 function getModelVariant(buildingId,modelId){
-    if(typeof DATA.getModelVariant==="function"){
-        return DATA.getModelVariant(buildingId,modelId);
-    }
-    return getBuildingModels(buildingId)
-        .find(model=>model.id===modelId)||null;
+    return typeof DATA.getModelVariant==="function"
+        ?DATA.getModelVariant(buildingId,modelId)
+        :getBuildingModels(buildingId).find(item=>item.id===modelId)||null;
 }
 function getDefaultModelVariant(buildingId){
     if(typeof DATA.getDefaultModelVariant==="function"){
@@ -115,7 +103,7 @@ function getDefaultModelVariant(buildingId){
     }
     const building=getBuildingById(buildingId);
     if(!building)return null;
-    return getModelVariant(building.id,building.defaultModel)
+    return getModelVariant(buildingId,building.defaultModel)
         ||building.models?.[0]||null;
 }
 function getNavigationEntrance(location){
@@ -131,7 +119,7 @@ function getNavigationEntrance(location){
 }
 
 /* CACHE */
-const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r5-directory";
+const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r7-webar";
 const PRIORITY_MODELS=[
     "./assets/models/gedung_biro_outdoor.glb",
     "./assets/models/gedung_perkuliahan_outdoor.glb",
@@ -139,24 +127,22 @@ const PRIORITY_MODELS=[
     "./assets/models/gedung_biro_indoor.glb",
     "./assets/models/gedung_perkuliahan_indoor.glb"
 ];
-
 async function registerServiceWorker(){
     if(!("serviceWorker" in navigator))return;
     try{
         await navigator.serviceWorker.register(
-            "./sw.js?v=6-webar",{scope:"./"}
+            "./sw.js?v=7-webar",{scope:"./"}
         );
         await navigator.serviceWorker.ready;
     }catch(error){
-        console.warn("Service Worker:",error);
+        console.warn("Service worker:",error);
     }
 }
 async function cacheModel(url){
     if(!url||!("caches" in window))return false;
     try{
         const cache=await caches.open(MODEL_CACHE_NAME);
-        const existing=await cache.match(url,{ignoreSearch:true});
-        if(existing)return true;
+        if(await cache.match(url,{ignoreSearch:true}))return true;
         const response=await fetch(url,{cache:"force-cache"});
         if(!response.ok)return false;
         await cache.put(url,response.clone());
@@ -179,7 +165,7 @@ function preloadBuildingModels(building){
     building.models.forEach(model=>cacheModel(model.src));
 }
 
-/* DATABASE LOKASI */
+/* LOKASI */
 const locations=[];
 buildings.forEach(building=>{
     locations.push({
@@ -203,16 +189,12 @@ rooms.forEach(room=>{
         name:room.name,
         buildingId:room.buildingId,
         floor:room.floor,
-        parent:building?building.name:"Fakultas Teknik UISU",
+        parent:building?.name||"Fakultas Teknik UISU",
+        description:room.description||"",
         navigationEntranceId:room.navigationEntranceId,
         units:Array.isArray(room.units)?room.units:[],
         tendik:Array.isArray(room.tendik)?room.tendik:[],
-        modelMarker:room.modelMarker||null,
-        description:room.description||(
-            room.name+" berada di "+
-            (building?building.name:"Fakultas Teknik UISU")+
-            (room.floor?", lantai "+room.floor:"")+"."
-        )
+        modelMarker:room.modelMarker||null
     });
 });
 people.forEach(person=>{
@@ -220,33 +202,24 @@ people.forEach(person=>{
 });
 
 /* HALAMAN */
-function updateHeaderActive(pageName){
+function updateHeaderActive(page){
     all(".header-link").forEach(button=>{
-        button.classList.remove("active");
+        button.classList.toggle("active",button.dataset.page===page);
     });
-    document.querySelector(
-        `.header-link[data-page="${pageName}"]`
-    )?.classList.add("active");
 }
 function showPage(pageName,pushHistory=true){
     if(!NAVIGATION_ENABLED&&
-        (pageName==="navigation"||pageName==="navigationActive")){
-        return;
-    }
+       (pageName==="navigation"||pageName==="navigationActive"))return;
     const page=byId(pageName+"Page");
     if(!page)return;
-
-    if(pushHistory&&state.currentPage&&
-        state.currentPage!==pageName){
+    if(pushHistory&&state.currentPage!==pageName){
         state.pageHistory.push(state.currentPage);
     }
-
     all(".page").forEach(item=>item.classList.remove("active"));
     page.classList.add("active");
     state.currentPage=pageName;
     updateHeaderActive(pageName);
     closeDrawer();
-
     if(pageName!=="navigationActive"){
         window.scrollTo({top:0,behavior:"auto"});
     }
@@ -255,7 +228,8 @@ function showPage(pageName,pushHistory=true){
 function goBack(){
     stopGpsTracking();
     const previous=state.pageHistory.length
-        ?state.pageHistory.pop():"home";
+        ?state.pageHistory.pop()
+        :"home";
     showPage(previous,false);
 }
 all("[data-back]").forEach(button=>{
@@ -287,18 +261,16 @@ on("hamburgerButton","click",openDrawer);
 on("closeDrawer","click",closeDrawer);
 on("drawerOverlay","click",closeDrawer);
 
-/* HERO */
+/* SLIDER */
 const slides=all(".hero-slide");
 function showSlide(index){
     if(!slides.length)return;
-    if(index<0)index=slides.length-1;
-    if(index>=slides.length)index=0;
-    state.currentSlide=index;
+    state.currentSlide=(index+slides.length)%slides.length;
     slides.forEach((slide,i)=>{
-        slide.classList.toggle("active",i===index);
+        slide.classList.toggle("active",i===state.currentSlide);
     });
     all(".slider-dot").forEach((dot,i)=>{
-        dot.classList.toggle("active",i===index);
+        dot.classList.toggle("active",i===state.currentSlide);
     });
 }
 on("prevSlide","click",()=>showSlide(state.currentSlide-1));
@@ -309,6 +281,7 @@ all(".slider-dot").forEach(dot=>{
     });
 });
 
+/* MODEL BERANDA */
 const landingModels=[
     {name:"Biro Fakultas Teknik UISU",viewer:byId("landingModel0")},
     {name:"Gedung Perkuliahan Fakultas Teknik UISU",viewer:byId("landingModel1")},
@@ -316,21 +289,27 @@ const landingModels=[
 ];
 function showLandingModel(index){
     if(!landingModels.length)return;
-    if(index<0)index=landingModels.length-1;
-    if(index>=landingModels.length)index=0;
-    state.landingModelIndex=index;
+    state.landingModelIndex=
+        (index+landingModels.length)%landingModels.length;
     landingModels.forEach((item,i)=>{
-        item.viewer?.classList.toggle("active",i===index);
+        item.viewer?.classList.toggle(
+            "active",i===state.landingModelIndex
+        );
     });
-    setText("landingModelName",landingModels[index].name);
-    setText("landingModelCounter",
-        `${index+1} / ${landingModels.length}`);
+    setText(
+        "landingModelName",
+        landingModels[state.landingModelIndex].name
+    );
+    setText(
+        "landingModelCounter",
+        `${state.landingModelIndex+1} / ${landingModels.length}`
+    );
 }
 on("landingNextModel","click",()=>{
     showLandingModel(state.landingModelIndex+1);
 });
 
-/* WARNA PROGRAM STUDI */
+/* WARNA UNIT */
 const UNIT_CLASS={
     "Teknik Informatika":"room-unit-informatika",
     "Teknik Mesin":"room-unit-mesin",
@@ -339,41 +318,38 @@ const UNIT_CLASS={
     "Teknik Elektro":"room-unit-elektro",
     "Fakultas Teknik":"room-unit-fakultas"
 };
-function escapeHtml(value){
-    return String(value??"")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-}
 function renderUnitMarkup(units){
     if(!Array.isArray(units)||!units.length)return "";
     const content=units.map((unit,index)=>{
-        const className=UNIT_CLASS[unit]||"room-unit-fakultas";
-        const comma=index<units.length-1
-            ?'<span class="room-unit-punctuation">, </span>':"";
-        return `<span class="room-unit ${className}">${escapeHtml(unit)}</span>${comma}`;
+        const name=UNIT_CLASS[unit]||"room-unit-fakultas";
+        const separator=index<units.length-1
+            ?'<span class="room-unit-punctuation">, </span>'
+            :"";
+        return `<span class="room-unit ${name}">${escapeHtml(unit)}</span>${separator}`;
     }).join("");
-    return `<span class="room-unit-group"><span class="room-unit-punctuation">(</span>${content}<span class="room-unit-punctuation">)</span></span>`;
+    return `<span class="room-unit-group">
+        <span class="room-unit-punctuation">(</span>
+        ${content}
+        <span class="room-unit-punctuation">)</span>
+    </span>`;
 }
 
 /* PENCARIAN */
-function normalize(value){
-    return String(value||"").toLowerCase().trim();
+function normalize(text){
+    return String(text||"").toLowerCase().trim();
 }
 function searchLocations(value){
-    const query=normalize(value);
-    if(!query)return [];
-    return locations.filter(location=>{
-        return normalize(
-            location.name+" "+
-            (location.units||[]).join(" ")+" "+
-            (location.parent||"")
-        ).includes(query);
-    }).slice(0,40);
+    const search=normalize(value);
+    if(!search)return [];
+    return locations.filter(item=>
+        normalize(
+            item.name+" "+
+            (item.units||[]).join(" ")+" "+
+            (item.parent||"")
+        ).includes(search)
+    ).slice(0,40);
 }
-function renderSearchResults(results,container,onSelect){
+function renderSearchResults(results,container,callback){
     if(!container)return;
     container.innerHTML="";
     if(!results.length){
@@ -385,51 +361,48 @@ function renderSearchResults(results,container,onSelect){
         const button=document.createElement("button");
         button.type="button";
         button.className="search-result";
-        let typeText="Ruangan";
-        if(location.type==="building")typeText="Gedung";
-        else if(location.type==="person")typeText="Civitas";
+        const type=location.type==="building"
+            ?"Gedung"
+            :location.type==="person"?"Civitas":"Ruangan";
         button.innerHTML=`
             <span>
                 <strong class="search-result-title">
                     <span>${escapeHtml(location.name)}</span>
                     ${renderUnitMarkup(location.units)}
                 </strong>
-                <small>${location.parent||"Fakultas Teknik UISU"}${location.floor?" • Lantai "+location.floor:""}</small>
+                <small>${escapeHtml(location.parent||"Fakultas Teknik UISU")}
+                ${location.floor?" • Lantai "+location.floor:""}</small>
             </span>
-            <span class="search-type">${typeText}</span>
+            <span class="search-type">${type}</span>
         `;
-        button.addEventListener("click",()=>onSelect(location));
+        button.addEventListener("click",()=>callback(location));
         container.appendChild(button);
     });
 }
-
-const globalSearch=byId("globalSearch");
-if(globalSearch){
-    globalSearch.addEventListener("input",event=>{
-        const value=event.target.value;
-        if(!value.trim()){
+on("globalSearch","input",event=>{
+    const value=event.target.value;
+    if(!value.trim()){
+        hide("globalSearchResults");
+        return;
+    }
+    renderSearchResults(
+        searchLocations(value),
+        byId("globalSearchResults"),
+        location=>{
+            state.globalSelection=location;
+            setText("globalSelectedName",location.name);
+            byId("globalSearch").value=location.name;
             hide("globalSearchResults");
-            return;
+            show("globalSelected");
         }
-        renderSearchResults(
-            searchLocations(value),
-            byId("globalSearchResults"),
-            location=>{
-                state.globalSelection=location;
-                globalSearch.value=location.name;
-                setText("globalSelectedName",location.name);
-                hide("globalSearchResults");
-                show("globalSelected");
-            }
-        );
-        show("globalSearchResults");
-    });
-}
+    );
+    show("globalSearchResults");
+});
 on("clearGlobalSearch","click",()=>{
-    if(globalSearch)globalSearch.value="";
+    byId("globalSearch").value="";
     state.globalSelection=null;
-    hide("globalSelected");
     hide("globalSearchResults");
+    hide("globalSelected");
 });
 
 /* INFORMASI */
@@ -437,16 +410,17 @@ function openInfo(location){
     if(!location)return;
     state.infoLocation=location;
     setText("infoTitle",location.name);
-    const infoUnits=byId("infoUnits");
-    if(infoUnits){
-        infoUnits.innerHTML=renderUnitMarkup(location.units);
-        infoUnits.classList.toggle(
-            "hidden",
-            !Array.isArray(location.units)||!location.units.length
+    const units=byId("infoUnits");
+    if(units){
+        units.innerHTML=renderUnitMarkup(location.units);
+        units.classList.toggle(
+            "hidden",!Array.isArray(location.units)||!location.units.length
         );
     }
-    setText("infoDescription",
-        location.description||"Informasi belum tersedia.");
+    setText(
+        "infoDescription",
+        location.description||"Informasi belum tersedia."
+    );
     show("infoModal");
 }
 function closeInfo(){hide("infoModal");}
@@ -456,18 +430,14 @@ on("globalInfoButton","click",()=>{
     openInfo(state.globalSelection);
 });
 on("globalNavButton","click",()=>{
-    if(state.globalSelection){
-        openNavigationWithDestination(state.globalSelection);
-    }
+    openNavigationWithDestination(state.globalSelection);
 });
 
 /* TENDIK */
 function normalizeWhatsappNumber(phone){
     let digits=String(phone||"").replace(/\D/g,"");
     if(!digits)return "";
-    if(digits.startsWith("0")){
-        digits="62"+digits.slice(1);
-    }
+    if(digits.startsWith("0"))digits="62"+digits.slice(1);
     return digits;
 }
 function whatsappUrl(phone){
@@ -475,12 +445,11 @@ function whatsappUrl(phone){
     return number?`https://wa.me/${number}`:"";
 }
 function openTendik(location){
-    const isBiroRoom=location?.buildingId==="biro-ft";
+    const isBiro=location?.buildingId==="biro-ft";
     const isLibrary=location?.id==="perpustakaan-ft";
     const contacts=Array.isArray(location?.tendik)
         ?location.tendik:[];
-    if((!isBiroRoom&&!isLibrary)||!contacts.length)return;
-
+    if((!isBiro&&!isLibrary)||!contacts.length)return;
     setText("tendikRoomTitle",location.name);
     hide("tendikRoomParent");
 
@@ -491,42 +460,40 @@ function openTendik(location){
     contacts.forEach(contact=>{
         const card=document.createElement("article");
         card.className="tendik-card";
-
-        const jabatan=contact.jabatan?.trim()||"-";
-        const name=contact.name?.trim()||"-";
-        const phone=contact.phone?.trim()||"-";
-        const photo=contact.photo?.trim()||"";
-        const whatsapp=phone!=="-"?whatsappUrl(phone):"";
+        const jabatan=String(contact.jabatan||"-").trim()||"-";
+        const name=String(contact.name||"-").trim()||"-";
+        const phone=String(contact.phone||"-").trim()||"-";
+        const photo=String(contact.photo||"").trim();
+        const wa=phone!=="-"?whatsappUrl(phone):"";
 
         const photoMarkup=photo
             ?`<div class="tendik-photo-wrap">
                 <img class="tendik-photo"
                      src="${escapeHtml(photo)}"
                      alt="Foto ${escapeHtml(name)}"
-                     loading="lazy" decoding="async"
+                     loading="lazy"
+                     decoding="async"
                      onerror="this.parentNode.classList.add('tendik-photo-empty');this.remove()">
               </div>`
-            :`<div class="tendik-photo-wrap tendik-photo-empty"
-                   aria-label="Foto tidak tersedia">-</div>`;
+            :`<div class="tendik-photo-wrap tendik-photo-empty">-</div>`;
 
         card.innerHTML=`
             <p class="tendik-jabatan">${escapeHtml(jabatan)}</p>
             ${photoMarkup}
             <h3 class="tendik-name">${escapeHtml(name)}</h3>
-            ${whatsapp
+            ${wa
                 ?`<a class="tendik-whatsapp"
-                     href="${whatsapp}"
+                     href="${wa}"
                      target="_blank"
                      rel="noopener noreferrer"
                      aria-label="WhatsApp ${escapeHtml(name)}">
                     <span class="tendik-whatsapp-label">KONTAK (WhatsApp)</span>
                     <strong>${escapeHtml(phone)}</strong>
-                   </a>`
-                :`<div class="tendik-whatsapp tendik-contact-empty"
-                       aria-label="Kontak kosong">
+                  </a>`
+                :`<div class="tendik-whatsapp tendik-contact-empty">
                     <span class="tendik-whatsapp-label">KONTAK</span>
                     <strong>-</strong>
-                   </div>`
+                  </div>`
             }
         `;
         list.appendChild(card);
@@ -537,21 +504,19 @@ function closeTendik(){hide("tendikModal");}
 on("closeTendikModal","click",closeTendik);
 on("tendikBackdrop","click",closeTendik);
 
-/* SELECTOR MODEL */
+/* PILIHAN GEDUNG */
 function populateBuildingSelect(select){
     if(!select)return;
     select.innerHTML=
         '<option value="">-- Pilih Gedung --</option>';
-    buildings.slice()
-        .sort((a,b)=>
-            (a.modelMenuOrder??99)-(b.modelMenuOrder??99)
-        )
-        .forEach(building=>{
-            const option=document.createElement("option");
-            option.value=building.id;
-            option.textContent=building.modelMenuName||building.name;
-            select.appendChild(option);
-        });
+    buildings.slice().sort((a,b)=>
+        (a.modelMenuOrder??99)-(b.modelMenuOrder??99)
+    ).forEach(building=>{
+        const option=document.createElement("option");
+        option.value=building.id;
+        option.textContent=building.modelMenuName||building.name;
+        select.appendChild(option);
+    });
 }
 const viewerBuildingSelect=byId("viewerBuildingSelect");
 const arBuildingSelect=byId("arBuildingSelect");
@@ -564,10 +529,8 @@ function renderModelSwitch({
     const container=byId(containerId);
     const badge=byId(singleBadgeId);
     if(!container||!badge||!building)return;
-
     const models=building.models||[];
     container.innerHTML="";
-
     if(models.length<=1){
         hide(containerId);
         if(models[0]){
@@ -578,7 +541,6 @@ function renderModelSwitch({
         }
         return;
     }
-
     hide(singleBadgeId);
     show(containerId);
     models.forEach(model=>{
@@ -594,7 +556,7 @@ function renderModelSwitch({
     });
 }
 
-/* VIEWER 3D */
+/* 3D VIEWER */
 const main3DViewer=byId("main3DViewer");
 let current3DModel={buildingId:null,modelId:null,src:null};
 
@@ -607,28 +569,21 @@ function updateViewerText(building,model){
 function setViewerLoading(building,model){
     updateViewerText(building,model);
     setText("viewerLoadStatus","MEMUAT MODEL 3D...");
-    const dot=byId("viewerLoadingDot");
-    if(dot)dot.className="loading-dot loading";
+    byId("viewerLoadingDot").className="loading-dot loading";
     show("viewerLoadingOverlay");
     hide("viewerUnavailable");
 }
 function setViewerReady(building,model){
     updateViewerText(building,model);
     setText("viewerLoadStatus","MODEL 3D SIAP");
-    const dot=byId("viewerLoadingDot");
-    if(dot)dot.className="loading-dot ready";
+    byId("viewerLoadingDot").className="loading-dot ready";
     hide("viewerLoadingOverlay");
     hide("viewerUnavailable");
 }
 function setViewerUnavailable(building,model){
-    const title=model.viewerTitle||building.name;
-    setText("viewerTitle",title);
-    setText("viewerCurrentModelName",title+" - "+model.name);
-    setText("viewerPreloadDescription",
-        "Model 3D sedang dalam tahap penyelesaian");
+    updateViewerText(building,model);
     setText("viewerLoadStatus","MODEL BELUM TERSEDIA");
-    const dot=byId("viewerLoadingDot");
-    if(dot)dot.className="loading-dot error";
+    byId("viewerLoadingDot").className="loading-dot error";
     hide("viewerLoadingOverlay");
     show("viewerUnavailable");
 }
@@ -644,23 +599,19 @@ function applyModelDefaultCamera(model,jump=true){
         main3DViewer.jumpCameraToGoal();
     }
 }
-function reset3DCamera(){
-    if(!main3DViewer)return;
+on("resetCamera","click",()=>{
     const model=getModelVariant(
-        current3DModel.buildingId,current3DModel.modelId
+        current3DModel.buildingId,
+        current3DModel.modelId
     );
     if(model)applyModelDefaultCamera(model,true);
-}
-on("resetCamera","click",reset3DCamera);
-
+});
 function load3DModel(building,model){
     if(!building||!model||!main3DViewer)return;
     state.viewerBuildingId=building.id;
     state.viewerModelId=model.id;
     current3DModel={
-        buildingId:building.id,
-        modelId:model.id,
-        src:model.src
+        buildingId:building.id,modelId:model.id,src:model.src
     };
     applyModelDefaultCamera(model,true);
     renderModelSwitch({
@@ -668,54 +619,44 @@ function load3DModel(building,model){
         activeModelId:model.id,
         containerId:"viewerModelSwitch",
         singleBadgeId:"viewerSingleModeBadge",
-        onChange:nextModelId=>{
-            const next=getModelVariant(building.id,nextModelId);
+        onChange:modelId=>{
+            const next=getModelVariant(building.id,modelId);
             if(next)load3DModel(building,next);
         }
     });
     setViewerLoading(building,model);
     cacheModel(model.src);
-    const currentSrc=main3DViewer.getAttribute("src");
-    if(currentSrc!==model.src){
+    if(main3DViewer.getAttribute("src")!==model.src){
         main3DViewer.setAttribute("src",model.src);
     }else{
         setViewerReady(building,model);
-        applyModelDefaultCamera(model,true);
     }
     applyDestinationMarker();
 }
-if(main3DViewer){
-    main3DViewer.addEventListener("load",()=>{
-        const building=getBuildingById(current3DModel.buildingId);
-        const model=getModelVariant(
-            current3DModel.buildingId,current3DModel.modelId
-        );
-        if(building&&model){
-            setViewerReady(building,model);
-            applyModelDefaultCamera(model,true);
-        }
-    });
-    main3DViewer.addEventListener("error",()=>{
-        const building=getBuildingById(current3DModel.buildingId);
-        const model=getModelVariant(
-            current3DModel.buildingId,current3DModel.modelId
-        );
-        if(building&&model)setViewerUnavailable(building,model);
-    });
-}
+main3DViewer?.addEventListener("load",()=>{
+    const building=getBuildingById(current3DModel.buildingId);
+    const model=getModelVariant(
+        current3DModel.buildingId,current3DModel.modelId
+    );
+    if(building&&model){
+        setViewerReady(building,model);
+        applyModelDefaultCamera(model,true);
+    }
+});
+main3DViewer?.addEventListener("error",()=>{
+    const building=getBuildingById(current3DModel.buildingId);
+    const model=getModelVariant(
+        current3DModel.buildingId,current3DModel.modelId
+    );
+    if(building&&model)setViewerUnavailable(building,model);
+});
 function prepareViewerBuilding(
     buildingId,preferredModelId=null,scroll=true
 ){
     const building=getBuildingById(buildingId);
-    if(!building){
-        toast("Gedung tidak ditemukan.");
-        return;
-    }
+    if(!building){toast("Gedung tidak ditemukan.");return;}
     const models=building.models||[];
-    if(!models.length){
-        toast("Model belum terdaftar.");
-        return;
-    }
+    if(!models.length){toast("Model belum tersedia.");return;}
     preloadBuildingModels(building);
     show("viewerCard");
     const model=getModelVariant(building.id,preferredModelId)
@@ -731,42 +672,43 @@ function prepareViewerBuilding(
     }
 }
 on("show3DModel","click",()=>{
-    const buildingId=viewerBuildingSelect?.value;
-    if(!buildingId){
+    const id=viewerBuildingSelect?.value;
+    if(!id){
         setText("viewerMessage","Pilih gedung terlebih dahulu.");
         return;
     }
     setText("viewerMessage","");
     state.pending3DMarker=null;
-    prepareViewerBuilding(buildingId,null,true);
+    prepareViewerBuilding(id);
 });
-function hideDestinationHotspot(){
-    hide("destination3DHotspot");
-}
 function applyDestinationMarker(){
-    hideDestinationHotspot();
-    if(!state.pending3DMarker||!main3DViewer)return;
+    hide("destination3DHotspot");
+    if(!state.pending3DMarker)return;
     const marker=state.pending3DMarker.marker;
-    const hotspot=byId("destination3DHotspot");
-    if(!hotspot)return;
-    hotspot.dataset.position=
+    const element=byId("destination3DHotspot");
+    if(!element)return;
+    element.dataset.position=
         `${marker.x}m ${marker.y}m ${marker.z}m`;
     setText("destination3DLabel",state.pending3DMarker.label);
     show("destination3DHotspot");
 }
 
-/* AR SELECTOR */
+/* AR PREVIEW - INDOOR / OUTDOOR */
 const mainARViewer=byId("mainARViewer");
+const launchARCamera=byId("launchARCamera");
+let arPreviewLoaded=false;
+
 function setARLoading(building,model){
     const title=model.viewerTitle||building.name;
     setText("arViewerTitle",title);
     setText("arCurrentModelName",title+" - "+model.name);
     setText("arPreloadDescription",model.viewerDescription);
     setText("arLoadStatus","MEMUAT MODEL AR...");
-    const dot=byId("arLoadingDot");
-    if(dot)dot.className="loading-dot loading";
+    byId("arLoadingDot").className="loading-dot loading";
     show("arLoadingOverlay");
     hide("arUnavailable");
+    arPreviewLoaded=false;
+    if(launchARCamera)launchARCamera.disabled=true;
 }
 function setARReady(building,model){
     const title=model.viewerTitle||building.name;
@@ -774,87 +716,109 @@ function setARReady(building,model){
     setText("arCurrentModelName",title+" - "+model.name);
     setText("arPreloadDescription",model.viewerDescription);
     setText("arLoadStatus","MODEL AR SIAP");
-    const dot=byId("arLoadingDot");
-    if(dot)dot.className="loading-dot ready";
+    byId("arLoadingDot").className="loading-dot ready";
     hide("arLoadingOverlay");
     hide("arUnavailable");
+    arPreviewLoaded=true;
+    if(launchARCamera)launchARCamera.disabled=false;
 }
 function setARUnavailable(building,model){
     const title=model.viewerTitle||building.name;
     setText("arViewerTitle",title);
     setText("arCurrentModelName",title+" - "+model.name);
-    setText("arPreloadDescription",
-        "Model 3D sedang dalam tahap penyelesaian");
     setText("arLoadStatus","MODEL BELUM TERSEDIA");
-    const dot=byId("arLoadingDot");
-    if(dot)dot.className="loading-dot error";
+    byId("arLoadingDot").className="loading-dot error";
     hide("arLoadingOverlay");
     show("arUnavailable");
+    arPreviewLoaded=false;
+    if(launchARCamera)launchARCamera.disabled=true;
 }
 function loadARModel(buildingId,modelId){
     const building=getBuildingById(buildingId);
     if(!building)return;
-    const model=getModelVariant(building.id,modelId)
-        ||getDefaultModelVariant(building.id);
+    const model=getModelVariant(buildingId,modelId)
+        ||getDefaultModelVariant(buildingId);
     if(!model)return;
 
-    state.arBuildingId=building.id;
+    state.arBuildingId=buildingId;
     state.arModelId=model.id;
     preloadBuildingModels(building);
     show("arViewerCard");
+
     renderModelSwitch({
         building,
         activeModelId:model.id,
         containerId:"arModelSwitch",
         singleBadgeId:"arSingleModeBadge",
-        onChange:nextModelId=>loadARModel(building.id,nextModelId)
+        onChange:id=>loadARModel(building.id,id)
     });
+
     setARLoading(building,model);
-    if(mainARViewer)mainARViewer.removeAttribute("src");
-    setARReady(building,model);
+    if(mainARViewer){
+        if(mainARViewer.getAttribute("src")===model.src){
+            if(mainARViewer.loaded){
+                setARReady(building,model);
+            }
+        }else{
+            mainARViewer.setAttribute("src",model.src);
+        }
+    }
 }
-if(mainARViewer){
-    mainARViewer.addEventListener("load",()=>{
-        const building=getBuildingById(state.arBuildingId);
-        const model=getModelVariant(
-            state.arBuildingId,state.arModelId
-        );
-        if(building&&model)setARReady(building,model);
-    });
-    mainARViewer.addEventListener("error",()=>{
-        const building=getBuildingById(state.arBuildingId);
-        const model=getModelVariant(
-            state.arBuildingId,state.arModelId
-        );
-        if(building&&model)setARUnavailable(building,model);
-    });
-}
+mainARViewer?.addEventListener("load",()=>{
+    const building=getBuildingById(state.arBuildingId);
+    const model=getModelVariant(
+        state.arBuildingId,state.arModelId
+    );
+    if(building&&model)setARReady(building,model);
+});
+mainARViewer?.addEventListener("error",()=>{
+    const building=getBuildingById(state.arBuildingId);
+    const model=getModelVariant(
+        state.arBuildingId,state.arModelId
+    );
+    if(building&&model)setARUnavailable(building,model);
+});
 on("prepareMainAR","click",()=>{
     const buildingId=arBuildingSelect?.value;
     if(!buildingId){
         setText("arMessage","Pilih gedung terlebih dahulu.");
         return;
     }
-    const model=getModelVariant(buildingId,"outdoor")
-        ||getDefaultModelVariant(buildingId);
-    if(!model)return;
     setText("arMessage","");
+    const model=getDefaultModelVariant(buildingId);
+    if(!model)return;
     loadARModel(buildingId,model.id);
+    setTimeout(()=>{
+        byId("arViewerCard")?.scrollIntoView({
+            behavior:"smooth",block:"start"
+        });
+    },60);
+});
+on("launchARCamera","click",()=>{
+    if(!arPreviewLoaded){
+        setText("arMessage","Tunggu model selesai dimuat.");
+        return;
+    }
+    const building=getBuildingById(state.arBuildingId);
+    const model=getModelVariant(
+        state.arBuildingId,state.arModelId
+    );
+    if(!building||!model)return;
     window.FT_WEBAR?.start(
         model.src,
-        model.viewerTitle||getBuildingById(buildingId)?.name||"Gedung"
+        model.viewerTitle||building.name
     );
 });
 
 /* DIREKTORI */
 function locationForBuilding(building){
-    return locations.find(location=>
-        location.type==="building"&&location.id===building.id
+    return locations.find(item=>
+        item.type==="building"&&item.id===building.id
     )||null;
 }
 function locationForRoom(room){
-    return locations.find(location=>
-        location.type==="room"&&location.id===room.id
+    return locations.find(item=>
+        item.type==="room"&&item.id===room.id
     )||null;
 }
 function closeDirectoryRoomItem(item){
@@ -862,7 +826,8 @@ function closeDirectoryRoomItem(item){
     item.classList.remove("open");
     item.querySelector(".room-toggle-button")
         ?.setAttribute("aria-expanded","false");
-    item.querySelector(".room-actions")?.classList.add("hidden");
+    item.querySelector(".room-actions")
+        ?.classList.add("hidden");
 }
 function closeDirectoryBuildingCard(article){
     if(!article)return;
@@ -872,33 +837,31 @@ function closeDirectoryBuildingCard(article){
     article.querySelectorAll(".room-item.open")
         .forEach(closeDirectoryRoomItem);
 }
-function closeOtherDirectoryRooms(currentItem){
+function closeOtherDirectoryRooms(current){
     document.querySelectorAll(".directory .room-item.open")
         .forEach(item=>{
-            if(item!==currentItem)closeDirectoryRoomItem(item);
+            if(item!==current)closeDirectoryRoomItem(item);
         });
 }
-function closeOtherDirectoryBuildings(currentArticle){
+function closeOtherDirectoryBuildings(current){
     document.querySelectorAll(".directory .building-card.open")
-        .forEach(article=>{
-            if(article!==currentArticle){
-                closeDirectoryBuildingCard(article);
-            }
+        .forEach(item=>{
+            if(item!==current)closeDirectoryBuildingCard(item);
         });
 }
 function renderRoomList(roomList,container){
     if(!container)return;
     container.innerHTML="";
     if(!roomList.length)return;
-
     const grid=document.createElement("div");
     grid.className="room-grid";
-
     roomList.forEach(room=>{
         const location=locationForRoom(room);
         const item=document.createElement("div");
-        const actionsId=`directory-room-actions-${room.id}`;
         item.className="room-item";
+        const actionsId=`directory-room-actions-${room.id}`;
+        const hasTendik=room.buildingId==="biro-ft"&&
+            Array.isArray(room.tendik)&&room.tendik.length>0;
 
         item.innerHTML=`
             <button type="button"
@@ -909,28 +872,22 @@ function renderRoomList(roomList,container){
                     <span class="room-name"></span>
                     <span class="room-unit-slot"></span>
                 </span>
-                <span class="room-chevron"
-                      aria-hidden="true">›</span>
+                <span class="room-chevron" aria-hidden="true">›</span>
             </button>
             <div id="${actionsId}" class="room-actions hidden">
                 <button type="button" class="room-info">Informasi</button>
                 <button type="button" class="room-nav">Petunjuk Arah</button>
-                ${room.buildingId==="biro-ft"
-                    &&Array.isArray(room.tendik)
-                    &&room.tendik.length
+                ${hasTendik
                     ?'<button type="button" class="room-tendik">Tendik</button>'
                     :""}
             </div>
         `;
         item.querySelector(".room-name").textContent=room.name;
-        const unitSlot=item.querySelector(".room-unit-slot");
-        if(unitSlot){
-            unitSlot.innerHTML=renderUnitMarkup(room.units);
-        }
+        item.querySelector(".room-unit-slot").innerHTML=
+            renderUnitMarkup(room.units);
 
         const toggle=item.querySelector(".room-toggle-button");
         const actions=item.querySelector(".room-actions");
-
         toggle.addEventListener("click",()=>{
             const expanded=
                 toggle.getAttribute("aria-expanded")!=="true";
@@ -955,15 +912,14 @@ function renderLaboratory(roomList,container){
     const floorButtons=document.createElement("div");
     floorButtons.className="floor-buttons";
     const roomContainer=document.createElement("div");
-
     [1,2,3].forEach(floor=>{
         const button=document.createElement("button");
         button.type="button";
         button.className="floor-button";
         button.textContent=`Lantai ${floor}`;
         button.addEventListener("click",()=>{
-            Array.from(floorButtons.children).forEach(item=>{
-                item.classList.remove("active");
+            Array.from(floorButtons.children).forEach(element=>{
+                element.classList.remove("active");
             });
             button.classList.add("active");
             renderRoomList(
@@ -981,7 +937,6 @@ function renderDirectory(){
     const container=byId("directoryContainer");
     if(!container)return;
     container.innerHTML="";
-
     buildings.forEach((building,index)=>{
         const buildingRooms=rooms.filter(
             room=>room.buildingId===building.id
@@ -989,13 +944,17 @@ function renderDirectory(){
         const location=locationForBuilding(building);
         const article=document.createElement("article");
         article.className="building-card";
-
         article.innerHTML=`
             <button class="building-button"
-                    type="button" aria-expanded="false"
+                    type="button"
+                    aria-expanded="false"
                     aria-controls="directory-building-content-${building.id}">
-                <span class="building-number">${String(index+1).padStart(2,"0")}</span>
-                <span><strong>${building.name}</strong></span>
+                <span class="building-number">
+                    ${String(index+1).padStart(2,"0")}
+                </span>
+                <span>
+                    <strong>${escapeHtml(building.name)}</strong>
+                </span>
                 <span>›</span>
             </button>
             <div id="directory-building-content-${building.id}"
@@ -1003,17 +962,19 @@ function renderDirectory(){
         `;
         const header=article.querySelector(".building-button");
         const content=article.querySelector(".building-content");
-
         header.addEventListener("click",()=>{
             const expanded=!article.classList.contains("open");
             closeOtherDirectoryBuildings(article);
-            if(!expanded){
-                article.querySelectorAll(".room-item.open")
-                    .forEach(closeDirectoryRoomItem);
-            }
             article.classList.toggle("open",expanded);
-            header.setAttribute("aria-expanded",String(expanded));
+            header.setAttribute(
+                "aria-expanded",String(expanded)
+            );
         });
+
+        const hasLibraryTendik=
+            building.id==="perpustakaan-ft"&&
+            Array.isArray(building.tendik)&&
+            building.tendik.length>0;
 
         const actions=document.createElement("div");
         actions.className="building-actions";
@@ -1022,19 +983,16 @@ function renderDirectory(){
                     type="button">Informasi</button>
             <button class="button button-primary building-nav"
                     type="button">Petunjuk Arah</button>
-            ${building.id==="perpustakaan-ft"
-                &&Array.isArray(building.tendik)
-                &&building.tendik.length
+            ${hasLibraryTendik
                 ?`<button class="button button-primary building-tendik"
-                          type="button">Tendik</button>`
+                           type="button">Tendik</button>`
                 :""}
         `;
         content.appendChild(actions);
-
         actions.querySelector(".building-info")
-            ?.addEventListener("click",()=>openInfo(location));
+            .addEventListener("click",()=>openInfo(location));
         actions.querySelector(".building-nav")
-            ?.addEventListener("click",()=>{
+            .addEventListener("click",()=>{
                 openNavigationWithDestination(location);
             });
         actions.querySelector(".building-tendik")
@@ -1053,14 +1011,12 @@ function renderDirectory(){
     });
 }
 
-/* ENGINE NAVIGASI TETAP DISIMPAN */
-function setStep(stepNumber){
-    const ids=[
-        "stepTarget","stepPosition","stepRoute","stepNavigation"
-    ];
-    ids.forEach((id,index)=>{
-        byId(id)?.classList.toggle("active",index+1<=stepNumber);
-    });
+/* NAVIGATION ENGINE (DIPERTAHANKAN) */
+function setStep(step){
+    ["stepTarget","stepPosition","stepRoute","stepNavigation"]
+        .forEach((id,index)=>{
+            byId(id)?.classList.toggle("active",index+1<=step);
+        });
 }
 function getImageContentBox(container,image){
     if(!container||!image)return null;
@@ -1070,14 +1026,11 @@ function getImageContentBox(container,image){
     const nh=image.naturalHeight||ch;
     if(!cw||!ch||!nw||!nh)return null;
     const scale=Math.min(cw/nw,ch/nh);
-    const width=nw*scale;
-    const height=nh*scale;
+    const width=nw*scale,height=nh*scale;
     return {
         left:(cw-width)/2,
         top:(ch-height)/2,
-        width,height,
-        naturalWidth:nw,
-        naturalHeight:nh
+        width,height
     };
 }
 function fitContainerToImage(container,image){
@@ -1089,15 +1042,38 @@ function fitSvgToImage(svg,container,image){
     if(!svg||!container||!image)return;
     const box=getImageContentBox(container,image);
     if(!box)return;
-    svg.style.inset="auto";
-    svg.style.left=box.left+"px";
-    svg.style.top=box.top+"px";
-    svg.style.width=box.width+"px";
-    svg.style.height=box.height+"px";
-    svg.setAttribute(
-        "viewBox",`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`
-    );
+    Object.assign(svg.style,{
+        inset:"auto",
+        left:box.left+"px",
+        top:box.top+"px",
+        width:box.width+"px",
+        height:box.height+"px"
+    });
+    svg.setAttribute("viewBox",`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
     svg.setAttribute("preserveAspectRatio","none");
+}
+function positionElementOnImage(element,point,container,image){
+    if(!element||!point||!container||!image)return;
+    const box=getImageContentBox(container,image);
+    if(!box)return;
+    element.style.left=
+        box.left+point.x/MAP_WIDTH*box.width+"px";
+    element.style.top=
+        box.top+point.y/MAP_HEIGHT*box.height+"px";
+}
+function positionSelectionMapElement(element,point){
+    positionElementOnImage(
+        element,point,byId("navigationMap"),
+        byId("navigationMapImage")
+    );
+}
+function positionLiveMapElement(element,point){
+    const container=byId("liveMapContent");
+    if(!container)return;
+    positionElementOnImage(
+        element,point,container,
+        container.querySelector(".live-map-background")
+    );
 }
 function syncNavigationMapGeometry(){
     const container=byId("navigationMap");
@@ -1105,8 +1081,7 @@ function syncNavigationMapGeometry(){
     if(!container||!image)return;
     fitContainerToImage(container,image);
     fitSvgToImage(
-        container.querySelector(".route-svg"),
-        container,image
+        container.querySelector(".route-svg"),container,image
     );
     if(state.routeResult){
         positionSelectionMapElement(
@@ -1119,13 +1094,11 @@ function syncNavigationMapGeometry(){
 }
 function syncLiveMapGeometry(){
     const container=byId("liveMapContent");
-    if(!container)return;
-    const image=container.querySelector(".live-map-background");
-    if(!image)return;
+    const image=container?.querySelector(".live-map-background");
+    if(!container||!image)return;
     fitContainerToImage(container,image);
     fitSvgToImage(
-        container.querySelector(".live-route-svg"),
-        container,image
+        container.querySelector(".live-route-svg"),container,image
     );
     if(state.routeResult){
         positionLiveMapElement(
@@ -1141,47 +1114,19 @@ function syncAllMapGeometry(){
     syncNavigationMapGeometry();
     syncLiveMapGeometry();
 }
-function positionElementOnImage(element,point,container,image){
-    if(!element||!point||!container||!image)return;
-    const box=getImageContentBox(container,image);
-    if(!box)return;
-    element.style.left=
-        (box.left+(point.x/MAP_WIDTH)*box.width)+"px";
-    element.style.top=
-        (box.top+(point.y/MAP_HEIGHT)*box.height)+"px";
-}
-function positionSelectionMapElement(element,point){
-    positionElementOnImage(
-        element,point,
-        byId("navigationMap"),
-        byId("navigationMapImage")
-    );
-}
-function positionLiveMapElement(element,point){
-    const container=byId("liveMapContent");
-    if(!container)return;
-    positionElementOnImage(
-        element,point,container,
-        container.querySelector(".live-map-background")
-    );
-}
 function resetNavigation(){
     stopGpsTracking();
     state.destination=null;
     state.clickedPosition=null;
     state.routeResult=null;
-
-    const search=byId("navigationSearch");
-    if(search)search.value="";
+    if(byId("navigationSearch"))byId("navigationSearch").value="";
     byId("activeRoute")?.setAttribute("points","");
-
     [
         "mapSection","selectedDestination","routeFoundBox",
         "userMarker","entranceMarker","resetPosition"
     ].forEach(hide);
     show("mapInstructionArea");
     setStep(1);
-
     const results=byId("navigationSearchResults");
     if(results){
         results.innerHTML=
@@ -1191,30 +1136,26 @@ function resetNavigation(){
 function selectDestination(location){
     if(!location)return;
     state.destination=location;
-    const search=byId("navigationSearch");
-    if(search)search.value=location.name;
-
+    if(byId("navigationSearch")){
+        byId("navigationSearch").value=location.name;
+    }
     setText("selectedDestinationName",location.name);
-    setText("selectedDestinationParent",
-        location.parent||"Fakultas Teknik UISU");
+    setText(
+        "selectedDestinationParent",
+        location.parent||"Fakultas Teknik UISU"
+    );
     show("selectedDestination");
-
-    const results=byId("navigationSearchResults");
-    if(results)results.innerHTML="";
-
-    setText("mapHeadingTitle",
-        `Tap pada denah sesuai posisi Anda sekarang, lalu sistem akan memberikan jalur terdekat menuju ${location.name}.`);
-
+    byId("navigationSearchResults").innerHTML="";
+    setText(
+        "mapHeadingTitle",
+        `Tap pada denah sesuai posisi Anda sekarang, lalu sistem akan memberikan jalur terdekat menuju ${location.name}.`
+    );
     show("mapInstructionArea");
     show("mapSection");
-    [
-        "routeFoundBox","userMarker",
-        "entranceMarker","resetPosition"
-    ].forEach(hide);
-
+    ["routeFoundBox","userMarker","entranceMarker","resetPosition"]
+        .forEach(hide);
     byId("activeRoute")?.setAttribute("points","");
     setStep(2);
-
     setTimeout(()=>{
         syncNavigationMapGeometry();
         byId("mapSection")?.scrollIntoView({
@@ -1222,75 +1163,54 @@ function selectDestination(location){
         });
     },80);
 }
-const navigationSearch=byId("navigationSearch");
-if(navigationSearch){
-    navigationSearch.addEventListener("input",()=>{
-        const value=navigationSearch.value;
-        const container=byId("navigationSearchResults");
-        if(!container)return;
-        if(!value.trim()){
-            container.innerHTML=
-                '<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>';
-            return;
-        }
-        renderSearchResults(
-            searchLocations(value),container,selectDestination
-        );
-    });
-}
+on("navigationSearch","input",event=>{
+    const value=event.target.value;
+    const container=byId("navigationSearchResults");
+    if(!container)return;
+    if(!value.trim()){
+        container.innerHTML=
+            '<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>';
+        return;
+    }
+    renderSearchResults(
+        searchLocations(value),container,selectDestination
+    );
+});
 
-/* DIJKSTRA */
+/* GRAPH DAN DIJKSTRA */
 function pointDistance(a,b){
     return Math.hypot(a.x-b.x,a.y-b.y);
 }
 const graph={};
-Object.keys(mapNodes).forEach(nodeId=>{
-    graph[nodeId]=[];
-});
+Object.keys(mapNodes).forEach(id=>{graph[id]=[];});
 const preparedEdges=mapEdges.map(edge=>{
-    const points=edge.points.map(point=>({
-        x:point[0],y:point[1]
-    }));
+    const points=edge.points.map(p=>({x:p[0],y:p[1]}));
     let length=0;
     const cumulative=[0];
     for(let i=0;i<points.length-1;i++){
         length+=pointDistance(points[i],points[i+1]);
         cumulative.push(length);
     }
-    return {
-        id:edge.id,
-        from:edge.from,
-        to:edge.to,
-        points,length,cumulative
-    };
+    return {...edge,points,length,cumulative};
 });
 const edgeById={};
 preparedEdges.forEach(edge=>{
     edgeById[edge.id]=edge;
-    graph[edge.from].push({
+    graph[edge.from]?.push({
         node:edge.to,edgeId:edge.id,weight:edge.length
     });
-    graph[edge.to].push({
+    graph[edge.to]?.push({
         node:edge.from,edgeId:edge.id,weight:edge.length
     });
 });
-
 function projectPointToSegment(point,a,b){
-    const abX=b.x-a.x;
-    const abY=b.y-a.y;
-    const apX=point.x-a.x;
-    const apY=point.y-a.y;
-    const lengthSquared=abX*abX+abY*abY;
-
-    let t=lengthSquared
-        ?(apX*abX+apY*abY)/lengthSquared
-        :0;
-
-    t=Math.max(0,Math.min(1,t));
-    const projected={
-        x:a.x+abX*t,
-        y:a.y+abY*t
-    };
+    const dx=b.x-a.x,dy=b.y-a.y;
+    const lengthSquared=dx*dx+dy*dy;
+    const t=lengthSquared
+        ?Math.max(0,Math.min(1,
+            ((point.x-a.x)*dx+(point.y-a.y)*dy)/lengthSquared
+        )):0;
+    const projected={x:a.x+dx*t,y:a.y+dy*t};
     return {
         point:projected,
         t,
@@ -1301,17 +1221,13 @@ function snapToRoute(point){
     let best=null;
     preparedEdges.forEach(edge=>{
         for(let i=0;i<edge.points.length-1;i++){
-            const a=edge.points[i];
-            const b=edge.points[i+1];
+            const a=edge.points[i],b=edge.points[i+1];
             const projection=projectPointToSegment(point,a,b);
             const segmentLength=pointDistance(a,b);
-            const along=edge.cumulative[i]+
-                segmentLength*projection.t;
-
+            const along=edge.cumulative[i]+segmentLength*projection.t;
             if(!best||projection.distance<best.distance){
                 best={
-                    edge,
-                    segmentIndex:i,
+                    edge,segmentIndex:i,
                     point:projection.point,
                     distance:projection.distance,
                     along,
@@ -1324,49 +1240,39 @@ function snapToRoute(point){
     return best;
 }
 function dijkstra(start,target){
-    const nodeIds=Object.keys(graph);
-    if(!nodeIds.includes(start)||!nodeIds.includes(target)){
-        return null;
-    }
-
-    const distances={};
-    const previous={};
-    const previousEdge={};
-    nodeIds.forEach(id=>{
-        distances[id]=Infinity;
+    const ids=Object.keys(graph);
+    if(!ids.includes(start)||!ids.includes(target))return null;
+    const distance={},previous={},previousEdge={};
+    ids.forEach(id=>{
+        distance[id]=Infinity;
         previous[id]=null;
         previousEdge[id]=null;
     });
-    distances[start]=0;
-    const unvisited=new Set(nodeIds);
-
-    while(unvisited.size){
-        let current=null;
-        let smallest=Infinity;
-        unvisited.forEach(id=>{
-            if(distances[id]<smallest){
-                smallest=distances[id];
+    distance[start]=0;
+    const remaining=new Set(ids);
+    while(remaining.size){
+        let current=null,minimum=Infinity;
+        remaining.forEach(id=>{
+            if(distance[id]<minimum){
+                minimum=distance[id];
                 current=id;
             }
         });
-        if(current===null||smallest===Infinity)break;
+        if(current===null||minimum===Infinity)break;
         if(current===target)break;
-        unvisited.delete(current);
-
-        graph[current].forEach(connection=>{
-            if(!unvisited.has(connection.node))return;
-            const candidate=distances[current]+connection.weight;
-            if(candidate<distances[connection.node]){
-                distances[connection.node]=candidate;
-                previous[connection.node]=current;
-                previousEdge[connection.node]=connection.edgeId;
+        remaining.delete(current);
+        graph[current].forEach(next=>{
+            if(!remaining.has(next.node))return;
+            const cost=distance[current]+next.weight;
+            if(cost<distance[next.node]){
+                distance[next.node]=cost;
+                previous[next.node]=current;
+                previousEdge[next.node]=next.edgeId;
             }
         });
     }
-    if(distances[target]===Infinity)return null;
-
-    const nodes=[];
-    const edges=[];
+    if(distance[target]===Infinity)return null;
+    const nodes=[],edges=[];
     let cursor=target;
     while(cursor){
         nodes.unshift(cursor);
@@ -1374,17 +1280,11 @@ function dijkstra(start,target){
         edges.unshift(previousEdge[cursor]);
         cursor=previous[cursor];
     }
-    return {
-        distance:distances[target],
-        nodes,edges
-    };
+    return {distance:distance[target],nodes,edges};
 }
 function pointsFromSnapToEndpoint(snap,endpoint){
     const points=snap.edge.points;
-    const output=[{
-        x:snap.point.x,
-        y:snap.point.y
-    }];
+    const output=[{...snap.point}];
     if(endpoint===snap.edge.from){
         output.push(points[snap.segmentIndex]);
         for(let i=snap.segmentIndex-1;i>=0;i--){
@@ -1403,20 +1303,20 @@ function routeNodePolyline(route){
     route.edges.forEach((edgeId,index)=>{
         const edge=edgeById[edgeId];
         if(!edge)return;
-        const fromNode=route.nodes[index];
-        let points=edge.from===fromNode
+        const forward=edge.from===route.nodes[index];
+        let pts=forward
             ?edge.points.slice()
             :edge.points.slice().reverse();
-        if(output.length)points=points.slice(1);
-        output.push(...points);
+        if(output.length)pts=pts.slice(1);
+        output.push(...pts);
     });
     return output;
 }
 function dedupePoints(points){
     const output=[];
     points.forEach(point=>{
-        const previous=output[output.length-1];
-        if(!previous||pointDistance(previous,point)>.5){
+        const last=output[output.length-1];
+        if(!last||pointDistance(last,point)>.5){
             output.push(point);
         }
     });
@@ -1425,20 +1325,13 @@ function dedupePoints(points){
 function buildRoute(clickedPoint){
     if(!state.destination)return null;
     const entrance=getNavigationEntrance(state.destination);
-    if(!entrance){
-        toast("Entrance tujuan belum tersedia.");
-        return null;
-    }
+    if(!entrance)return null;
     const snap=snapToRoute(clickedPoint);
     if(!snap)return null;
-    const fromRoute=dijkstra(
-        snap.edge.from,entrance.nodeId
-    );
-    const toRoute=dijkstra(
-        snap.edge.to,entrance.nodeId
-    );
-    const candidates=[];
 
+    const fromRoute=dijkstra(snap.edge.from,entrance.nodeId);
+    const toRoute=dijkstra(snap.edge.to,entrance.nodeId);
+    const candidates=[];
     if(fromRoute){
         candidates.push({
             endpoint:snap.edge.from,
@@ -1456,154 +1349,124 @@ function buildRoute(clickedPoint){
     if(!candidates.length)return null;
     candidates.sort((a,b)=>a.cost-b.cost);
     const best=candidates[0];
-    const startPart=pointsFromSnapToEndpoint(
-        snap,best.endpoint
-    );
+    const startPart=pointsFromSnapToEndpoint(snap,best.endpoint);
     const graphPart=routeNodePolyline(best.route);
-    const routePoints=dedupePoints(
-        startPart.concat(graphPart).concat([{
-            x:entrance.x,y:entrance.y
-        }])
-    );
     return {
         startSnap:snap,
         entrance,
         graphDistance:best.cost,
-        points:routePoints
+        points:dedupePoints([
+            ...startPart,
+            ...graphPart,
+            {x:entrance.x,y:entrance.y}
+        ])
     };
 }
-
-/* NAVIGASI DENAH */
-const navigationMap=byId("navigationMap");
-if(navigationMap){
-    navigationMap.addEventListener("pointerdown",event=>{
-        if(!state.destination){
-            toast("Pilih tujuan terlebih dahulu.");
-            return;
-        }
-        const image=byId("navigationMapImage");
-        const rect=navigationMap.getBoundingClientRect();
-        const box=getImageContentBox(navigationMap,image);
-        if(!box)return;
-
-        const clickX=event.clientX-rect.left;
-        const clickY=event.clientY-rect.top;
-        if(clickX<box.left||clickX>box.left+box.width||
-           clickY<box.top||clickY>box.top+box.height){
-            return;
-        }
-
-        const clickedPoint={
-            x:((clickX-box.left)/box.width)*MAP_WIDTH,
-            y:((clickY-box.top)/box.height)*MAP_HEIGHT
-        };
-        const route=buildRoute(clickedPoint);
-        if(!route){
-            toast("Rute belum dapat ditemukan.");
-            return;
-        }
-        state.clickedPosition=clickedPoint;
-        state.routeResult=route;
-        byId("activeRoute")?.setAttribute(
-            "points",
-            route.points.map(p=>`${p.x},${p.y}`).join(" ")
-        );
-        positionSelectionMapElement(
-            byId("userMarker"),route.startSnap.point
-        );
-        positionSelectionMapElement(
-            byId("entranceMarker"),route.entrance
-        );
-        show("userMarker");
-        show("entranceMarker");
-        hide("mapInstructionArea");
-        show("routeFoundBox");
-        show("resetPosition");
-        setStep(3);
-    });
-}
+on("navigationMap","pointerdown",event=>{
+    if(!state.destination)return;
+    const map=byId("navigationMap");
+    const image=byId("navigationMapImage");
+    const rect=map.getBoundingClientRect();
+    const box=getImageContentBox(map,image);
+    if(!box)return;
+    const x=event.clientX-rect.left;
+    const y=event.clientY-rect.top;
+    if(x<box.left||x>box.left+box.width||
+       y<box.top||y>box.top+box.height)return;
+    const point={
+        x:(x-box.left)/box.width*MAP_WIDTH,
+        y:(y-box.top)/box.height*MAP_HEIGHT
+    };
+    const route=buildRoute(point);
+    if(!route){
+        toast("Rute belum ditemukan.");
+        return;
+    }
+    state.clickedPosition=point;
+    state.routeResult=route;
+    byId("activeRoute")?.setAttribute(
+        "points",route.points.map(p=>`${p.x},${p.y}`).join(" ")
+    );
+    positionSelectionMapElement(
+        byId("userMarker"),route.startSnap.point
+    );
+    positionSelectionMapElement(
+        byId("entranceMarker"),route.entrance
+    );
+    show("userMarker");
+    show("entranceMarker");
+    hide("mapInstructionArea");
+    show("routeFoundBox");
+    show("resetPosition");
+    setStep(3);
+});
 on("resetPosition","click",()=>{
     state.clickedPosition=null;
     state.routeResult=null;
     byId("activeRoute")?.setAttribute("points","");
-    [
-        "userMarker","entranceMarker",
-        "routeFoundBox","resetPosition"
-    ].forEach(hide);
+    ["userMarker","entranceMarker","routeFoundBox","resetPosition"]
+        .forEach(hide);
     show("mapInstructionArea");
     setStep(2);
 });
 
-/* TURN-BY-TURN */
+/* PETUNJUK RUTE */
 function turnAngle(a,b,c){
-    const ax=b.x-a.x;
-    const ay=b.y-a.y;
-    const bx=c.x-b.x;
-    const by=c.y-b.y;
-    const cross=ax*by-ay*bx;
-    const dot=ax*bx+ay*by;
-    return Math.atan2(cross,dot)*180/Math.PI;
+    const ax=b.x-a.x,ay=b.y-a.y;
+    const bx=c.x-b.x,by=c.y-b.y;
+    return Math.atan2(
+        ax*by-ay*bx,
+        ax*bx+ay*by
+    )*180/Math.PI;
 }
 function simplifyInstructionPoints(points){
-    if(!points||points.length<=2){
-        return points?points.slice():[];
-    }
-    const output=[points[0]];
+    if(!points||points.length<=2)return points?.slice()||[];
+    const result=[points[0]];
     for(let i=1;i<points.length-1;i++){
-        const angle=turnAngle(
+        if(Math.abs(turnAngle(
             points[i-1],points[i],points[i+1]
-        );
-        if(Math.abs(angle)>=28){
-            output.push(points[i]);
+        ))>=28){
+            result.push(points[i]);
         }
     }
-    output.push(points[points.length-1]);
-    return output;
+    result.push(points[points.length-1]);
+    return result;
 }
 function createNavigationInstructions(){
     if(!state.routeResult||!state.destination)return [];
     const points=simplifyInstructionPoints(
         state.routeResult.points
     );
-    const instructions=[{
-        icon:"●",
-        title:"Lokasi Anda saat ini",
-        description:
-            "Mulai dari posisi yang Anda tandai pada denah."
+    const output=[{
+        icon:"●",title:"Lokasi Anda saat ini",
+        description:"Mulai dari posisi yang Anda tandai pada denah."
     }];
-
     for(let i=1;i<points.length-1;i++){
         const angle=turnAngle(
             points[i-1],points[i],points[i+1]
         );
         if(angle>28){
-            instructions.push({
-                icon:"↱",
-                title:"Belok kanan",
-                description:
-                    "Ikuti jalur hingga persimpangan berikutnya."
+            output.push({
+                icon:"↱",title:"Belok kanan",
+                description:"Ikuti jalur hingga persimpangan berikutnya."
             });
         }else if(angle<-28){
-            instructions.push({
-                icon:"↰",
-                title:"Belok kiri",
-                description:
-                    "Ikuti jalur hingga persimpangan berikutnya."
+            output.push({
+                icon:"↰",title:"Belok kiri",
+                description:"Ikuti jalur hingga persimpangan berikutnya."
             });
         }
     }
-    instructions.push({
-        icon:"◎",
-        title:"Entrance tujuan di depan",
+    output.push({
+        icon:"◎",title:"Entrance tujuan di depan",
         description:state.routeResult.entrance.name
     });
-    instructions.push({
-        icon:"✓",
-        title:"Anda sudah tiba",
+    output.push({
+        icon:"✓",title:"Anda sudah tiba",
         description:
             `Anda sudah tiba di entrance menuju ${state.destination.name}.`
     });
-    return instructions;
+    return output;
 }
 function renderLiveBuildingMarkers(){
     const container=byId("liveBuildingMarkers");
@@ -1613,9 +1476,7 @@ function renderLiveBuildingMarkers(){
         if(!building.liveMarker)return;
         const marker=document.createElement("div");
         marker.className="live-building-marker";
-        marker.innerHTML=`
-            <span></span><label>${building.name}</label>
-        `;
+        marker.innerHTML=`<span></span><label>${escapeHtml(building.name)}</label>`;
         container.appendChild(marker);
         positionLiveMapElement(marker,building.liveMarker);
     });
@@ -1624,45 +1485,41 @@ function renderRouteDetail(){
     const container=byId("routeInstructionList");
     if(!container)return;
     container.innerHTML="";
-    state.liveInstructions.forEach(step=>{
-        const item=document.createElement("div");
-        item.className="route-instruction-item";
-        item.innerHTML=`
-            <div class="route-step-icon">${step.icon}</div>
+    state.liveInstructions.forEach(item=>{
+        const row=document.createElement("div");
+        row.className="route-instruction-item";
+        row.innerHTML=`
+            <div class="route-step-icon">${item.icon}</div>
             <div class="route-step-copy">
-                <strong>${step.title}</strong>
-                <span>${step.description}</span>
+                <strong>${escapeHtml(item.title)}</strong>
+                <span>${escapeHtml(item.description)}</span>
             </div>
         `;
-        container.appendChild(item);
+        container.appendChild(row);
     });
 }
 function renderLiveNavigation(){
     if(!state.routeResult||!state.destination)return;
     const route=state.routeResult;
     byId("liveRoute")?.setAttribute(
-        "points",
-        route.points.map(p=>`${p.x},${p.y}`).join(" ")
+        "points",route.points.map(p=>`${p.x},${p.y}`).join(" ")
     );
     syncLiveMapGeometry();
     positionLiveMapElement(
         byId("liveUserMarker"),route.startSnap.point
     );
-    show("liveUserMarker");
     positionLiveMapElement(
         byId("liveDestinationMarker"),route.entrance
     );
+    show("liveUserMarker");
     show("liveDestinationMarker");
-
     setText("liveDestinationMarkerLabel",state.destination.name);
     setText("liveTargetName",state.destination.name);
     setText("liveRouteDestination",state.destination.name);
     setText("liveRouteEntrance",route.entrance.name);
-
     renderLiveBuildingMarkers();
     state.liveInstructions=createNavigationInstructions();
     renderRouteDetail();
-
     const next=state.liveInstructions.find(item=>
         item.title!=="Lokasi Anda saat ini"
     );
@@ -1674,19 +1531,16 @@ function renderLiveNavigation(){
 
 /* GPS */
 function solveAffine(calibration,lat,lon){
-    if(!Array.isArray(calibration)||calibration.length<3)return null;
-    const p1=calibration[0];
-    const p2=calibration[1];
-    const p3=calibration[2];
-
+    if(!Array.isArray(calibration)||calibration.length<3){
+        return null;
+    }
+    const [p1,p2,p3]=calibration;
     const determinant=
         p1.lon*(p2.lat-p3.lat)-
         p1.lat*(p2.lon-p3.lon)+
         (p2.lon*p3.lat-p3.lon*p2.lat);
-
     if(Math.abs(determinant)<1e-12)return null;
-
-    function coefficients(v1,v2,v3){
+    function solve(v1,v2,v3){
         const a=(
             v1*(p2.lat-p3.lat)+
             v2*(p3.lat-p1.lat)+
@@ -1704,8 +1558,8 @@ function solveAffine(calibration,lat,lon){
         )/determinant;
         return {a,b,c};
     }
-    const cx=coefficients(p1.x,p2.x,p3.x);
-    const cy=coefficients(p1.y,p2.y,p3.y);
+    const cx=solve(p1.x,p2.x,p3.x);
+    const cy=solve(p1.y,p2.y,p3.y);
     return {
         x:cx.a*lon+cx.b*lat+cx.c,
         y:cy.a*lon+cy.b*lat+cy.c
@@ -1719,25 +1573,19 @@ function stopGpsTracking(){
 }
 function startGpsTracking(){
     stopGpsTracking();
-    if(mapCalibration.length<3){
-        console.info(
-            "GPS siap. Koordinat kalibrasi belum tersedia."
-        );
-        return;
-    }
+    if(mapCalibration.length<3)return;
     if(!navigator.geolocation)return;
-
     state.gpsWatchId=navigator.geolocation.watchPosition(
         position=>{
-            const projected=solveAffine(
+            const point=solveAffine(
                 mapCalibration,
                 position.coords.latitude,
                 position.coords.longitude
             );
-            if(!projected)return;
-            const snap=snapToRoute(projected);
+            if(!point)return;
+            const snap=snapToRoute(point);
             positionLiveMapElement(
-                byId("liveUserMarker"),snap?snap.point:projected
+                byId("liveUserMarker"),snap?.point||point
             );
         },
         error=>console.warn("GPS:",error),
@@ -1773,41 +1621,26 @@ on("endRoute","click",()=>{
 });
 function showDestinationIn3D(){
     if(!state.destination)return;
-    const destination=state.destination;
-    const buildingId=destination.buildingId||destination.id;
+    const location=state.destination;
+    const buildingId=location.buildingId||location.id;
     const building=getBuildingById(buildingId);
     if(!building)return;
-
-    let model=null;
-    if(destination.type==="room"){
-        model=getModelVariant(building.id,"indoor");
-    }
-    if(!model){
-        model=getDefaultModelVariant(building.id);
-    }
+    let model=location.type==="room"
+        ?getModelVariant(building.id,"indoor")
+        :null;
+    if(!model)model=getDefaultModelVariant(building.id);
     showPage("viewer");
     if(viewerBuildingSelect){
         viewerBuildingSelect.value=building.id;
     }
-    state.pending3DMarker=destination.modelMarker
-        ?{
-            marker:destination.modelMarker,
-            label:destination.name
-        }:null;
-    prepareViewerBuilding(
-        building.id,model?.id,false
-    );
+    state.pending3DMarker=location.modelMarker
+        ?{marker:location.modelMarker,label:location.name}
+        :null;
+    prepareViewerBuilding(building.id,model?.id,false);
 }
 on("showDestination3D","click",showDestinationIn3D);
 
 /* MENU */
-function openViewer(){showPage("viewer");}
-function openAR(){showPage("ar");}
-function openNavigation(){
-    if(!NAVIGATION_ENABLED)return;
-    openNavigationWithDestination();
-}
-function openDirectory(){showPage("directory");}
 function openNavigationWithDestination(location=null){
     if(!NAVIGATION_ENABLED)return;
     showPage("navigation");
@@ -1815,16 +1648,16 @@ function openNavigationWithDestination(location=null){
     if(location)selectDestination(location);
 }
 ["menu3D","feature3D"].forEach(id=>{
-    on(id,"click",openViewer);
+    on(id,"click",()=>showPage("viewer"));
 });
 ["menuAR","featureAR"].forEach(id=>{
-    on(id,"click",openAR);
+    on(id,"click",()=>showPage("ar"));
 });
 ["menuNavigation","featureNav"].forEach(id=>{
-    on(id,"click",openNavigation);
+    on(id,"click",()=>openNavigationWithDestination());
 });
 ["menuDirectory","featureDirectory"].forEach(id=>{
-    on(id,"click",openDirectory);
+    on(id,"click",()=>showPage("directory"));
 });
 
 /* TOAST */
@@ -1853,27 +1686,25 @@ document.addEventListener("keydown",event=>{
     if(state.currentPage!=="home")goBack();
 });
 
-/* PETA RESPONSIVE */
+/* MAP RESIZE */
 function registerMapImageEvents(){
-    const selectionImage=byId("navigationMapImage");
-    if(selectionImage){
-        if(selectionImage.complete&&selectionImage.naturalWidth){
+    const selection=byId("navigationMapImage");
+    if(selection){
+        if(selection.complete&&selection.naturalWidth){
             syncNavigationMapGeometry();
         }else{
-            selectionImage.addEventListener(
+            selection.addEventListener(
                 "load",syncNavigationMapGeometry
             );
         }
     }
-    const liveImage=byId("liveMapContent")
+    const live=byId("liveMapContent")
         ?.querySelector(".live-map-background");
-    if(liveImage){
-        if(liveImage.complete&&liveImage.naturalWidth){
+    if(live){
+        if(live.complete&&live.naturalWidth){
             syncLiveMapGeometry();
         }else{
-            liveImage.addEventListener(
-                "load",syncLiveMapGeometry
-            );
+            live.addEventListener("load",syncLiveMapGeometry);
         }
     }
 }
@@ -1886,8 +1717,8 @@ window.addEventListener("orientationchange",()=>{
     setTimeout(syncAllMapGeometry,250);
 });
 
-/* INISIALISASI */
-async function startApp(){
+/* INIT */
+function startApp(){
     renderDirectory();
     applyFeatureVisibility();
     showSlide(0);
@@ -1896,109 +1727,77 @@ async function startApp(){
     registerMapImageEvents();
     registerServiceWorker();
 
-    const warmCache=()=>preloadPriorityModels();
+    const preload=()=>preloadPriorityModels();
     if("requestIdleCallback" in window){
-        requestIdleCallback(warmCache,{timeout:2000});
+        requestIdleCallback(preload,{timeout:2000});
     }else{
-        setTimeout(warmCache,1000);
+        setTimeout(preload,1000);
     }
     setTimeout(syncAllMapGeometry,120);
-    console.log(
-        "FT UISU Explorer Revision 6 (No Navigation) loaded"
-    );
+    console.log("FT UISU Explorer Revision 7 loaded");
 }
 startApp();
-
 })();
 
-/* =========================================================
-   FULLSCREEN 3D — REVISI 40
-========================================================= */
+/* =====================================================
+   FULLSCREEN MODEL VIEWER
+===================================================== */
 (function(){
 "use strict";
-
 const card=document.getElementById("viewerCard");
 const page=document.getElementById("viewerPage");
 const viewer=document.getElementById("main3DViewer");
 const status=document.getElementById("viewerLoadingDot");
 const openButton=document.getElementById("viewerFullscreenButton");
 const closeButton=document.getElementById("viewerFullscreenExit");
-
-if(!card||!page||!viewer||!status||!openButton||!closeButton){
-    return;
-}
+if(!card||!page||!viewer||!status||!openButton||!closeButton)return;
 if(card.dataset.fullscreenInitialized)return;
 card.dataset.fullscreenInitialized="true";
 
-let session=null;
 const root=document.documentElement;
-const nativeElement=()=>
-    document.fullscreenElement||document.webkitFullscreenElement;
-const visible=()=>
-    page.classList.contains("active")&&
+const native=()=>document.fullscreenElement||
+    document.webkitFullscreenElement;
+const visible=()=>page.classList.contains("active")&&
     !card.classList.contains("hidden");
-const ready=()=>
-    visible()&&status.classList.contains("ready");
+const ready=()=>visible()&&status.classList.contains("ready");
+let current=null;
 
 function updateButtons(){
-    if(session&&!visible()){
+    if(current&&!visible()){
         closeFullscreen(false);
         return;
     }
-    openButton.classList.toggle("hidden",!ready()||!!session);
-    closeButton.classList.toggle("hidden",!session);
-    closeButton.disabled=!!session?.closing;
+    openButton.classList.toggle("hidden",!ready()||!!current);
+    closeButton.classList.toggle("hidden",!current);
 }
-function finish(current){
-    if(session!==current)return;
-    session=null;
+function finish(session){
+    if(current!==session)return;
+    current=null;
     card.classList.remove("viewer-is-fullscreen");
     root.classList.remove("viewer-fullscreen-open");
-    root.style.removeProperty(
-        "--viewer-fullscreen-scroll-top"
-    );
+    root.style.removeProperty("--viewer-fullscreen-scroll-top");
     card.removeAttribute("role");
     card.removeAttribute("aria-modal");
     card.removeAttribute("aria-labelledby");
     updateButtons();
-
-    if(current.restore&&visible()){
+    if(session.restore&&visible()){
         window.scrollTo({
-            left:current.x,
-            top:current.y,
-            behavior:"instant"
+            left:session.x,top:session.y,behavior:"instant"
         });
-        (ready()?openButton:viewer).focus({
-            preventScroll:true
-        });
-    }
-}
-function exitNativeQuietly(){
-    const exit=document.exitFullscreen||
-        document.webkitExitFullscreen;
-    if(exit&&nativeElement()===card){
-        try{
-            Promise.resolve(
-                exit.call(document)
-            ).catch(()=>{});
-        }catch(error){}
+        (ready()?openButton:viewer).focus({preventScroll:true});
     }
 }
 async function openFullscreen(){
-    if(session||!ready()||nativeElement())return;
-
-    const current={
+    if(current||!ready()||native())return;
+    const session={
         x:window.scrollX,
         y:window.scrollY,
-        pending:true,
-        fallback:false,
-        closing:false,
-        restore:true
+        restore:true,
+        fallback:false
     };
-    session=current;
+    current=session;
     root.style.setProperty(
-        "--viewer-fullscreen-scroll-top",
-        `${-current.y}px`
+        "--viewer-fullscreen-scroll-top",`${-session.y}px`
     );
     root.classList.add("viewer-fullscreen-open");
     card.classList.add("viewer-is-fullscreen");
@@ -2010,104 +1809,48 @@ async function openFullscreen(){
 
     const request=card.requestFullscreen||
         card.webkitRequestFullscreen;
-    const enabled=document.fullscreenEnabled??
-        document.webkitFullscreenEnabled??true;
-
-    if(!request||!enabled){
-        current.pending=false;
-        current.fallback=true;
-        return;
-    }
-
-    try{
-        await request.call(card);
-        if(session!==current){
-            if(!session)exitNativeQuietly();
-            return;
+    if(request){
+        try{
+            await request.call(card);
+            session.fallback=native()!==card;
+        }catch(error){
+            session.fallback=true;
         }
-        current.pending=false;
-        current.fallback=nativeElement()!==card;
-    }catch(error){
-        if(session!==current)return;
-        current.pending=false;
-        current.fallback=true;
+    }else{
+        session.fallback=true;
     }
-    closeButton.focus({preventScroll:true});
-    updateButtons();
 }
 async function closeFullscreen(restore=true){
-    const current=session;
     if(!current)return;
-    if(!restore)current.restore=false;
-    if(current.closing)return;
-    current.closing=true;
-    updateButtons();
-
-    if(nativeElement()===card){
+    const session=current;
+    if(!restore)session.restore=false;
+    if(native()===card){
         const exit=document.exitFullscreen||
             document.webkitExitFullscreen;
-        try{
-            if(!exit){
-                throw new Error("Fullscreen exit unavailable");
-            }
-            await exit.call(document);
-        }catch(error){
-            if(session===current&&nativeElement()===card){
-                current.closing=false;
-                closeButton.disabled=false;
-                return;
-            }
-        }
+        try{await exit?.call(document);}catch(error){}
     }
-    finish(current);
+    finish(session);
 }
-function onNativeChange(){
-    if(nativeElement()===card){
-        if(!session){
-            exitNativeQuietly();
-            return;
-        }
-        session.pending=false;
-        session.fallback=false;
-    }else if(session&&!session.pending&&!session.fallback){
-        if(!visible())session.restore=false;
-        finish(session);
-    }
-}
-
 openButton.addEventListener("click",openFullscreen);
 closeButton.addEventListener("click",()=>closeFullscreen());
-document.addEventListener("fullscreenchange",onNativeChange);
-document.addEventListener("webkitfullscreenchange",onNativeChange);
-
+document.addEventListener("fullscreenchange",()=>{
+    if(current&&!native()&&!current.fallback){
+        finish(current);
+    }
+});
+document.addEventListener("webkitfullscreenchange",()=>{
+    if(current&&!native()&&!current.fallback){
+        finish(current);
+    }
+});
 document.addEventListener("keydown",event=>{
-    if(!session)return;
+    if(!current)return;
     if(event.key==="Escape"){
         event.preventDefault();
         event.stopPropagation();
         closeFullscreen();
-    }else if(event.key==="Tab"){
-        const controls=Array.from(card.querySelectorAll(
-            "button:not([disabled]), select:not([disabled]), a[href], [tabindex], model-viewer"
-        )).filter(element=>
-            element.tabIndex>=0&&element.getClientRects().length
-        );
-        if(!controls.length)return;
-        const first=controls[0];
-        const last=controls[controls.length-1];
-        if(event.shiftKey&&document.activeElement===first){
-            event.preventDefault();
-            last.focus();
-        }else if(!event.shiftKey&&document.activeElement===last){
-            event.preventDefault();
-            first.focus();
-        }else if(!card.contains(document.activeElement)){
-            event.preventDefault();
-            closeButton.focus();
-        }
     }
 },true);
-
 const observer=new MutationObserver(updateButtons);
 [page,card,status].forEach(element=>{
     observer.observe(element,{
@@ -2118,664 +1861,647 @@ const observer=new MutationObserver(updateButtons);
 viewer.addEventListener("load",updateButtons);
 viewer.addEventListener("error",updateButtons);
 updateButtons();
-
 })();
 
-/* =========================================================
-   WEBAR MARKERLESS — REVISI 6 NO NAVIGATE
-
-   - Izin kamera langsung dari klik user
-   - Pratinjau video
-   - World tracking 8th Wall
-   - FullWindowCanvas
-   - GLTFLoader dan material PBR
-   - Penempatan objek pada kandidat bidang
-   - Rotate dan Zoom
-   - Tidak ada drag untuk memindahkan anchor
-========================================================= */
+/* =====================================================
+   WEBAR MARKERLESS - REVISI 7
+   CAMERA FALLBACK, TRACKING, INDOOR / OUTDOOR
+===================================================== */
 (function(){
 "use strict";
 
-const el=id=>document.getElementById(id);
-const overlay=el("webarOverlay");
-const canvas=el("webarCamera");
-const preview=el("webarPreview");
-if(!overlay||!canvas||!preview)return;
+const $=id=>document.getElementById(id);
+const overlay=$("webarOverlay");
+const canvas=$("webarCamera");
+const video=$("webarPreview");
+if(!overlay||!canvas||!video)return;
 
-const ENGINE_URL=
+const ENGINE=
     "https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js";
-const EXTRAS_URL=
+const EXTRAS=
     "https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js";
-
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const mobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||
+    (navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 
-const isMobile=()=>
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||
-    (navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)||
-    navigator.userAgentData?.mobile===true;
-
-const errorText=error=>{
-    if(error?.name==="NotAllowedError"||
-       error?.name==="PermissionDeniedError"){
-        return "Akses kamera ditolak. Izinkan kamera untuk situs ini melalui pengaturan browser, lalu coba lagi.";
-    }
-    if(error?.name==="NotFoundError"){
-        return "Kamera tidak ditemukan pada perangkat ini.";
-    }
-    if(error?.name==="NotReadableError"){
-        return "Kamera sedang digunakan aplikasi lain. Tutup aplikasi kamera lalu coba lagi.";
-    }
-    return error?.message||String(error)||
-        "Kesalahan tidak diketahui.";
-};
-
-const session={
+const s={
     active:false,
-    busy:false,
-    serial:0,
-    previewStream:null,
-    previewReady:false,
-    xrVideo:false,
-    motionGranted:false,
-    motionRequired:false,
+    opening:false,
+    token:0,
+    src:"",
+    title:"",
+    stream:null,
+    xrRunning:false,
+    hasVideo:false,
+    visibleFrame:false,
+    frameSamples:0,
+    blankSamples:0,
+    lastProbe:0,
+    watchdog:null,
     THREE:null,
-    GLTFLoader:null,
-    DRACOLoader:null,
-    KTX2Loader:null,
+    Loader:null,
+    Draco:null,
+    Ktx:null,
     scene:null,
     camera:null,
     renderer:null,
     anchor:null,
-    turntable:null,
-    model:null,
+    pivot:null,
+    object:null,
     modelReady:false,
-    candidate:null,
-    stableFrames:0,
     tracking:false,
+    candidate:null,
+    stable:0,
     placed:false,
-    lastStatus:0,
+    lastMessage:0,
     zoom:1,
     yaw:0,
     pointers:new Map(),
     pinch:0,
-    src:"",
-    title:"",
-    startTimestamp:0,
-    cameraStatus:"",
-    loadingTimer:null,
-    modelTimer:null,
-    modelError:null,
-    startingXR:false
+    orientationAllowed:false
 };
 
-function status(message,detail){
-    if(!session.active)return;
-    el("webarStatus").textContent=message;
-    if(detail!==undefined){
-        el("webarInstructions").textContent=detail;
+function message(heading,description){
+    if(!s.active)return;
+    $("webarStatus").textContent=heading;
+    if(description!==undefined){
+        $("webarInstructions").textContent=description;
     }
 }
-function updateSize(){
-    if(!session.active)return;
-    overlay.style.setProperty(
-        "height","100dvh","important"
-    );
-    overlay.style.setProperty(
-        "width","100vw","important"
-    );
-    canvas.style.setProperty(
-        "height","100%","important"
-    );
-    canvas.style.setProperty(
-        "width","100%","important"
-    );
-}
-function releaseStream(){
-    if(session.previewStream){
-        session.previewStream.getTracks().forEach(track=>{
-            track.stop();
-        });
-        session.previewStream=null;
+function errorMessage(error){
+    if(error?.name==="NotAllowedError"){
+        return "Akses kamera ditolak. Aktifkan izin kamera untuk situs ini di pengaturan browser.";
     }
-    preview.pause();
-    preview.srcObject=null;
-    session.previewReady=false;
+    if(error?.name==="NotFoundError"){
+        return "Kamera belakang tidak ditemukan.";
+    }
+    if(error?.name==="NotReadableError"){
+        return "Kamera sedang digunakan aplikasi lain.";
+    }
+    return error?.message||String(error)||
+        "Terjadi kesalahan kamera atau mesin AR.";
 }
-function unpauseBrowser3d(){
-    document.querySelectorAll("model-viewer").forEach(viewer=>{
-        try{viewer.play?.();}catch(error){}
+function ui(id,visible){
+    $(id)?.classList.toggle("hidden",!visible);
+}
+function viewCanvas(visible){
+    canvas.classList.toggle("webar-waiting",!visible);
+    canvas.classList.toggle("webar-live",visible);
+    video.classList.toggle("hidden",visible);
+}
+function stopPreview(){
+    s.stream?.getTracks().forEach(track=>track.stop());
+    s.stream=null;
+    try{video.pause();}catch(error){}
+    video.srcObject=null;
+}
+async function startPreview(token){
+    if(!s.active||token!==s.token)return;
+    if(!navigator.mediaDevices?.getUserMedia){
+        throw new Error("Browser tidak mendukung akses kamera.");
+    }
+    stopPreview();
+    const stream=await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{facingMode:{ideal:"environment"}}
     });
+    if(!s.active||token!==s.token){
+        stream.getTracks().forEach(track=>track.stop());
+        return;
+    }
+    s.stream=stream;
+    video.srcObject=stream;
+    video.muted=true;
+    video.setAttribute("playsinline","");
+    try{await video.play();}catch(error){
+        console.warn("Preview camera:",error);
+    }
+    viewCanvas(false);
 }
-function pauseBrowser3d(){
-    document.querySelectorAll("model-viewer").forEach(viewer=>{
-        try{viewer.pause?.();}catch(error){}
-    });
-}
-
-/* SCRIPT LOADER */
-function scriptOnce(id,url,globalName,timeout=25000){
+function scriptOnce(id,url,globalName,timeout=30000){
     if(window[globalName]){
         return Promise.resolve(window[globalName]);
     }
     return new Promise((resolve,reject)=>{
-        const tag=document.getElementById(id)||
+        const script=document.getElementById(id)||
             document.createElement("script");
-        let settled=false;
-
-        const cleanup=()=>{
-            tag.removeEventListener("load",loaded);
-            tag.removeEventListener("error",failed);
-            window.removeEventListener("xrloaded",loaded);
-            window.removeEventListener("xrextrasloaded",loaded);
+        let finished=false;
+        const eventName=globalName==="XR8"
+            ?"xrloaded"
+            :"xrextrasloaded";
+        let timer;
+        function cleanup(){
+            window.removeEventListener(eventName,ready);
+            script.removeEventListener("load",ready);
+            script.removeEventListener("error",failed);
             clearTimeout(timer);
-        };
-        const done=error=>{
-            if(settled)return;
-            settled=true;
+        }
+        function finish(error){
+            if(finished)return;
+            finished=true;
             cleanup();
             if(error){
-                tag.remove();
+                script.remove();
                 reject(error);
             }else{
                 resolve(window[globalName]);
             }
-        };
-        const loaded=()=>{
-            if(window[globalName])done();
-        };
-        const failed=()=>done(
-            new Error(
-                "Tidak dapat mengambil "+globalName+
-                " dari CDN. Periksa jaringan."
-            )
-        );
-        const timer=setTimeout(()=>{
-            done(new Error(
-                "Waktu pemuatan "+globalName+" habis."
+        }
+        function ready(){
+            if(window[globalName])finish();
+        }
+        function failed(){
+            finish(new Error(
+                "Gagal mengunduh "+globalName+" dari CDN."
+            ));
+        }
+        timer=setTimeout(()=>{
+            finish(new Error(
+                globalName+" tidak siap dalam "+
+                Math.round(timeout/1000)+" detik."
             ));
         },timeout);
-
-        tag.addEventListener("load",loaded);
-        tag.addEventListener("error",failed);
-        window.addEventListener("xrloaded",loaded);
-        window.addEventListener("xrextrasloaded",loaded);
-
-        if(!tag.isConnected){
-            tag.id=id;
-            tag.src=url;
-            tag.async=true;
-            tag.crossOrigin="anonymous";
+        window.addEventListener(eventName,ready);
+        script.addEventListener("load",ready);
+        script.addEventListener("error",failed);
+        if(!script.isConnected){
+            script.id=id;
+            script.async=true;
+            script.src=url;
+            script.crossOrigin="anonymous";
             if(globalName==="XR8"){
-                tag.setAttribute("data-preload-chunks","slam");
+                script.dataset.preloadChunks="slam";
             }
-            document.head.appendChild(tag);
+            document.head.appendChild(script);
         }
-        loaded();
+        ready();
     });
 }
-
-/* DEPENDENSI */
-async function libraries(){
-    if(!session.THREE){
-        const [THREE,glTF]=await Promise.all([
+async function ensureLibraries(){
+    if(!s.THREE){
+        const [THREE,loader]=await Promise.all([
             import("three"),
             import("three/addons/loaders/GLTFLoader.js")
         ]);
-        session.THREE=THREE;
-        session.GLTFLoader=glTF.GLTFLoader;
-
-        // Three.js disiapkan sebelum XR8.
+        s.THREE=THREE;
+        s.Loader=loader.GLTFLoader;
         window.THREE=THREE;
 
         const extras=await Promise.allSettled([
             import("three/addons/loaders/DRACOLoader.js"),
             import("three/addons/loaders/KTX2Loader.js")
         ]);
-        session.DRACOLoader=
-            extras[0].status==="fulfilled"
-                ?extras[0].value.DRACOLoader:null;
-        session.KTX2Loader=
-            extras[1].status==="fulfilled"
-                ?extras[1].value.KTX2Loader:null;
+        s.Draco=extras[0].status==="fulfilled"
+            ?extras[0].value.DRACOLoader:null;
+        s.Ktx=extras[1].status==="fulfilled"
+            ?extras[1].value.KTX2Loader:null;
     }
-
-    await scriptOnce(
-        "ft-xrextras-r6",EXTRAS_URL,"XRExtras"
-    );
-    await scriptOnce(
-        "ft-engine-r6",ENGINE_URL,"XR8",35000
-    );
-
-    if(!window.XR8?.XrController?.pipelineModule){
+    await scriptOnce("ft-xrextras-r7",EXTRAS,"XRExtras");
+    await scriptOnce("ft-engine-r7",ENGINE,"XR8",40000);
+    if(!window.XR8?.XrController||!window.XR8?.Threejs){
         throw new Error(
-            "Modul world tracking dari XR8 tidak tersedia."
+            "Modul SLAM atau renderer 3D tidak tersedia."
         );
     }
-
     if(typeof window.XR8.loadChunk==="function"){
         await Promise.race([
             Promise.resolve(window.XR8.loadChunk("slam")),
             new Promise((_,reject)=>{
                 setTimeout(()=>{
-                    reject(new Error(
-                        "SLAM belum siap dalam 20 detik."
-                    ));
-                },20000);
+                    reject(new Error("Modul SLAM tidak siap."));
+                },25000);
             })
         ]);
     }
 }
-
-/* GLB */
-function loader(){
-    const modelLoader=new session.GLTFLoader();
-
-    if(session.DRACOLoader){
-        const draco=new session.DRACOLoader();
-        draco.setDecoderPath(
-            "https://www.gstatic.com/draco/v1/decoders/"
-        );
-        modelLoader.setDRACOLoader(draco);
-    }
-    if(session.KTX2Loader&&session.renderer){
-        const ktx=new session.KTX2Loader();
-        ktx.setTranscoderPath(
-            "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/basis/"
-        );
-        ktx.detectSupport(session.renderer);
-        modelLoader.setKTX2Loader(ktx);
-    }
-    return modelLoader;
-}
-function fetchGLB(token){
-    const source=new URL(session.src,document.baseURI);
-    source.searchParams.set("arv","6");
-    const modelLoader=loader();
-
-    session.modelTimer=setTimeout(()=>{
-        if(session.active&&token===session.serial&&
-           !session.modelReady){
-            status(
-                "Model membutuhkan waktu lebih lama",
-                "Periksa koneksi dan ukuran file GLB. Jika tetap tidak muncul, coba model Outdoor lainnya."
-            );
-        }
-    },25000);
-
-    modelLoader.load(
-        source.href,
-        gltf=>{
-            if(!session.active||token!==session.serial)return;
-            clearTimeout(session.modelTimer);
-            try{
-                attachGLB(gltf.scene);
-            }catch(error){
-                session.modelError=errorText(error);
-                status(
-                    "Objek gagal ditampilkan",
-                    session.modelError
-                );
-                el("webarRetry").classList.remove("hidden");
-            }
-        },
-        undefined,
-        error=>{
-            if(!session.active||token!==session.serial)return;
-            clearTimeout(session.modelTimer);
-            session.modelError=errorText(error);
-            status(
-                "Model GLB gagal dimuat",
-                session.modelError
-            );
-            el("webarRetry").classList.remove("hidden");
-        }
-    );
-}
-function attachGLB(object){
-    if(!session.turntable)return;
-    const THREE=session.THREE;
-    object.updateMatrixWorld(true);
-
-    const bounds=new THREE.Box3().setFromObject(object);
+function attachModel(root){
+    if(!s.active||!s.pivot)return;
+    const THREE=s.THREE;
+    root.updateMatrixWorld(true);
+    const bounds=new THREE.Box3().setFromObject(root);
     if(bounds.isEmpty()){
-        throw new Error(
-            "File GLB tidak memiliki geometri."
-        );
+        throw new Error("GLB tidak memiliki mesh 3D.");
     }
-
     const size=bounds.getSize(new THREE.Vector3());
     const center=bounds.getCenter(new THREE.Vector3());
-    const scale=1.0/Math.max(size.x,size.z,.0001);
-
-    object.scale.multiplyScalar(scale);
-    object.position.set(
+    const scale=.9/Math.max(
+        size.x,size.z,size.y*.6,.001
+    );
+    root.scale.multiplyScalar(scale);
+    root.position.set(
         -center.x*scale,
         -bounds.min.y*scale,
         -center.z*scale
     );
-    object.traverse(node=>{
+    root.traverse(node=>{
         if(!node.isMesh)return;
+        node.frustumCulled=false;
         node.castShadow=true;
         const materials=Array.isArray(node.material)
             ?node.material:[node.material];
-        materials.forEach(material=>{
-            if(material)material.needsUpdate=true;
+        materials.filter(Boolean).forEach(material=>{
+            material.needsUpdate=true;
         });
     });
-
-    session.model=new THREE.Group();
-    session.model.add(object);
-    session.turntable.add(session.model);
-    session.modelReady=true;
-
-    status(
-        "Model siap, mencari bidang datar...",
-        "Arahkan kamera perlahan ke lantai atau meja bermotif. Tunggu sampai reticle stabil."
+    s.object=root;
+    s.pivot.add(root);
+    s.modelReady=true;
+    message(
+        "Model siap — pindai permukaan",
+        "Arahkan kamera ke lantai/meja dengan pola dan pencahayaan cukup."
     );
 }
-
-/* SCENE XR */
-function initScene(token){
-    const xr=window.XR8;
-    const THREE=session.THREE;
-    const sceneData=xr.Threejs.xrScene();
-
-    if(!sceneData?.scene||
-       !sceneData?.camera||
-       !sceneData?.renderer){
-        throw new Error("Renderer AR tidak tersedia.");
+function loadModel(token){
+    const loader=new s.Loader();
+    if(s.Draco){
+        const decoder=new s.Draco();
+        decoder.setDecoderPath(
+            "https://www.gstatic.com/draco/v1/decoders/"
+        );
+        loader.setDRACOLoader(decoder);
+    }
+    if(s.Ktx&&s.renderer){
+        const ktx=new s.Ktx();
+        ktx.setTranscoderPath(
+            "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/basis/"
+        );
+        ktx.detectSupport(s.renderer);
+        loader.setKTX2Loader(ktx);
     }
 
-    session.scene=sceneData.scene;
-    session.camera=sceneData.camera;
-    session.renderer=sceneData.renderer;
-
-    session.renderer.outputColorSpace=THREE.SRGBColorSpace;
-    session.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    session.renderer.toneMappingExposure=1.05;
-
-    session.scene.add(
-        new THREE.HemisphereLight(0xffffff,0xb7c9d2,2.3)
+    const source=new URL(s.src,document.baseURI);
+    source.searchParams.set("arVersion","7");
+    loader.load(
+        source.href,
+        gltf=>{
+            if(!s.active||token!==s.token)return;
+            try{
+                attachModel(gltf.scene);
+            }catch(error){
+                fatal("Model tidak bisa dirender",error);
+            }
+        },
+        undefined,
+        error=>{
+            if(s.active&&token===s.token){
+                fatal("GLB gagal dimuat",error);
+            }
+        }
     );
-    const key=new THREE.DirectionalLight(0xffffff,2);
-    key.position.set(2,5,3);
-    key.castShadow=true;
-    session.scene.add(key);
-    session.renderer.shadowMap.enabled=true;
+}
+function sceneStart(token){
+    const xr=window.XR8;
+    const THREE=s.THREE;
+    const {scene,camera,renderer}=xr.Threejs.xrScene();
+    if(!scene||!camera||!renderer){
+        throw new Error("Scene WebGL tidak berhasil dibuat.");
+    }
+    s.scene=scene;
+    s.camera=camera;
+    s.renderer=renderer;
 
-    session.anchor=new THREE.Group();
-    session.anchor.visible=false;
-    session.scene.add(session.anchor);
+    // Jangan hapus gambar dari GlTextureRenderer.
+    renderer.autoClear=false;
+    renderer.autoClearColor=false;
+    renderer.autoClearDepth=true;
+    scene.background=null;
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled=true;
 
-    session.turntable=new THREE.Group();
-    session.anchor.add(session.turntable);
+    scene.add(
+        new THREE.HemisphereLight(
+            0xffffff,0xb5cbd0,2
+        )
+    );
+    const sun=new THREE.DirectionalLight(
+        0xffffff,2
+    );
+    sun.position.set(3,6,4);
+    sun.castShadow=true;
+    scene.add(sun);
+
+    s.anchor=new THREE.Group();
+    s.anchor.visible=false;
+    scene.add(s.anchor);
+
+    s.pivot=new THREE.Group();
+    s.anchor.add(s.pivot);
 
     const shadow=new THREE.Mesh(
-        new THREE.PlaneGeometry(2,2),
-        new THREE.ShadowMaterial({opacity:.18})
+        new THREE.PlaneGeometry(2.5,2.5),
+        new THREE.ShadowMaterial({opacity:.19})
     );
     shadow.rotation.x=-Math.PI/2;
+    shadow.position.y=.003;
     shadow.receiveShadow=true;
-    shadow.position.y=.002;
-    session.anchor.add(shadow);
+    s.anchor.add(shadow);
 
-    session.camera.position.set(0,1.5,0);
+    camera.position.set(0,1.6,0);
     xr.XrController.updateCameraProjectionMatrix({
-        origin:session.camera.position,
-        facing:session.camera.quaternion
+        origin:camera.position,
+        facing:camera.quaternion
     });
-
-    status(
-        "Menyiapkan objek 3D...",
-        "Kamera sudah berjalan. Model dimuat memakai material asli file GLB."
-    );
-    fetchGLB(token);
+    loadModel(token);
 }
-
-/* BIDANG DATAR */
-function validPoint(point){
+function valid(point){
     return point&&
         [point.x,point.y,point.z].every(Number.isFinite);
 }
-function candidateFromTracking(reality){
-    if(!session.camera||
+function surfacePoint(reality){
+    if(!s.camera||
        !reality||
-       reality.trackingStatus!=="NORMAL"){
-        return null;
-    }
+       reality.trackingStatus!=="NORMAL")return null;
     const xr=window.XR8;
     if(typeof xr?.XrController?.hitTest!=="function"){
         return null;
     }
-
-    const hitPoints=[];
+    const hits=[];
     for(const [u,v] of [
-        [.50,.61],[.43,.61],[.57,.61],[.50,.70]
+        [.50,.63],[.40,.66],[.60,.66],[.50,.75]
     ]){
-        let results=[];
         try{
-            results=xr.XrController.hitTest(
+            const result=xr.XrController.hitTest(
                 u,v,["FEATURE_POINT"]
             )||[];
-        }catch(error){
-            continue;
-        }
-        const hit=results.find(item=>
-            validPoint(item.position)
-        );
-        if(hit)hitPoints.push(hit.position);
+            const hit=result.find(item=>
+                valid(item.position)
+            );
+            if(hit)hits.push(hit.position);
+        }catch(error){}
     }
-    if(!hitPoints.length)return null;
+    if(hits.length<2)return null;
+    const heights=hits.map(p=>p.y).sort((a,b)=>a-b);
+    const y=heights[Math.floor(heights.length/2)];
+    const same=hits.filter(p=>Math.abs(p.y-y)<.10);
+    if(same.length<2||s.camera.position.y-y<.15)return null;
 
-    const THREE=session.THREE;
-    const median=numbers=>
-        numbers.slice().sort((a,b)=>a-b)[
-            Math.floor(numbers.length/2)
-        ];
-    const centerY=median(hitPoints.map(p=>p.y));
-    const points=hitPoints.filter(p=>
-        Math.abs(p.y-centerY)<.12
+    const point=new s.THREE.Vector3(
+        same.reduce((sum,p)=>sum+p.x,0)/same.length,
+        y,
+        same.reduce((sum,p)=>sum+p.z,0)/same.length
     );
-
-    // Dua titik selevel sebagai kandidat horizontal.
-    if(points.length<2)return null;
-    const cameraY=session.camera.position.y;
-    if(!(centerY<cameraY-.18))return null;
-
-    const point=new THREE.Vector3(
-        points.reduce((sum,p)=>sum+p.x,0)/points.length,
-        centerY,
-        points.reduce((sum,p)=>sum+p.z,0)/points.length
-    );
-    const distance=session.camera.position.distanceTo(point);
-    if(distance<.25||distance>5)return null;
-    return point;
+    const distance=s.camera.position.distanceTo(point);
+    return distance>.25&&distance<5?point:null;
 }
 function place(){
-    if(!session.candidate||
-       !session.modelReady||
-       !session.anchor){
-        return;
-    }
-    session.anchor.position.copy(session.candidate);
-    session.anchor.visible=true;
-    session.placed=true;
-    session.stableFrames=0;
-    el("webarReticle").classList.add("hidden");
-    el("webarPlace").classList.add("hidden");
-    el("webarReset").classList.remove("hidden");
-    status(
-        "Model terkunci pada permukaan",
-        "Putar dengan satu jari, zoom dengan dua jari. Gerakkan ponsel untuk melihat sudut lainnya."
+    if(!s.modelReady||
+       !s.visibleFrame||
+       !s.tracking||
+       !s.candidate||
+       !s.anchor)return;
+
+    s.anchor.position.copy(s.candidate);
+    s.anchor.visible=true;
+    s.placed=true;
+    ui("webarPlace",false);
+    ui("webarReticle",false);
+    ui("webarReset",true);
+    message(
+        "Model ditempatkan di permukaan",
+        "Satu jari untuk memutar, dua jari untuk zoom. Geser posisi ponsel untuk melihat sudut berbeda."
     );
 }
-function updateTracking(reality){
-    if(!session.active||
-       !session.modelReady||
-       !session.camera)return;
+function trackingUpdate(reality){
+    if(!s.active||!s.modelReady)return;
+    s.tracking=reality?.trackingStatus==="NORMAL";
 
-    const normal=reality?.trackingStatus==="NORMAL";
-    session.tracking=normal;
-
-    if(session.placed){
-        session.anchor.visible=normal;
-        if(!normal&&
-           performance.now()-session.lastStatus>1300){
-            session.lastStatus=performance.now();
-            status(
-                "Tracking sementara terputus",
-                "Kembali arahkan kamera pada area saat model diletakkan."
+    if(s.placed){
+        if(s.anchor){
+            s.anchor.visible=s.tracking&&s.visibleFrame;
+        }
+        if(!s.tracking&&
+           performance.now()-s.lastMessage>1500){
+            s.lastMessage=performance.now();
+            message(
+                "Tracking hilang sementara",
+                "Gerakkan kamera ke area yang sudah dipindai sebelumnya."
             );
         }
         return;
     }
+    if(!s.visibleFrame)return;
+    const point=surfacePoint(reality);
 
-    const position=candidateFromTracking(reality);
-    if(!position){
-        session.stableFrames=0;
-        session.candidate=null;
-        el("webarReticle").classList.add("hidden");
-        el("webarPlace").classList.add("hidden");
-        if(performance.now()-session.lastStatus>1400){
-            session.lastStatus=performance.now();
-            status(
-                normal
-                    ?"Memindai bidang datar..."
+    if(!point){
+        s.stable=0;
+        s.candidate=null;
+        ui("webarPlace",false);
+        ui("webarReticle",false);
+
+        if(performance.now()-s.lastMessage>1300){
+            s.lastMessage=performance.now();
+            message(
+                s.tracking
+                    ?"Mencari bidang datar..."
                     :"Memulai pelacakan SLAM...",
-                "Gerakkan ponsel perlahan ke arah lantai/meja berpola, dengan cahaya cukup."
+                "Arahkan kamera ke bawah perlahan pada lantai atau meja yang bertekstur."
             );
         }
         return;
     }
 
-    if(session.candidate&&
-       session.candidate.distanceTo(position)<.16){
-        session.stableFrames++;
-        session.candidate.lerp(position,.25);
+    if(s.candidate&&
+       s.candidate.distanceTo(point)<.14){
+        s.candidate.lerp(point,.24);
+        s.stable++;
     }else{
-        session.candidate=position.clone();
-        session.stableFrames=1;
+        s.candidate=point.clone();
+        s.stable=1;
     }
 
-    const ready=session.stableFrames>=3;
-    el("webarReticle").classList.toggle("hidden",!ready);
-    el("webarPlace").classList.toggle("hidden",!ready);
-
-    if(session.stableFrames>=9){
+    const ready=s.stable>=4;
+    ui("webarPlace",ready);
+    ui("webarReticle",ready);
+    if(s.stable>=16){
         place();
         return;
     }
-
-    if(performance.now()-session.lastStatus>1000){
-        session.lastStatus=performance.now();
-        status(
-            "Bidang terdeteksi — menstabilkan posisi...",
-            "Tahan ponsel perlahan sampai objek otomatis terkunci, atau tekan Tempatkan Model."
+    if(performance.now()-s.lastMessage>1300){
+        s.lastMessage=performance.now();
+        message(
+            "Bidang ditemukan, menstabilkan...",
+            "Tahan posisi atau tekan Tempatkan Model."
         );
     }
 }
-
-/* XR PIPELINE */
+function sampleVideoFrame(){
+    if(!s.active||!s.hasVideo||!s.renderer)return;
+    const now=performance.now();
+    if(now-s.lastProbe<1200)return;
+    s.lastProbe=now;
+    try{
+        const gl=s.renderer.getContext();
+        const width=gl.drawingBufferWidth;
+        const height=gl.drawingBufferHeight;
+        if(width<10||height<10)return;
+        const rgba=new Uint8Array(4);
+        let bright=0;
+        for(const [x,y] of [
+            [.2,.2],[.5,.35],[.7,.6],[.4,.8],[.85,.75]
+        ]){
+            gl.readPixels(
+                Math.round(width*x),
+                Math.round(height*y),
+                1,1,
+                gl.RGBA,
+                gl.UNSIGNED_BYTE,
+                rgba
+            );
+            if(rgba[0]+rgba[1]+rgba[2]>42)bright++;
+        }
+        s.frameSamples++;
+        if(bright){
+            s.visibleFrame=true;
+            s.blankSamples=0;
+            if(canvas.classList.contains("webar-waiting")){
+                viewCanvas(true);
+                message(
+                    "Kamera AR aktif",
+                    "Memuat model dan mencari bidang datar..."
+                );
+            }
+        }else{
+            s.blankSamples++;
+            if(s.blankSamples>=6&&!s.visibleFrame){
+                fallback(
+                    "Lapisan kamera XR berwarna hitam. Pratinjau kamera biasa diaktifkan; tracking AR belum tersedia."
+                );
+            }
+        }
+    }catch(error){
+        s.visibleFrame=true;
+        viewCanvas(true);
+    }
+}
 function pipeline(token){
     return {
-        name:"ft-uisu-revisi6-worldtracking",
+        name:"ft-uisu-r7-slam-scene",
         onStart:()=>{
-            if(!session.active||token!==session.serial)return;
+            if(!s.active||token!==s.token)return;
             try{
-                initScene(token);
+                sceneStart(token);
             }catch(error){
-                session.modelError=errorText(error);
-                status(
-                    "Gagal menyiapkan 3D",session.modelError
-                );
-                el("webarRetry").classList.remove("hidden");
+                fatal("Renderer AR gagal dibuat",error);
             }
         },
-        onCameraStatusChange:({status:statusCode,error})=>{
-            if(!session.active||token!==session.serial)return;
-            session.cameraStatus=statusCode;
-
-            if(statusCode==="hasVideo"){
-                session.xrVideo=true;
-                canvas.classList.remove("webar-waiting");
-                preview.classList.add("hidden");
-                status(
-                    "Kamera aktif",
-                    "Memulai pelacakan dan memuat model 3D..."
+        onCameraStatusChange:({status,error})=>{
+            if(!s.active||token!==s.token)return;
+            if(status==="hasVideo"){
+                s.hasVideo=true;
+                message(
+                    "Kamera XR terhubung",
+                    "Memeriksa tampilan video sebelum membuka lapisan AR..."
                 );
-            }else if(statusCode==="failed"){
-                status(
-                    "Kamera AR gagal",errorText(error)
-                );
-                el("webarRetry").classList.remove("hidden");
-            }else if(statusCode==="requesting"){
-                status(
-                    "Meminta akses kamera AR...",
-                    "Izinkan kamera ketika diminta browser."
+            }else if(status==="failed"){
+                fatal("Kamera XR gagal",error);
+            }else if(status==="requesting"){
+                message(
+                    "Mengaktifkan kamera XR...",
+                    "Izinkan kamera bila diminta browser."
                 );
             }
         },
         onUpdate:({processCpuResult})=>{
-            if(token===session.serial){
-                updateTracking(processCpuResult?.reality);
+            if(s.active&&token===s.token){
+                trackingUpdate(processCpuResult?.reality);
+            }
+        },
+        onRender:()=>{
+            if(s.active&&token===s.token){
+                sampleVideoFrame();
             }
         },
         onException:error=>{
-            if(!session.active||token!==session.serial)return;
-            console.error("FT UISU XR8",error);
-            status(
-                "Mesin AR mengalami kendala",errorText(error)
-            );
-            el("webarRetry").classList.remove("hidden");
+            if(s.active&&token===s.token){
+                fatal("Mesin WebAR gagal",error);
+            }
         }
     };
 }
-
-/* MULAI XR */
-async function startEngine(token){
-    await libraries();
-    if(!session.active||token!==session.serial)return;
-
-    if(!isMobile()){
-        status(
-            "Kamera pratinjau desktop aktif",
-            "Pelacakan SLAM markerless memerlukan Safari di iPhone atau Chrome di Android. Buka tautan dari smartphone."
-        );
-        return;
+function stopXR(){
+    clearTimeout(s.watchdog);
+    s.watchdog=null;
+    if(s.xrRunning){
+        try{window.XR8?.stop?.();}catch(error){
+            console.warn(error);
+        }
+        try{
+            window.XR8?.clearCameraPipelineModules?.();
+        }catch(error){}
     }
-    if(session.motionRequired&&!session.motionGranted){
-        status(
-            "Izin sensor gerak diperlukan di iPhone",
-            "Tekan 'Izinkan Sensor Gerak' agar pelacakan ruang dapat berjalan."
-        );
-        el("webarMotion").classList.remove("hidden");
-        return;
-    }
-    await runXR(token);
+    s.xrRunning=false;
+    s.hasVideo=false;
+    s.visibleFrame=false;
+    s.scene=null;
+    s.camera=null;
+    s.renderer=null;
+    s.anchor=null;
+    s.pivot=null;
+    s.object=null;
+    s.modelReady=false;
 }
-async function runXR(token){
-    if(!session.active||
-       token!==session.serial||
-       session.xrVideo||
-       session.startingXR)return;
+async function fallback(reason){
+    if(!s.active)return;
+    const token=s.token;
+    stopXR();
+    s.placed=false;
+    viewCanvas(false);
+    ui("webarRetry",true);
+    ui("webarPlace",false);
+    ui("webarReset",false);
+    message(
+        "Kamera pratinjau — AR belum aktif",
+        reason
+    );
+    try{
+        await startPreview(token);
+    }catch(error){
+        if(s.active&&token===s.token){
+            message(
+                "Kamera gagal",
+                errorMessage(error)
+            );
+        }
+    }
+}
+function fatal(context,error){
+    console.error(context,error);
+    if(s.active){
+        fallback(context+": "+errorMessage(error));
+    }
+}
+async function runEngine(token){
+    await ensureLibraries();
+    if(!s.active||token!==s.token)return;
 
-    session.startingXR=true;
+    if(!mobile()){
+        message(
+            "Pratinjau kamera desktop",
+            "Tracking SLAM memerlukan perangkat mobile. Gunakan Safari iPhone atau Chrome Android."
+        );
+        ui("webarRetry",false);
+        return;
+    }
+
     const xr=window.XR8;
     const extras=window.XRExtras;
-
     if(!extras?.FullWindowCanvas?.pipelineModule){
-        session.startingXR=false;
         throw new Error(
-            "Modul FullWindowCanvas tidak tersedia."
+            "Modul layar penuh XRExtras tidak tersedia."
         );
     }
 
-    releaseStream();
-    canvas.classList.add("webar-waiting");
-    preview.classList.add("hidden");
+    stopPreview();
+    viewCanvas(false);
+    message(
+        "Memulai kamera AR...",
+        "Menguji lapisan kamera agar tidak hitam."
+    );
 
-    xr.stop?.();
-    xr.clearCameraPipelineModules?.();
+    try{
+        xr.stop?.();
+        xr.clearCameraPipelineModules?.();
+    }catch(error){}
 
     xr.XrController.configure({
         disableWorldTracking:false,
@@ -2791,335 +2517,263 @@ async function runXR(token){
         pipeline(token)
     ]);
 
-    status(
-        "Mengaktifkan kamera AR...",
-        "Kamera akan memenuhi layar begitu stream XR dimulai."
-    );
-
-    const maybeRun=xr.run({
+    s.xrRunning=true;
+    const result=xr.run({
         canvas,
         cameraConfig:{
             direction:xr.XrConfig.camera().BACK
         },
-        allowedDevices:xr.XrConfig.device().MOBILE
-    });
-
-    if(maybeRun&&typeof maybeRun.then==="function"){
-        await maybeRun;
-    }
-    session.startingXR=false;
-    session.loadingTimer=setTimeout(()=>{
-        if(session.active&&
-           token===session.serial&&
-           !session.xrVideo){
-            status(
-                "Kamera XR belum menghasilkan video",
-                "Coba Lagi. Jika tetap gagal, pastikan browser mendapat izin Kamera dan Sensor Gerak."
-            );
-            el("webarRetry").classList.remove("hidden");
+        allowedDevices:xr.XrConfig.device().MOBILE,
+        glContextConfig:{
+            alpha:false,
+            preserveDrawingBuffer:false
         }
-    },17000);
-}
-
-/* MULAI DARI KLIK */
-function start(src,title){
-    if(session.active||session.busy)return;
-
-    session.active=true;
-    session.busy=true;
-    session.serial++;
-    const token=session.serial;
-
-    session.src=src;
-    session.title=title;
-    session.modelReady=false;
-    session.model=null;
-    session.placed=false;
-    session.candidate=null;
-    session.stableFrames=0;
-    session.tracking=false;
-    session.xrVideo=false;
-    session.startingXR=false;
-    session.zoom=1;
-    session.yaw=0;
-    session.lastStatus=0;
-    session.cameraStatus="";
-    session.modelError=null;
-    session.pointers.clear();
-
-    session.motionRequired=
-        typeof window.DeviceOrientationEvent?.requestPermission
-            ==="function";
-    session.motionGranted=!session.motionRequired;
-
-    el("webarTitle").textContent=title;
-    [
-        "webarReset","webarPlace","webarRetry",
-        "webarMotion","webarReticle"
-    ].forEach(id=>{
-        el(id)?.classList.add("hidden");
     });
 
-    canvas.classList.add("webar-waiting");
-    preview.classList.remove("hidden");
-    overlay.classList.remove("hidden");
-    document.documentElement.classList.add("webar-open");
-    pauseBrowser3d();
-    updateSize();
+    if(result&&typeof result.then==="function"){
+        await result;
+    }
+    s.watchdog=setTimeout(()=>{
+        if(s.active&&token===s.token&&!s.visibleFrame){
+            fallback(
+                "Mesin XR tidak menampilkan gambar kamera dalam 18 detik. Tekan Coba Lagi atau kembali memilih model."
+            );
+        }
+    },18000);
+}
+function start(src,title){
+    if(s.active||s.opening)return;
 
-    status(
-        "Meminta akses kamera...",
-        "Tekan Izinkan jika browser menampilkan permintaan kamera."
+    s.active=true;
+    s.opening=true;
+    s.token++;
+    const token=s.token;
+
+    s.src=src;
+    s.title=title;
+    s.xrRunning=false;
+    s.hasVideo=false;
+    s.visibleFrame=false;
+    s.blankSamples=0;
+    s.frameSamples=0;
+    s.lastProbe=0;
+    s.modelReady=false;
+    s.tracking=false;
+    s.candidate=null;
+    s.stable=0;
+    s.placed=false;
+    s.zoom=1;
+    s.yaw=0;
+    s.pointers.clear();
+
+    $("webarTitle").textContent=title;
+    [
+        "webarRetry","webarMotion",
+        "webarPlace","webarReset","webarReticle"
+    ].forEach(id=>ui(id,false));
+
+    ui(
+        "webarMotion",
+        typeof window.DeviceOrientationEvent?.requestPermission==="function"
     );
 
-    if(!window.isSecureContext||
-       !navigator.mediaDevices?.getUserMedia){
-        status(
-            "Browser tidak dapat membuka kamera",
-            "Gunakan HTTPS dan Safari terbaru (iPhone) atau Chrome terbaru (Android)."
-        );
-        el("webarRetry").classList.remove("hidden");
-        session.busy=false;
-        return;
-    }
+    overlay.classList.remove("hidden");
+    document.documentElement.classList.add("webar-open");
+    viewCanvas(false);
 
-    // Penting: dipanggil langsung dalam event klik.
-    const request=navigator.mediaDevices.getUserMedia({
-        audio:false,
-        video:{
-            facingMode:{ideal:"environment"}
-        }
+    document.querySelectorAll("model-viewer").forEach(item=>{
+        try{item.pause?.();}catch(error){}
     });
+    message(
+        "Meminta izin kamera...",
+        "Izinkan kamera melalui browser untuk memulai AR."
+    );
+
+    // Request pertama harus berjalan dari interaksi klik.
+    const request=window.isSecureContext&&
+        navigator.mediaDevices?.getUserMedia
+        ?navigator.mediaDevices.getUserMedia({
+            audio:false,
+            video:{facingMode:{ideal:"environment"}}
+        })
+        :Promise.reject(new Error(
+            "Kamera membutuhkan HTTPS dan browser yang mendukung getUserMedia."
+        ));
 
     (async()=>{
         try{
             const stream=await request;
-            if(!session.active||token!==session.serial){
-                stream.getTracks().forEach(track=>{
-                    track.stop();
-                });
+            if(!s.active||token!==s.token){
+                stream.getTracks().forEach(track=>track.stop());
                 return;
             }
-
-            session.previewStream=stream;
-            preview.srcObject=stream;
+            s.stream=stream;
+            video.srcObject=stream;
             try{
-                await preview.play();
+                await video.play();
             }catch(error){}
-            session.previewReady=true;
 
-            if(session.motionRequired){
-                el("webarMotion").classList.remove("hidden");
-                status(
-                    "Kamera siap — izin sensor gerak diperlukan",
-                    "Tekan 'Izinkan Sensor Gerak' untuk mengaktifkan tracking iPhone."
-                );
-            }else{
-                status(
-                    "Kamera siap, menyiapkan SLAM...",
-                    "Memuat pustaka AR. Pratinjau kamera akan ditampilkan selama persiapan."
-                );
-            }
-            await startEngine(token);
+            message(
+                "Kamera siap",
+                "Mengunduh mesin pelacakan bidang..."
+            );
+            await runEngine(token);
         }catch(error){
-            if(session.active&&token===session.serial){
-                console.error("FT UISU AR",error);
-                status(
-                    "AR belum dapat dibuka",errorText(error)
-                );
-                el("webarRetry").classList.remove("hidden");
+            if(s.active&&token===s.token){
+                console.error("WebAR start:",error);
+                await fallback(errorMessage(error));
             }
         }finally{
-            if(token===session.serial){
-                session.busy=false;
+            if(token===s.token){
+                s.opening=false;
             }
         }
     })();
 }
-
-/* IZIN SENSOR GERAK IOS */
-async function motionPermission(){
-    if(!session.active)return;
-    try{
-        const permission=
-            await window.DeviceOrientationEvent.requestPermission();
-        session.motionGranted=permission==="granted";
-
-        if(!session.motionGranted){
-            status(
-                "Sensor gerak belum diizinkan",
-                "Aktifkan izin gerak & orientasi pada Safari, lalu coba lagi."
-            );
-            return;
-        }
-        el("webarMotion").classList.add("hidden");
-        status(
-            "Sensor gerak aktif",
-            "Menyiapkan world tracking dan model 3D..."
-        );
-        if(window.XR8){
-            await runXR(session.serial);
-        }else{
-            await startEngine(session.serial);
-        }
-    }catch(error){
-        status(
-            "Izin sensor gerak gagal",errorText(error)
-        );
-    }
-}
-
-/* RESET DAN CLOSE */
 function reset(){
-    if(!session.active)return;
-    session.placed=false;
-    session.candidate=null;
-    session.stableFrames=0;
-    session.zoom=1;
-    session.yaw=0;
-    session.pointers.clear();
+    if(!s.active||!s.xrRunning)return;
+    s.placed=false;
+    s.candidate=null;
+    s.stable=0;
+    s.zoom=1;
+    s.yaw=0;
 
-    if(session.anchor){
-        session.anchor.visible=false;
-    }
-    if(session.turntable){
-        session.turntable.rotation.set(0,0,0);
-        session.turntable.scale.setScalar(1);
+    if(s.anchor)s.anchor.visible=false;
+    if(s.pivot){
+        s.pivot.rotation.y=0;
+        s.pivot.scale.setScalar(1);
     }
 
-    el("webarPlace").classList.add("hidden");
-    el("webarReset").classList.add("hidden");
-    el("webarReticle").classList.add("hidden");
-    status(
-        "Mencari permukaan baru...",
-        "Gerakkan kamera perlahan mengitari lantai/meja bermotif."
+    ui("webarReset",false);
+    ui("webarPlace",false);
+    ui("webarReticle",false);
+    message(
+        "Ulangi pencarian permukaan",
+        "Gerakkan kamera perlahan untuk melacak bidang baru."
     );
 }
 function close(){
-    if(!session.active)return;
-    session.active=false;
-    session.busy=false;
-    session.startingXR=false;
-    session.serial++;
+    if(!s.active)return;
+    s.active=false;
+    s.opening=false;
+    s.token++;
 
-    clearTimeout(session.loadingTimer);
-    clearTimeout(session.modelTimer);
-    session.pointers.clear();
-
-    try{
-        window.XR8?.stop?.();
-    }catch(error){
-        console.warn(error);
-    }
-    try{
-        window.XR8?.clearCameraPipelineModules?.();
-    }catch(error){}
-
-    releaseStream();
-    session.anchor=null;
-    session.turntable=null;
-    session.model=null;
-    session.scene=null;
-    session.camera=null;
-    session.renderer=null;
-    session.modelReady=false;
-    session.placed=false;
+    stopXR();
+    stopPreview();
+    s.pointers.clear();
 
     overlay.classList.add("hidden");
-    canvas.classList.remove("webar-waiting");
     document.documentElement.classList.remove("webar-open");
-    unpauseBrowser3d();
+    viewCanvas(false);
+
+    document.querySelectorAll("model-viewer").forEach(item=>{
+        try{item.play?.();}catch(error){}
+    });
 }
 function retry(){
-    if(!session.active)return;
-    const src=session.src;
-    const title=session.title;
+    if(!s.active)return;
+    const src=s.src;
+    const title=s.title;
     close();
     start(src,title);
 }
-
-/* GESTURE */
-function pinchDistance(){
-    const p=[...session.pointers.values()];
-    return p.length===2
-        ?Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)
-        :0;
+function grantMotion(){
+    const fn=window.DeviceOrientationEvent?.requestPermission;
+    if(!fn){
+        ui("webarMotion",false);
+        return;
+    }
+    Promise.resolve(
+        fn.call(window.DeviceOrientationEvent)
+    ).then(permission=>{
+        s.orientationAllowed=permission==="granted";
+        ui("webarMotion",false);
+    }).catch(error=>{
+        message(
+            "Sensor gerak belum diizinkan",
+            errorMessage(error)
+        );
+    });
 }
+function gestureDistance(){
+    const points=[...s.pointers.values()];
+    if(points.length!==2)return 0;
+    return Math.hypot(
+        points[0].x-points[1].x,
+        points[0].y-points[1].y
+    );
+}
+
 canvas.addEventListener("pointerdown",event=>{
-    if(!session.placed)return;
+    if(!s.placed)return;
     event.preventDefault();
     try{
         canvas.setPointerCapture(event.pointerId);
     }catch(error){}
-    session.pointers.set(event.pointerId,{
+    s.pointers.set(event.pointerId,{
         x:event.clientX,
         y:event.clientY
     });
-    session.pinch=pinchDistance();
+    s.pinch=gestureDistance();
 });
 canvas.addEventListener("pointermove",event=>{
-    if(!session.placed||
-       !session.turntable||
-       !session.pointers.has(event.pointerId)){
-        return;
-    }
+    if(!s.placed||
+       !s.pivot||
+       !s.pointers.has(event.pointerId))return;
     event.preventDefault();
-    const previous=session.pointers.get(event.pointerId);
-    session.pointers.set(event.pointerId,{
+
+    const old=s.pointers.get(event.pointerId);
+    s.pointers.set(event.pointerId,{
         x:event.clientX,
         y:event.clientY
     });
-    if(session.pointers.size===2){
-        const next=pinchDistance();
-        if(session.pinch>0){
-            session.zoom=clamp(
-                session.zoom*next/session.pinch,.3,4
+
+    if(s.pointers.size===2){
+        const distance=gestureDistance();
+        if(s.pinch>0){
+            s.zoom=clamp(
+                s.zoom*distance/s.pinch,.35,3.5
             );
-            session.turntable.scale.setScalar(session.zoom);
+            s.pivot.scale.setScalar(s.zoom);
         }
-        session.pinch=next;
-    }else if(session.pointers.size===1){
-        session.yaw+=(event.clientX-previous.x)*.008;
-        session.turntable.rotation.y=session.yaw;
+        s.pinch=distance;
+    }else if(s.pointers.size===1){
+        s.yaw+=(event.clientX-old.x)*.008;
+        s.pivot.rotation.y=s.yaw;
     }
 },{passive:false});
-const pointerEnd=event=>{
-    session.pointers.delete(event.pointerId);
-    session.pinch=pinchDistance();
-};
-canvas.addEventListener("pointerup",pointerEnd);
-canvas.addEventListener("pointercancel",pointerEnd);
+function endPointer(event){
+    s.pointers.delete(event.pointerId);
+    s.pinch=gestureDistance();
+}
+canvas.addEventListener("pointerup",endPointer);
+canvas.addEventListener("pointercancel",endPointer);
 canvas.addEventListener("wheel",event=>{
-    if(!session.placed||!session.turntable)return;
+    if(!s.placed||!s.pivot)return;
     event.preventDefault();
-    session.zoom=clamp(
-        session.zoom*(event.deltaY>0?.93:1.07),.3,4
+    s.zoom=clamp(
+        s.zoom*(event.deltaY>0?.93:1.07),
+        .35,3.5
     );
-    session.turntable.scale.setScalar(session.zoom);
+    s.pivot.scale.setScalar(s.zoom);
 },{passive:false});
 
-/* EVENT WEBAR */
-el("webarPlace")?.addEventListener("click",place);
-el("webarMotion")?.addEventListener("click",motionPermission);
-el("webarRetry")?.addEventListener("click",retry);
-el("webarReset")?.addEventListener("click",reset);
-el("webarClose")?.addEventListener("click",close);
+$("webarPlace")?.addEventListener("click",place);
+$("webarReset")?.addEventListener("click",reset);
+$("webarRetry")?.addEventListener("click",retry);
+$("webarClose")?.addEventListener("click",close);
+$("webarBackBottom")?.addEventListener("click",close);
+$("webarMotion")?.addEventListener("click",grantMotion);
 
 document.addEventListener("keydown",event=>{
-    if(event.key==="Escape"&&session.active){
+    if(s.active&&event.key==="Escape"){
         event.preventDefault();
         event.stopImmediatePropagation();
         close();
     }
 },true);
 document.addEventListener("visibilitychange",()=>{
-    if(document.hidden&&session.active)close();
+    if(s.active&&document.hidden)close();
 });
-window.addEventListener("resize",updateSize);
-window.visualViewport?.addEventListener("resize",updateSize);
-window.addEventListener("orientationchange",()=>{
-    setTimeout(updateSize,200);
-});
-
 window.FT_WEBAR={start,close,reset};
 })();
