@@ -311,6 +311,7 @@ a{color:inherit;text-decoration:none;}
     .feature-grid{grid-template-columns:repeat(2,1fr);}
     .developer-card{grid-template-columns:minmax(210px,290px) minmax(0,1fr);gap:25px;}
 }
+
 @media (max-width:640px){
     .header-inner{width:calc(100% - 22px);min-height:63px;gap:8px;}
     .brand{flex:1;}
@@ -364,10 +365,24 @@ a{color:inherit;text-decoration:none;}
     .live-map-viewport{min-height:440px;}
 }
 
-.brand-copy strong{font-family:inherit;background:linear-gradient(135deg,#087f72,#1898d5);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
-:is(.button-primary,.hero-button,.native-ar-button,.room-info,.room-nav,.model-switch-button.active,.directory .floor-button.active){background:linear-gradient(135deg,var(--green),var(--blue));color:var(--white);}
+.brand-copy strong{
+    font-family:inherit;
+    background:linear-gradient(135deg,#087f72,#1898d5);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:transparent;
+}
+:is(.button-primary,.hero-button,.native-ar-button,.room-info,.room-nav,.model-switch-button.active,.directory .floor-button.active){
+    background:linear-gradient(135deg,var(--green),var(--blue));
+    color:var(--white);
+}
 @media (hover:hover){
-    :is(.button-primary,.hero-button,.native-ar-button,.room-info,.room-nav,.model-switch-button.active,.directory .floor-button.active):hover{background:var(--white);color:var(--green);border-color:var(--green);}
+    :is(.button-primary,.hero-button,.native-ar-button,.room-info,.room-nav,.model-switch-button.active,.directory .floor-button.active):hover{
+        background:var(--white);
+        color:var(--green);
+        border-color:var(--green);
+    }
 }
 
 /* REVISI 39 */
@@ -375,7 +390,6 @@ a{color:inherit;text-decoration:none;}
 :root{
     --r39-title-gradient:linear-gradient(135deg,#087f72,#1898d5);
 }
-
 .brand-copy strong,
 .hero-slide[data-slide-index="0"] .hero-title > span:not(.accent),
 .hero-slide[data-slide-index="1"] .hero-title > span:not(.accent),
@@ -389,7 +403,6 @@ a{color:inherit;text-decoration:none;}
     -webkit-text-fill-color:transparent;
     color:transparent;
 }
-
 #menu3D,#feature3D{
     --r39-logo-image:url("./assets/images/logo_3d.png?v=39-fix1");
     --r39-logo-size:309.794% auto;
@@ -410,7 +423,6 @@ a{color:inherit;text-decoration:none;}
     --r39-logo-size:92.017% auto;
     --r39-logo-position:66.546% 79.414%;
 }
-
 :is(#menu3D,#menuAR,#menuNavigation,#menuDirectory) > .drawer-icon,
 :is(#feature3D,#featureAR,#featureNav,#featureDirectory) > .feature-icon,
 #logoHome > .revision39-brand-icon{
@@ -425,23 +437,17 @@ a{color:inherit;text-decoration:none;}
     font-size:0;
     flex-shrink:0;
 }
-
 :is(#menu3D,#menuAR,#menuNavigation,#menuDirectory) > .drawer-icon{
-    width:40px;
-    min-width:40px;
-    height:40px;
+    width:40px;min-width:40px;height:40px;
 }
 :is(#feature3D,#featureAR,#featureNav,#featureDirectory) > .feature-icon{
-    width:43px;
-    min-width:43px;
-    height:43px;
+    width:43px;min-width:43px;height:43px;
 }
 #logoHome > .revision39-brand-icon{
     --r39-logo-image:url("./assets/images/logo-ft-uisu.png?v=39-fix1");
     --r39-logo-size:118.681% auto;
     --r39-logo-position:56.088% 50.529%;
 }
-
 @media (forced-colors:active){
     .brand-copy strong,
     .hero-slide[data-slide-index="0"] .hero-title > span:not(.accent),
@@ -452,7 +458,6 @@ a{color:inherit;text-decoration:none;}
         color:CanvasText;
     }
 }
-
 :is(#menu3D,#feature3D){
     --r39-logo-size:280.976% auto;
     --r39-logo-position:52.183% 50.126%;
@@ -475,13 +480,10 @@ a{color:inherit;text-decoration:none;}
     .slider-two-title{font-size:clamp(18px,6.3vw,36px);}
 }
 .drawer-header h2{
-    width:fit-content;
-    max-width:100%;
+    width:fit-content;max-width:100%;
     background:linear-gradient(135deg,#087f72,#1898d5);
-    -webkit-background-clip:text;
-    background-clip:text;
-    -webkit-text-fill-color:transparent;
-    color:transparent;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
 }
 
 /* REVISI 39 FIX 5 */
@@ -684,7 +686,6 @@ html.viewer-fullscreen-open body{
         border-color:var(--green);
     }
 }
-
 .tendik-card{
     padding:16px;
     display:flex;
@@ -746,15 +747,9 @@ html.viewer-fullscreen-open body{
     .tendik-photo-wrap{width:108px;height:108px;}
 }
 
-/* REVISI 44
-   Single accordion gedung dan ruangan berada di script.js.
-   Gedung tanpa cabang ruangan tidak menampilkan placeholder.
-*/
+/* REVISI 44 — SINGLE ACCORDION */
 
-/* REVISI 1 (NO NAVIGATION)
-   Hanya menyembunyikan elemen.
-   Seluruh kode Navigasi tetap ada.
-*/
+/* REVISI 1 & 2 — NO NAVIGATION */
 
 .navigation-disabled :is(
     #menuNavigation,
@@ -769,7 +764,6 @@ html.viewer-fullscreen-open body{
     display:none !important;
     pointer-events:none !important;
 }
-
 .navigation-disabled .feature-grid{
     grid-template-columns:repeat(3,minmax(0,1fr));
 }
@@ -784,5 +778,145 @@ html.viewer-fullscreen-open body{
     }
 }
 
-/* REVISI 2 (NO NAVIGATION): Slider 2 dihapus dari index.html.
-   Slider 1 dan carousel tiga model 3D tetap menggunakan styling lama. */
+/* REVISI 4 — WEBAR MARKERLESS */
+
+.ar-hint{
+    grid-column:1/-1;
+    color:#6c8087;
+    font-size:10px;
+    line-height:1.6;
+}
+.webar-overlay{
+    position:fixed;
+    inset:0;
+    z-index:1500;
+    width:100%;
+    height:100vh;
+    height:100dvh;
+    overflow:hidden;
+    background:#10191b;
+    color:white;
+    touch-action:none;
+    overscroll-behavior:contain;
+}
+.webar-overlay.hidden{display:none!important;}
+.webar-camera{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    touch-action:none;
+}
+.webar-top,.webar-bottom{
+    position:absolute;
+    z-index:4;
+    left:0;
+    right:0;
+    pointer-events:none;
+}
+.webar-top{
+    top:0;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 16px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:linear-gradient(to bottom,rgba(8,22,28,.66),transparent);
+}
+.webar-top>*{pointer-events:auto;}
+.webar-close{
+    width:45px;
+    height:45px;
+    flex:0 0 45px;
+    border:1px solid rgba(255,255,255,.40);
+    border-radius:13px;
+    background:rgba(13,31,40,.66);
+    color:#fff;
+    font-size:30px;
+    line-height:1;
+}
+.webar-heading{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+.webar-heading strong{font-size:11px;letter-spacing:.08em;}
+.webar-heading span{
+    font-size:10px;
+    color:#e3eff2;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.webar-center{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    display:grid;
+    place-items:center;
+    z-index:3;
+}
+.webar-reticle{
+    width:62px;
+    height:62px;
+    display:grid;
+    place-items:center;
+    border:2px solid #39ddc0;
+    border-radius:50%;
+    box-shadow:0 0 0 6px rgba(12,156,136,.1),0 0 32px rgba(13,214,174,.3);
+}
+.webar-reticle span{
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#39ddc0;
+}
+.webar-bottom{
+    bottom:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    padding:16px 15px calc(18px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(to top,rgba(8,20,26,.86),rgba(8,20,26,0));
+    text-align:center;
+}
+.webar-status{
+    max-width:560px;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.45;
+    text-shadow:0 2px 5px rgba(0,0,0,.6);
+}
+.webar-instructions{
+    max-width:550px;
+    font-size:10px;
+    line-height:1.55;
+    color:#e8f7f7;
+}
+.webar-actions{
+    pointer-events:auto;
+    display:flex;
+    gap:9px;
+    justify-content:center;
+}
+.webar-reset{
+    min-height:42px;
+    padding:0 17px;
+    border:1px solid #7be9d1;
+    border-radius:11px;
+    color:#fff;
+    font-size:10px;
+    font-weight:800;
+    background:linear-gradient(135deg,#087f72,#1898d5);
+}
+.webar-reset:hover{background:#fff;color:#087f72;}
+.webar-credit{font-size:7px;opacity:.66;}
+html.webar-open,
+html.webar-open body{overflow:hidden!important;}
+@media(max-width:640px){
+    .webar-status{font-size:12px;}
+    .webar-bottom{gap:8px;}
+    .webar-heading span{max-width:68vw;}
+}
