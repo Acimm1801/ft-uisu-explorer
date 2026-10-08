@@ -1,15 +1,19 @@
 /* =========================================================
    FT UISU EXPLORER
    SERVICE WORKER
-   REVISION 4 (NO NAVIGATION)
+   REVISI 5 (NO NAVIGATION) — DIREKTORI
+
+   - Cache model 3D
+   - Cache file statis
+   - Mendukung gambar Tendik .webp
+   - Cache lama dibersihkan saat versi diperbarui
 ========================================================= */
 
-const MODEL_CACHE =
-    "ft-uisu-models-no-navigation-r4";
+const MODEL_CACHE=
+    "ft-uisu-models-no-navigation-r5-directory";
 
-const STATIC_CACHE =
-    "ft-uisu-static-no-navigation-r4";
-
+const STATIC_CACHE=
+    "ft-uisu-static-no-navigation-r5-directory";
 
 /* =========================================================
    INSTALL
@@ -18,7 +22,6 @@ const STATIC_CACHE =
 self.addEventListener("install",()=>{
     self.skipWaiting();
 });
-
 
 /* =========================================================
    ACTIVATE
@@ -54,7 +57,6 @@ self.addEventListener("activate",event=>{
     );
 });
 
-
 /* =========================================================
    FETCH
 ========================================================= */
@@ -68,27 +70,31 @@ self.addEventListener("fetch",event=>{
 
     const url=new URL(request.url);
 
-    // Jangan intersep range requests.
+    // Range requests tidak ditangani Service Worker.
     if(request.headers.has("range")){
         return;
     }
 
-    // Model GLB menggunakan stale-while-revalidate.
-    if(url.pathname.toLowerCase().endsWith(".glb")){
+    const path=url.pathname.toLowerCase();
+
+    /* MODEL GLB */
+
+    if(path.endsWith(".glb")){
         event.respondWith(
             modelStaleWhileRevalidate(request)
         );
         return;
     }
 
-    // Aset statis menggunakan network-first.
+    /* STATIC FILE, TERMASUK FOTO TENDIK */
+
     if(
-        url.pathname.endsWith(".css")||
-        url.pathname.endsWith(".js")||
-        url.pathname.endsWith(".png")||
-        url.pathname.endsWith(".jpg")||
-        url.pathname.endsWith(".jpeg")||
-        url.pathname.endsWith(".webp")
+        path.endsWith(".css")||
+        path.endsWith(".js")||
+        path.endsWith(".png")||
+        path.endsWith(".jpg")||
+        path.endsWith(".jpeg")||
+        path.endsWith(".webp")
     ){
         event.respondWith(
             staticNetworkFirst(request)
@@ -96,9 +102,8 @@ self.addEventListener("fetch",event=>{
     }
 });
 
-
 /* =========================================================
-   MODEL CACHE
+   MODEL CACHE — STALE WHILE REVALIDATE
 ========================================================= */
 
 async function modelStaleWhileRevalidate(request){
@@ -121,13 +126,12 @@ async function modelStaleWhileRevalidate(request){
         .catch(()=>null);
 
     if(cached){
-        // Menampilkan cache sambil mengambil versi terbaru.
+        // Gunakan file tersimpan sambil memperbarui cache.
         networkPromise;
         return cached;
     }
 
     const network=await networkPromise;
-
     if(network){
         return network;
     }
@@ -138,9 +142,8 @@ async function modelStaleWhileRevalidate(request){
     });
 }
 
-
 /* =========================================================
-   STATIC CACHE
+   STATIC CACHE — NETWORK FIRST
 ========================================================= */
 
 async function staticNetworkFirst(request){
