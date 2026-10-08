@@ -311,7 +311,6 @@ a{color:inherit;text-decoration:none;}
     .feature-grid{grid-template-columns:repeat(2,1fr);}
     .developer-card{grid-template-columns:minmax(210px,290px) minmax(0,1fr);gap:25px;}
 }
-
 @media (max-width:640px){
     .header-inner{width:calc(100% - 22px);min-height:63px;gap:8px;}
     .brand{flex:1;}
@@ -774,15 +773,16 @@ html.viewer-fullscreen-open body{
 .navigation-disabled .feature-grid{
     grid-template-columns:repeat(3,minmax(0,1fr));
 }
-
 @media(max-width:900px){
     .navigation-disabled .feature-grid{
         grid-template-columns:repeat(2,minmax(0,1fr));
     }
 }
-
 @media(max-width:640px){
     .navigation-disabled .feature-grid{
         grid-template-columns:1fr;
     }
 }
+
+/* REVISI 2 (NO NAVIGATION): Slider 2 dihapus dari index.html.
+   Slider 1 dan carousel tiga model 3D tetap menggunakan styling lama. */
