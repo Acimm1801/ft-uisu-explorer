@@ -1,332 +1,425 @@
 
-(function(){
+/* =========================================================
+   FT UISU EXPLORER
+   REVISI 8 — NO NAVIGATION
+   DIREKTORI + VIEWER 3D + NAVIGASI TERSIMPAN + WEBAR
+========================================================= */
+
+(function () {
 "use strict";
 
-/* =====================================================
-   FT UISU EXPLORER - REV 7 (NO NAVIGATE)
-   Semua menu dan database tetap dipertahankan.
-===================================================== */
+const NAVIGATION_ENABLED = false;
+const DATA = window.FT_DATA || {};
+const MAP_WIDTH = DATA.MAP_WIDTH || 768;
+const MAP_HEIGHT = DATA.MAP_HEIGHT || 1024;
 
-const NAVIGATION_ENABLED=false;
-const DATA=window.FT_DATA||{};
-const MAP_WIDTH=DATA.MAP_WIDTH||768;
-const MAP_HEIGHT=DATA.MAP_HEIGHT||1024;
-const buildings=Array.isArray(DATA.buildings)?DATA.buildings:[];
-const rooms=Array.isArray(DATA.rooms)?DATA.rooms:[];
-const people=Array.isArray(DATA.people)?DATA.people:[];
-const entrances=Array.isArray(DATA.entrances)?DATA.entrances:[];
-const mapNodes=DATA.mapNodes||{};
-const mapEdges=Array.isArray(DATA.mapEdges)?DATA.mapEdges:[];
-const mapCalibration=Array.isArray(DATA.mapCalibration)?DATA.mapCalibration:[];
+const buildings = Array.isArray(DATA.buildings) ? DATA.buildings : [];
+const rooms = Array.isArray(DATA.rooms) ? DATA.rooms : [];
+const people = Array.isArray(DATA.people) ? DATA.people : [];
+const entrances = Array.isArray(DATA.entrances) ? DATA.entrances : [];
+const mapNodes = DATA.mapNodes || {};
+const mapEdges = Array.isArray(DATA.mapEdges) ? DATA.mapEdges : [];
+const mapCalibration = Array.isArray(DATA.mapCalibration)
+    ? DATA.mapCalibration : [];
 
-const byId=id=>document.getElementById(id);
-const all=selector=>Array.from(document.querySelectorAll(selector));
-function on(id,type,callback,options){
-    byId(id)?.addEventListener(type,callback,options);
+function byId(id) {
+    return document.getElementById(id);
 }
-function show(id){byId(id)?.classList.remove("hidden");}
-function hide(id){byId(id)?.classList.add("hidden");}
-function setText(id,text){
-    const element=byId(id);
-    if(element)element.textContent=text??"";
+function all(selector) {
+    return Array.from(document.querySelectorAll(selector));
 }
-function escapeHtml(value){
-    return String(value??"")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+function on(id, type, callback, options) {
+    byId(id)?.addEventListener(type, callback, options);
 }
-function applyFeatureVisibility(){
+function show(id) {
+    byId(id)?.classList.remove("hidden");
+}
+function hide(id) {
+    byId(id)?.classList.add("hidden");
+}
+function setText(id, value) {
+    const element = byId(id);
+    if (element) element.textContent = value ?? "";
+}
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function applyFeatureVisibility() {
     document.documentElement.classList.toggle(
-        "navigation-disabled",!NAVIGATION_ENABLED
+        "navigation-disabled", !NAVIGATION_ENABLED
     );
+
     document.querySelectorAll(
         "#menuNavigation,#featureNav,#globalNavButton,.room-nav,.building-nav"
-    ).forEach(element=>{
-        element.disabled=!NAVIGATION_ENABLED;
-        if(NAVIGATION_ENABLED)element.removeAttribute("aria-hidden");
-        else element.setAttribute("aria-hidden","true");
+    ).forEach(element => {
+        element.disabled = !NAVIGATION_ENABLED;
+        if (NAVIGATION_ENABLED) {
+            element.removeAttribute("aria-hidden");
+        } else {
+            element.setAttribute("aria-hidden", "true");
+        }
     });
 
-    const description=byId("directoryNavigationDescription");
-    if(description){
-        description.textContent=NAVIGATION_ENABLED
-            ?"Pilih gedung dan ruangan untuk melihat informasi atau membuka Petunjuk Arah."
-            :"Pilih gedung dan ruangan untuk melihat informasi atau data tenaga kependidikan.";
-    }
+    const texts = {
+        landingNavigationDescription:
+            "Lihat daftar gedung dan ruangan melalui fitur Direktori untuk menemukan informasi lokasi yang Anda cari.",
+        landingNavigationHeading: "Informasi Gedung & Ruangan",
+        landingNavigationFooter: "Cari Gedung • Ruangan • Informasi",
+        directoryNavigationDescription:
+            "Pilih gedung dan ruangan untuk melihat informasi atau data tenaga kependidikan."
+    };
+
+    Object.entries(texts).forEach(([id, text]) => {
+        const element = byId(id);
+        if (!element) return;
+
+        if (!element.dataset.navigationEnabledText) {
+            element.dataset.navigationEnabledText = element.textContent;
+        }
+
+        element.textContent = NAVIGATION_ENABLED
+            ? element.dataset.navigationEnabledText
+            : text;
+    });
 }
 
-const state={
-    currentPage:"home",
-    pageHistory:[],
-    currentSlide:0,
-    landingModelIndex:0,
-    globalSelection:null,
-    infoLocation:null,
-    destination:null,
-    clickedPosition:null,
-    routeResult:null,
-    liveInstructions:[],
-    gpsWatchId:null,
-    viewerBuildingId:null,
-    viewerModelId:null,
-    arBuildingId:null,
-    arModelId:null,
-    pending3DMarker:null
+const state = {
+    currentPage: "home",
+    pageHistory: [],
+    currentSlide: 0,
+    landingModelIndex: 0,
+    globalSelection: null,
+    infoLocation: null,
+    destination: null,
+    clickedPosition: null,
+    routeResult: null,
+    liveInstructions: [],
+    gpsWatchId: null,
+    viewerBuildingId: null,
+    viewerModelId: null,
+    arBuildingId: null,
+    arModelId: null,
+    pending3DMarker: null
 };
 
-function getBuildingById(id){
-    return typeof DATA.getBuildingById==="function"
-        ?DATA.getBuildingById(id)
-        :buildings.find(item=>item.id===id)||null;
+function getBuildingById(id) {
+    if (typeof DATA.getBuildingById === "function") {
+        return DATA.getBuildingById(id);
+    }
+    return buildings.find(building => building.id === id) || null;
 }
-function getEntranceById(id){
-    return typeof DATA.getEntranceById==="function"
-        ?DATA.getEntranceById(id)
-        :entrances.find(item=>item.id===id)||null;
+function getEntranceById(id) {
+    if (typeof DATA.getEntranceById === "function") {
+        return DATA.getEntranceById(id);
+    }
+    return entrances.find(entrance => entrance.id === id) || null;
 }
-function getBuildingModels(id){
-    return typeof DATA.getBuildingModels==="function"
-        ?DATA.getBuildingModels(id)
-        :getBuildingById(id)?.models||[];
+function getBuildingModels(id) {
+    if (typeof DATA.getBuildingModels === "function") {
+        return DATA.getBuildingModels(id);
+    }
+    return getBuildingById(id)?.models || [];
 }
-function getModelVariant(buildingId,modelId){
-    return typeof DATA.getModelVariant==="function"
-        ?DATA.getModelVariant(buildingId,modelId)
-        :getBuildingModels(buildingId).find(item=>item.id===modelId)||null;
+function getModelVariant(buildingId, modelId) {
+    if (typeof DATA.getModelVariant === "function") {
+        return DATA.getModelVariant(buildingId, modelId);
+    }
+    return getBuildingModels(buildingId)
+        .find(model => model.id === modelId) || null;
 }
-function getDefaultModelVariant(buildingId){
-    if(typeof DATA.getDefaultModelVariant==="function"){
+function getDefaultModelVariant(buildingId) {
+    if (typeof DATA.getDefaultModelVariant === "function") {
         return DATA.getDefaultModelVariant(buildingId);
     }
-    const building=getBuildingById(buildingId);
-    if(!building)return null;
-    return getModelVariant(buildingId,building.defaultModel)
-        ||building.models?.[0]||null;
+    const building = getBuildingById(buildingId);
+    if (!building) return null;
+    return getModelVariant(buildingId, building.defaultModel)
+        || building.models?.[0] || null;
 }
-function getNavigationEntrance(location){
-    if(typeof DATA.getNavigationEntranceForLocation==="function"){
+function getNavigationEntrance(location) {
+    if (typeof DATA.getNavigationEntranceForLocation === "function") {
         return DATA.getNavigationEntranceForLocation(location);
     }
-    if(!location)return null;
-    if(location.type==="room"&&location.navigationEntranceId){
+    if (!location) return null;
+    if (location.type === "room" && location.navigationEntranceId) {
         return getEntranceById(location.navigationEntranceId);
     }
-    const building=getBuildingById(location.buildingId||location.id);
-    return building?getEntranceById(building.defaultEntranceId):null;
+    const building = getBuildingById(location.buildingId || location.id);
+    return building ? getEntranceById(building.defaultEntranceId) : null;
 }
 
-/* CACHE */
-const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r7-webar";
-const PRIORITY_MODELS=[
+/* =========================================================
+   CACHE MODEL 3D
+========================================================= */
+
+const MODEL_CACHE_NAME = "ft-uisu-models-no-navigation-r8-webar";
+const PRIORITY_MODELS = [
     "./assets/models/gedung_biro_outdoor.glb",
     "./assets/models/gedung_perkuliahan_outdoor.glb",
     "./assets/models/laboratorium_outdoor.glb",
     "./assets/models/gedung_biro_indoor.glb",
     "./assets/models/gedung_perkuliahan_indoor.glb"
 ];
-async function registerServiceWorker(){
-    if(!("serviceWorker" in navigator))return;
-    try{
+
+async function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    try {
         await navigator.serviceWorker.register(
-            "./sw.js?v=7-webar",{scope:"./"}
+            "./sw.js?v=8-webar", { scope: "./" }
         );
         await navigator.serviceWorker.ready;
-    }catch(error){
-        console.warn("Service worker:",error);
+    } catch (error) {
+        console.warn("Service Worker:", error);
     }
 }
-async function cacheModel(url){
-    if(!url||!("caches" in window))return false;
-    try{
-        const cache=await caches.open(MODEL_CACHE_NAME);
-        if(await cache.match(url,{ignoreSearch:true}))return true;
-        const response=await fetch(url,{cache:"force-cache"});
-        if(!response.ok)return false;
-        await cache.put(url,response.clone());
+
+async function cacheModel(url) {
+    if (!url || !("caches" in window)) return false;
+    try {
+        const cache = await caches.open(MODEL_CACHE_NAME);
+        const existing = await cache.match(url, { ignoreSearch: true });
+        if (existing) return true;
+
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) return false;
+
+        await cache.put(url, response.clone());
         return true;
-    }catch(error){
+    } catch (error) {
         return false;
     }
 }
-async function preloadPriorityModels(){
-    const queue=PRIORITY_MODELS.slice();
-    async function worker(){
-        while(queue.length){
+
+async function preloadPriorityModels() {
+    const queue = PRIORITY_MODELS.slice();
+
+    async function worker() {
+        while (queue.length) {
             await cacheModel(queue.shift());
         }
     }
-    await Promise.all([worker(),worker()]);
-}
-function preloadBuildingModels(building){
-    if(!Array.isArray(building?.models))return;
-    building.models.forEach(model=>cacheModel(model.src));
+
+    await Promise.all([worker(), worker()]);
 }
 
-/* LOKASI */
-const locations=[];
-buildings.forEach(building=>{
+function preloadBuildingModels(building) {
+    if (!Array.isArray(building?.models)) return;
+    building.models.forEach(model => cacheModel(model.src));
+}
+
+/* =========================================================
+   DATABASE LOKASI UNTUK DIREKTORI & PENCARIAN
+========================================================= */
+
+const locations = [];
+
+buildings.forEach(building => {
     locations.push({
-        id:building.id,
-        type:"building",
-        name:building.name,
-        buildingId:building.id,
-        floor:building.actualFloor,
-        parent:"Fakultas Teknik UISU",
-        description:building.description,
-        tendik:Array.isArray(building.tendik)?building.tendik:[],
-        navigationEntranceId:building.defaultEntranceId,
-        modelMarker:null
+        id: building.id,
+        type: "building",
+        name: building.name,
+        buildingId: building.id,
+        floor: building.actualFloor,
+        parent: "Fakultas Teknik UISU",
+        description: building.description,
+        tendik: Array.isArray(building.tendik) ? building.tendik : [],
+        navigationEntranceId: building.defaultEntranceId,
+        modelMarker: null
     });
-});
-rooms.forEach(room=>{
-    const building=getBuildingById(room.buildingId);
-    locations.push({
-        id:room.id,
-        type:"room",
-        name:room.name,
-        buildingId:room.buildingId,
-        floor:room.floor,
-        parent:building?.name||"Fakultas Teknik UISU",
-        description:room.description||"",
-        navigationEntranceId:room.navigationEntranceId,
-        units:Array.isArray(room.units)?room.units:[],
-        tendik:Array.isArray(room.tendik)?room.tendik:[],
-        modelMarker:room.modelMarker||null
-    });
-});
-people.forEach(person=>{
-    locations.push({...person,type:"person"});
 });
 
-/* HALAMAN */
-function updateHeaderActive(page){
-    all(".header-link").forEach(button=>{
-        button.classList.toggle("active",button.dataset.page===page);
+rooms.forEach(room => {
+    const building = getBuildingById(room.buildingId);
+
+    locations.push({
+        id: room.id,
+        type: "room",
+        name: room.name,
+        buildingId: room.buildingId,
+        floor: room.floor,
+        parent: building?.name || "Fakultas Teknik UISU",
+        description: room.description || (
+            room.name + " berada di " +
+            (building?.name || "Fakultas Teknik UISU") +
+            (room.floor ? ", lantai " + room.floor : "") + "."
+        ),
+        navigationEntranceId: room.navigationEntranceId,
+        units: Array.isArray(room.units) ? room.units : [],
+        tendik: Array.isArray(room.tendik) ? room.tendik : [],
+        modelMarker: room.modelMarker || null
+    });
+});
+
+people.forEach(person => {
+    locations.push({ ...person, type: "person" });
+});
+
+/* =========================================================
+   HALAMAN
+========================================================= */
+
+function updateHeaderActive(pageName) {
+    all(".header-link").forEach(button => {
+        button.classList.toggle(
+            "active", button.dataset.page === pageName
+        );
     });
 }
-function showPage(pageName,pushHistory=true){
-    if(!NAVIGATION_ENABLED&&
-       (pageName==="navigation"||pageName==="navigationActive"))return;
-    const page=byId(pageName+"Page");
-    if(!page)return;
-    if(pushHistory&&state.currentPage!==pageName){
+
+function showPage(pageName, pushHistory = true) {
+    if (!NAVIGATION_ENABLED &&
+        ["navigation", "navigationActive"].includes(pageName)) return;
+
+    const page = byId(pageName + "Page");
+    if (!page) return;
+
+    if (pushHistory &&
+        state.currentPage &&
+        state.currentPage !== pageName) {
         state.pageHistory.push(state.currentPage);
     }
-    all(".page").forEach(item=>item.classList.remove("active"));
+
+    all(".page").forEach(item => item.classList.remove("active"));
     page.classList.add("active");
-    state.currentPage=pageName;
+
+    state.currentPage = pageName;
     updateHeaderActive(pageName);
     closeDrawer();
-    if(pageName!=="navigationActive"){
-        window.scrollTo({top:0,behavior:"auto"});
+
+    if (pageName !== "navigationActive") {
+        window.scrollTo({ top: 0, behavior: "auto" });
     }
-    setTimeout(syncAllMapGeometry,60);
+    setTimeout(syncAllMapGeometry, 60);
 }
-function goBack(){
+
+function goBack() {
     stopGpsTracking();
-    const previous=state.pageHistory.length
-        ?state.pageHistory.pop()
-        :"home";
-    showPage(previous,false);
+    const previous = state.pageHistory.length
+        ? state.pageHistory.pop()
+        : "home";
+    showPage(previous, false);
 }
-all("[data-back]").forEach(button=>{
-    button.addEventListener("click",goBack);
+
+all("[data-back]").forEach(button => {
+    button.addEventListener("click", goBack);
 });
-on("logoHome","click",()=>{
+
+on("logoHome", "click", () => {
     stopGpsTracking();
-    state.pageHistory=[];
-    showPage("home",false);
+    state.pageHistory = [];
+    showPage("home", false);
 });
-all("[data-page]").forEach(button=>{
-    button.addEventListener("click",()=>{
+
+all("[data-page]").forEach(button => {
+    button.addEventListener("click", () => {
         showPage(button.dataset.page);
     });
 });
 
 /* DRAWER */
-function openDrawer(){
+function openDrawer() {
     byId("drawer")?.classList.add("open");
     byId("drawerOverlay")?.classList.add("show");
-    document.body.style.overflow="hidden";
+    document.body.style.overflow = "hidden";
 }
-function closeDrawer(){
+function closeDrawer() {
     byId("drawer")?.classList.remove("open");
     byId("drawerOverlay")?.classList.remove("show");
-    document.body.style.overflow="";
+    document.body.style.overflow = "";
 }
-on("hamburgerButton","click",openDrawer);
-on("closeDrawer","click",closeDrawer);
-on("drawerOverlay","click",closeDrawer);
 
-/* SLIDER */
-const slides=all(".hero-slide");
-function showSlide(index){
-    if(!slides.length)return;
-    state.currentSlide=(index+slides.length)%slides.length;
-    slides.forEach((slide,i)=>{
-        slide.classList.toggle("active",i===state.currentSlide);
+on("hamburgerButton", "click", openDrawer);
+on("closeDrawer", "click", closeDrawer);
+on("drawerOverlay", "click", closeDrawer);
+
+/* HERO SLIDER */
+const slides = all(".hero-slide");
+
+function showSlide(index) {
+    if (!slides.length) return;
+    state.currentSlide = (index + slides.length) % slides.length;
+
+    slides.forEach((slide, i) => {
+        slide.classList.toggle("active", i === state.currentSlide);
     });
-    all(".slider-dot").forEach((dot,i)=>{
-        dot.classList.toggle("active",i===state.currentSlide);
+
+    all(".slider-dot").forEach((dot, i) => {
+        dot.classList.toggle("active", i === state.currentSlide);
     });
 }
-on("prevSlide","click",()=>showSlide(state.currentSlide-1));
-on("nextSlide","click",()=>showSlide(state.currentSlide+1));
-all(".slider-dot").forEach(dot=>{
-    dot.addEventListener("click",()=>{
+
+on("prevSlide", "click", () => showSlide(state.currentSlide - 1));
+on("nextSlide", "click", () => showSlide(state.currentSlide + 1));
+
+all(".slider-dot").forEach(dot => {
+    dot.addEventListener("click", () => {
         showSlide(Number(dot.dataset.slide));
     });
 });
 
-/* MODEL BERANDA */
-const landingModels=[
-    {name:"Biro Fakultas Teknik UISU",viewer:byId("landingModel0")},
-    {name:"Gedung Perkuliahan Fakultas Teknik UISU",viewer:byId("landingModel1")},
-    {name:"Laboratorium Fakultas Teknik UISU",viewer:byId("landingModel2")}
+/* LANDING MODEL SLIDER */
+const landingModels = [
+    { name: "Biro Fakultas Teknik UISU", viewer: byId("landingModel0") },
+    { name: "Gedung Perkuliahan Fakultas Teknik UISU", viewer: byId("landingModel1") },
+    { name: "Laboratorium Fakultas Teknik UISU", viewer: byId("landingModel2") }
 ];
-function showLandingModel(index){
-    if(!landingModels.length)return;
-    state.landingModelIndex=
-        (index+landingModels.length)%landingModels.length;
-    landingModels.forEach((item,i)=>{
+
+function showLandingModel(index) {
+    if (!landingModels.length) return;
+    state.landingModelIndex =
+        (index + landingModels.length) % landingModels.length;
+
+    landingModels.forEach((item, i) => {
         item.viewer?.classList.toggle(
-            "active",i===state.landingModelIndex
+            "active", i === state.landingModelIndex
         );
     });
+
     setText(
         "landingModelName",
         landingModels[state.landingModelIndex].name
     );
     setText(
         "landingModelCounter",
-        `${state.landingModelIndex+1} / ${landingModels.length}`
+        `${state.landingModelIndex + 1} / ${landingModels.length}`
     );
 }
-on("landingNextModel","click",()=>{
-    showLandingModel(state.landingModelIndex+1);
+
+on("landingNextModel", "click", () => {
+    showLandingModel(state.landingModelIndex + 1);
 });
 
-/* WARNA UNIT */
-const UNIT_CLASS={
-    "Teknik Informatika":"room-unit-informatika",
-    "Teknik Mesin":"room-unit-mesin",
-    "Teknik Sipil":"room-unit-sipil",
-    "Teknik Industri":"room-unit-industri",
-    "Teknik Elektro":"room-unit-elektro",
-    "Fakultas Teknik":"room-unit-fakultas"
+/* =========================================================
+   WARNA UNIT & PENCARIAN
+========================================================= */
+
+const UNIT_CLASS = {
+    "Teknik Informatika": "room-unit-informatika",
+    "Teknik Mesin": "room-unit-mesin",
+    "Teknik Sipil": "room-unit-sipil",
+    "Teknik Industri": "room-unit-industri",
+    "Teknik Elektro": "room-unit-elektro",
+    "Fakultas Teknik": "room-unit-fakultas"
 };
-function renderUnitMarkup(units){
-    if(!Array.isArray(units)||!units.length)return "";
-    const content=units.map((unit,index)=>{
-        const name=UNIT_CLASS[unit]||"room-unit-fakultas";
-        const separator=index<units.length-1
-            ?'<span class="room-unit-punctuation">, </span>'
-            :"";
-        return `<span class="room-unit ${name}">${escapeHtml(unit)}</span>${separator}`;
+
+function renderUnitMarkup(units) {
+    if (!Array.isArray(units) || !units.length) return "";
+
+    const content = units.map((unit, index) => {
+        const className = UNIT_CLASS[unit] || "room-unit-fakultas";
+        const separator = index < units.length - 1
+            ? '<span class="room-unit-punctuation">, </span>'
+            : "";
+
+        return `<span class="room-unit ${className}">${escapeHtml(unit)}</span>${separator}`;
     }).join("");
+
     return `<span class="room-unit-group">
         <span class="room-unit-punctuation">(</span>
         ${content}
@@ -334,536 +427,676 @@ function renderUnitMarkup(units){
     </span>`;
 }
 
-/* PENCARIAN */
-function normalize(text){
-    return String(text||"").toLowerCase().trim();
+function normalize(value) {
+    return String(value || "").toLowerCase().trim();
 }
-function searchLocations(value){
-    const search=normalize(value);
-    if(!search)return [];
-    return locations.filter(item=>
-        normalize(
-            item.name+" "+
-            (item.units||[]).join(" ")+" "+
-            (item.parent||"")
-        ).includes(search)
-    ).slice(0,40);
+
+function searchLocations(value) {
+    const query = normalize(value);
+    if (!query) return [];
+
+    return locations.filter(location => {
+        return normalize(
+            location.name + " " +
+            (location.units || []).join(" ") + " " +
+            (location.parent || "")
+        ).includes(query);
+    }).slice(0, 40);
 }
-function renderSearchResults(results,container,callback){
-    if(!container)return;
-    container.innerHTML="";
-    if(!results.length){
-        container.innerHTML=
+
+function renderSearchResults(results, container, onSelect) {
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (!results.length) {
+        container.innerHTML =
             '<div class="search-empty">Lokasi tidak ditemukan.</div>';
         return;
     }
-    results.forEach(location=>{
-        const button=document.createElement("button");
-        button.type="button";
-        button.className="search-result";
-        const type=location.type==="building"
-            ?"Gedung"
-            :location.type==="person"?"Civitas":"Ruangan";
-        button.innerHTML=`
+
+    results.forEach(location => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "search-result";
+
+        let typeText = "Ruangan";
+        if (location.type === "building") typeText = "Gedung";
+        if (location.type === "person") typeText = "Civitas";
+
+        button.innerHTML = `
             <span>
                 <strong class="search-result-title">
                     <span>${escapeHtml(location.name)}</span>
                     ${renderUnitMarkup(location.units)}
                 </strong>
-                <small>${escapeHtml(location.parent||"Fakultas Teknik UISU")}
-                ${location.floor?" • Lantai "+location.floor:""}</small>
+                <small>${escapeHtml(location.parent || "Fakultas Teknik UISU")}
+                ${location.floor ? " • Lantai " + location.floor : ""}</small>
             </span>
-            <span class="search-type">${type}</span>
+            <span class="search-type">${typeText}</span>
         `;
-        button.addEventListener("click",()=>callback(location));
+
+        button.addEventListener("click", () => onSelect(location));
         container.appendChild(button);
     });
 }
-on("globalSearch","input",event=>{
-    const value=event.target.value;
-    if(!value.trim()){
+
+on("globalSearch", "input", event => {
+    const input = event.target;
+    if (!input.value.trim()) {
         hide("globalSearchResults");
         return;
     }
+
     renderSearchResults(
-        searchLocations(value),
+        searchLocations(input.value),
         byId("globalSearchResults"),
-        location=>{
-            state.globalSelection=location;
-            setText("globalSelectedName",location.name);
-            byId("globalSearch").value=location.name;
+        location => {
+            state.globalSelection = location;
+            input.value = location.name;
+            setText("globalSelectedName", location.name);
             hide("globalSearchResults");
             show("globalSelected");
         }
     );
+
     show("globalSearchResults");
 });
-on("clearGlobalSearch","click",()=>{
-    byId("globalSearch").value="";
-    state.globalSelection=null;
-    hide("globalSearchResults");
+
+on("clearGlobalSearch", "click", () => {
+    if (byId("globalSearch")) byId("globalSearch").value = "";
+    state.globalSelection = null;
     hide("globalSelected");
+    hide("globalSearchResults");
 });
 
 /* INFORMASI */
-function openInfo(location){
-    if(!location)return;
-    state.infoLocation=location;
-    setText("infoTitle",location.name);
-    const units=byId("infoUnits");
-    if(units){
-        units.innerHTML=renderUnitMarkup(location.units);
+function openInfo(location) {
+    if (!location) return;
+
+    state.infoLocation = location;
+    setText("infoTitle", location.name);
+
+    const units = byId("infoUnits");
+    if (units) {
+        units.innerHTML = renderUnitMarkup(location.units);
         units.classList.toggle(
-            "hidden",!Array.isArray(location.units)||!location.units.length
+            "hidden",
+            !Array.isArray(location.units) || !location.units.length
         );
     }
+
     setText(
         "infoDescription",
-        location.description||"Informasi belum tersedia."
+        location.description || "Informasi belum tersedia."
     );
     show("infoModal");
 }
-function closeInfo(){hide("infoModal");}
-on("closeInfoModal","click",closeInfo);
-on("infoBackdrop","click",closeInfo);
-on("globalInfoButton","click",()=>{
-    openInfo(state.globalSelection);
-});
-on("globalNavButton","click",()=>{
-    openNavigationWithDestination(state.globalSelection);
+
+function closeInfo() {
+    hide("infoModal");
+}
+
+on("closeInfoModal", "click", closeInfo);
+on("infoBackdrop", "click", closeInfo);
+on("globalInfoButton", "click", () => openInfo(state.globalSelection));
+on("globalNavButton", "click", () => {
+    if (state.globalSelection) {
+        openNavigationWithDestination(state.globalSelection);
+    }
 });
 
-/* TENDIK */
-function normalizeWhatsappNumber(phone){
-    let digits=String(phone||"").replace(/\D/g,"");
-    if(!digits)return "";
-    if(digits.startsWith("0"))digits="62"+digits.slice(1);
+/* =========================================================
+   TENAGA KEPENDIDIKAN (TENDIK)
+========================================================= */
+
+function normalizeWhatsappNumber(phone) {
+    let digits = String(phone || "").replace(/\D/g, "");
+    if (!digits) return "";
+
+    if (digits.startsWith("0")) {
+        digits = "62" + digits.slice(1);
+    }
     return digits;
 }
-function whatsappUrl(phone){
-    const number=normalizeWhatsappNumber(phone);
-    return number?`https://wa.me/${number}`:"";
+
+function whatsappUrl(phone) {
+    const digits = normalizeWhatsappNumber(phone);
+    return digits ? `https://wa.me/${digits}` : "";
 }
-function openTendik(location){
-    const isBiro=location?.buildingId==="biro-ft";
-    const isLibrary=location?.id==="perpustakaan-ft";
-    const contacts=Array.isArray(location?.tendik)
-        ?location.tendik:[];
-    if((!isBiro&&!isLibrary)||!contacts.length)return;
-    setText("tendikRoomTitle",location.name);
+
+function openTendik(location) {
+    const isBiroRoom = location?.buildingId === "biro-ft";
+    const isLibrary = location?.id === "perpustakaan-ft";
+    const contacts = Array.isArray(location?.tendik)
+        ? location.tendik : [];
+
+    if ((!isBiroRoom && !isLibrary) || !contacts.length) return;
+
+    setText("tendikRoomTitle", location.name);
     hide("tendikRoomParent");
 
-    const list=byId("tendikList");
-    if(!list)return;
+    const list = byId("tendikList");
+    if (!list) return;
     list.replaceChildren();
 
-    contacts.forEach(contact=>{
-        const card=document.createElement("article");
-        card.className="tendik-card";
-        const jabatan=String(contact.jabatan||"-").trim()||"-";
-        const name=String(contact.name||"-").trim()||"-";
-        const phone=String(contact.phone||"-").trim()||"-";
-        const photo=String(contact.photo||"").trim();
-        const wa=phone!=="-"?whatsappUrl(phone):"";
+    contacts.forEach(contact => {
+        const card = document.createElement("article");
+        card.className = "tendik-card";
 
-        const photoMarkup=photo
-            ?`<div class="tendik-photo-wrap">
-                <img class="tendik-photo"
-                     src="${escapeHtml(photo)}"
-                     alt="Foto ${escapeHtml(name)}"
-                     loading="lazy"
-                     decoding="async"
-                     onerror="this.parentNode.classList.add('tendik-photo-empty');this.remove()">
-              </div>`
-            :`<div class="tendik-photo-wrap tendik-photo-empty">-</div>`;
+        const jabatan = contact.jabatan?.trim() || "-";
+        const name = contact.name?.trim() || "-";
+        const phone = contact.phone?.trim() || "-";
+        const photo = contact.photo?.trim() || "";
+        const wa = phone !== "-" ? whatsappUrl(phone) : "";
 
-        card.innerHTML=`
+        const photoMarkup = photo
+            ? `<div class="tendik-photo-wrap">
+                 <img class="tendik-photo"
+                      src="${escapeHtml(photo)}"
+                      alt="Foto ${escapeHtml(name)}"
+                      loading="lazy"
+                      decoding="async"
+                      onerror="this.parentNode.classList.add('tendik-photo-empty');this.remove()">
+               </div>`
+            : `<div class="tendik-photo-wrap tendik-photo-empty"
+                    aria-label="Foto tidak tersedia">-</div>`;
+
+        card.innerHTML = `
             <p class="tendik-jabatan">${escapeHtml(jabatan)}</p>
             ${photoMarkup}
             <h3 class="tendik-name">${escapeHtml(name)}</h3>
-            ${wa
-                ?`<a class="tendik-whatsapp"
-                     href="${wa}"
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     aria-label="WhatsApp ${escapeHtml(name)}">
-                    <span class="tendik-whatsapp-label">KONTAK (WhatsApp)</span>
-                    <strong>${escapeHtml(phone)}</strong>
-                  </a>`
-                :`<div class="tendik-whatsapp tendik-contact-empty">
-                    <span class="tendik-whatsapp-label">KONTAK</span>
-                    <strong>-</strong>
-                  </div>`
+            ${
+                wa
+                ? `<a class="tendik-whatsapp"
+                      href="${wa}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="WhatsApp ${escapeHtml(name)}">
+                       <span class="tendik-whatsapp-label">KONTAK (WhatsApp)</span>
+                       <strong>${escapeHtml(phone)}</strong>
+                   </a>`
+                : `<div class="tendik-whatsapp tendik-contact-empty"
+                        aria-label="Kontak kosong">
+                       <span class="tendik-whatsapp-label">KONTAK</span>
+                       <strong>-</strong>
+                   </div>`
             }
         `;
         list.appendChild(card);
     });
+
     show("tendikModal");
 }
-function closeTendik(){hide("tendikModal");}
-on("closeTendikModal","click",closeTendik);
-on("tendikBackdrop","click",closeTendik);
 
-/* PILIHAN GEDUNG */
-function populateBuildingSelect(select){
-    if(!select)return;
-    select.innerHTML=
-        '<option value="">-- Pilih Gedung --</option>';
-    buildings.slice().sort((a,b)=>
-        (a.modelMenuOrder??99)-(b.modelMenuOrder??99)
-    ).forEach(building=>{
-        const option=document.createElement("option");
-        option.value=building.id;
-        option.textContent=building.modelMenuName||building.name;
-        select.appendChild(option);
-    });
+function closeTendik() {
+    hide("tendikModal");
 }
-const viewerBuildingSelect=byId("viewerBuildingSelect");
-const arBuildingSelect=byId("arBuildingSelect");
+on("closeTendikModal", "click", closeTendik);
+on("tendikBackdrop", "click", closeTendik);
+
+/* =========================================================
+   GEDUNG DAN MODE MODEL
+========================================================= */
+
+function populateBuildingSelect(select) {
+    if (!select) return;
+
+    select.innerHTML =
+        '<option value="">-- Pilih Gedung --</option>';
+
+    buildings.slice()
+        .sort((a, b) =>
+            (a.modelMenuOrder ?? 99) - (b.modelMenuOrder ?? 99)
+        )
+        .forEach(building => {
+            const option = document.createElement("option");
+            option.value = building.id;
+            option.textContent = building.modelMenuName || building.name;
+            select.appendChild(option);
+        });
+}
+
+const viewerBuildingSelect = byId("viewerBuildingSelect");
+const arBuildingSelect = byId("arBuildingSelect");
+
 populateBuildingSelect(viewerBuildingSelect);
 populateBuildingSelect(arBuildingSelect);
 
 function renderModelSwitch({
-    building,activeModelId,containerId,singleBadgeId,onChange
-}){
-    const container=byId(containerId);
-    const badge=byId(singleBadgeId);
-    if(!container||!badge||!building)return;
-    const models=building.models||[];
-    container.innerHTML="";
-    if(models.length<=1){
+    building,
+    activeModelId,
+    containerId,
+    singleBadgeId,
+    onChange
+}) {
+    const container = byId(containerId);
+    const badge = byId(singleBadgeId);
+    if (!container || !badge || !building) return;
+
+    const models = building.models || [];
+    container.innerHTML = "";
+
+    if (models.length <= 1) {
         hide(containerId);
-        if(models[0]){
-            badge.textContent=models[0].name;
+        if (models[0]) {
+            badge.textContent = models[0].name;
             show(singleBadgeId);
-        }else{
+        } else {
             hide(singleBadgeId);
         }
         return;
     }
+
     hide(singleBadgeId);
     show(containerId);
-    models.forEach(model=>{
-        const button=document.createElement("button");
-        button.type="button";
-        button.className="model-switch-button";
-        button.textContent=model.name;
+
+    models.forEach(model => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "model-switch-button";
+        button.textContent = model.name;
         button.classList.toggle(
-            "active",model.id===activeModelId
+            "active", model.id === activeModelId
         );
-        button.addEventListener("click",()=>onChange(model.id));
+        button.addEventListener("click", () => onChange(model.id));
         container.appendChild(button);
     });
 }
 
-/* 3D VIEWER */
-const main3DViewer=byId("main3DViewer");
-let current3DModel={buildingId:null,modelId:null,src:null};
+/* =========================================================
+   3D MODEL VIEWER
+========================================================= */
 
-function updateViewerText(building,model){
-    const title=model.viewerTitle||building.name;
-    setText("viewerTitle",title);
-    setText("viewerCurrentModelName",title+" - "+model.name);
-    setText("viewerPreloadDescription",model.viewerDescription);
+const main3DViewer = byId("main3DViewer");
+let current3DModel = {
+    buildingId: null,
+    modelId: null,
+    src: null
+};
+
+function updateViewerText(building, model) {
+    const title = model.viewerTitle || building.name;
+    setText("viewerTitle", title);
+    setText("viewerCurrentModelName", title + " - " + model.name);
+    setText("viewerPreloadDescription", model.viewerDescription);
 }
-function setViewerLoading(building,model){
-    updateViewerText(building,model);
-    setText("viewerLoadStatus","MEMUAT MODEL 3D...");
-    byId("viewerLoadingDot").className="loading-dot loading";
+
+function setViewerLoading(building, model) {
+    updateViewerText(building, model);
+    setText("viewerLoadStatus", "MEMUAT MODEL 3D...");
+    byId("viewerLoadingDot").className = "loading-dot loading";
     show("viewerLoadingOverlay");
     hide("viewerUnavailable");
 }
-function setViewerReady(building,model){
-    updateViewerText(building,model);
-    setText("viewerLoadStatus","MODEL 3D SIAP");
-    byId("viewerLoadingDot").className="loading-dot ready";
+
+function setViewerReady(building, model) {
+    updateViewerText(building, model);
+    setText("viewerLoadStatus", "MODEL 3D SIAP");
+    byId("viewerLoadingDot").className = "loading-dot ready";
     hide("viewerLoadingOverlay");
     hide("viewerUnavailable");
 }
-function setViewerUnavailable(building,model){
-    updateViewerText(building,model);
-    setText("viewerLoadStatus","MODEL BELUM TERSEDIA");
-    byId("viewerLoadingDot").className="loading-dot error";
+
+function setViewerUnavailable(building, model) {
+    updateViewerText(building, model);
+    setText("viewerLoadStatus", "MODEL BELUM TERSEDIA");
+    byId("viewerLoadingDot").className = "loading-dot error";
     hide("viewerLoadingOverlay");
     show("viewerUnavailable");
 }
-function applyModelDefaultCamera(model,jump=true){
-    if(!main3DViewer||!model)return;
-    main3DViewer.cameraOrbit=
-        model.defaultCameraOrbit||"0deg 75deg auto";
-    main3DViewer.cameraTarget=
-        model.defaultCameraTarget||"auto auto auto";
-    main3DViewer.fieldOfView=
-        model.defaultFieldOfView||"35deg";
-    if(jump&&typeof main3DViewer.jumpCameraToGoal==="function"){
+
+function applyModelDefaultCamera(model, jump = true) {
+    if (!main3DViewer || !model) return;
+
+    main3DViewer.cameraOrbit =
+        model.defaultCameraOrbit || "0deg 75deg auto";
+    main3DViewer.cameraTarget =
+        model.defaultCameraTarget || "auto auto auto";
+    main3DViewer.fieldOfView =
+        model.defaultFieldOfView || "35deg";
+
+    if (jump && typeof main3DViewer.jumpCameraToGoal === "function") {
         main3DViewer.jumpCameraToGoal();
     }
 }
-on("resetCamera","click",()=>{
-    const model=getModelVariant(
+
+on("resetCamera", "click", () => {
+    const model = getModelVariant(
         current3DModel.buildingId,
         current3DModel.modelId
     );
-    if(model)applyModelDefaultCamera(model,true);
+    if (model) applyModelDefaultCamera(model, true);
 });
-function load3DModel(building,model){
-    if(!building||!model||!main3DViewer)return;
-    state.viewerBuildingId=building.id;
-    state.viewerModelId=model.id;
-    current3DModel={
-        buildingId:building.id,modelId:model.id,src:model.src
+
+function load3DModel(building, model) {
+    if (!building || !model || !main3DViewer) return;
+
+    state.viewerBuildingId = building.id;
+    state.viewerModelId = model.id;
+    current3DModel = {
+        buildingId: building.id,
+        modelId: model.id,
+        src: model.src
     };
-    applyModelDefaultCamera(model,true);
+
+    applyModelDefaultCamera(model, true);
+
     renderModelSwitch({
         building,
-        activeModelId:model.id,
-        containerId:"viewerModelSwitch",
-        singleBadgeId:"viewerSingleModeBadge",
-        onChange:modelId=>{
-            const next=getModelVariant(building.id,modelId);
-            if(next)load3DModel(building,next);
+        activeModelId: model.id,
+        containerId: "viewerModelSwitch",
+        singleBadgeId: "viewerSingleModeBadge",
+        onChange: nextModelId => {
+            const next = getModelVariant(building.id, nextModelId);
+            if (next) load3DModel(building, next);
         }
     });
-    setViewerLoading(building,model);
+
+    setViewerLoading(building, model);
     cacheModel(model.src);
-    if(main3DViewer.getAttribute("src")!==model.src){
-        main3DViewer.setAttribute("src",model.src);
-    }else{
-        setViewerReady(building,model);
+
+    if (main3DViewer.getAttribute("src") !== model.src) {
+        main3DViewer.setAttribute("src", model.src);
+    } else {
+        setViewerReady(building, model);
+        applyModelDefaultCamera(model, true);
     }
+
     applyDestinationMarker();
 }
-main3DViewer?.addEventListener("load",()=>{
-    const building=getBuildingById(current3DModel.buildingId);
-    const model=getModelVariant(
-        current3DModel.buildingId,current3DModel.modelId
+
+main3DViewer?.addEventListener("load", () => {
+    const building = getBuildingById(current3DModel.buildingId);
+    const model = getModelVariant(
+        current3DModel.buildingId,
+        current3DModel.modelId
     );
-    if(building&&model){
-        setViewerReady(building,model);
-        applyModelDefaultCamera(model,true);
+
+    if (building && model) {
+        setViewerReady(building, model);
+        applyModelDefaultCamera(model, true);
     }
 });
-main3DViewer?.addEventListener("error",()=>{
-    const building=getBuildingById(current3DModel.buildingId);
-    const model=getModelVariant(
-        current3DModel.buildingId,current3DModel.modelId
+
+main3DViewer?.addEventListener("error", () => {
+    const building = getBuildingById(current3DModel.buildingId);
+    const model = getModelVariant(
+        current3DModel.buildingId,
+        current3DModel.modelId
     );
-    if(building&&model)setViewerUnavailable(building,model);
+    if (building && model) setViewerUnavailable(building, model);
 });
+
 function prepareViewerBuilding(
-    buildingId,preferredModelId=null,scroll=true
-){
-    const building=getBuildingById(buildingId);
-    if(!building){toast("Gedung tidak ditemukan.");return;}
-    const models=building.models||[];
-    if(!models.length){toast("Model belum tersedia.");return;}
-    preloadBuildingModels(building);
-    show("viewerCard");
-    const model=getModelVariant(building.id,preferredModelId)
-        ||getDefaultModelVariant(building.id)
-        ||models[0];
-    load3DModel(building,model);
-    if(scroll){
-        setTimeout(()=>{
-            byId("viewerCard")?.scrollIntoView({
-                behavior:"smooth",block:"start"
-            });
-        },50);
-    }
-}
-on("show3DModel","click",()=>{
-    const id=viewerBuildingSelect?.value;
-    if(!id){
-        setText("viewerMessage","Pilih gedung terlebih dahulu.");
+    buildingId,
+    preferredModelId = null,
+    scroll = true
+) {
+    const building = getBuildingById(buildingId);
+    if (!building) {
+        toast("Gedung tidak ditemukan.");
         return;
     }
-    setText("viewerMessage","");
-    state.pending3DMarker=null;
-    prepareViewerBuilding(id);
+
+    const models = building.models || [];
+    if (!models.length) {
+        toast("Model belum terdaftar.");
+        return;
+    }
+
+    preloadBuildingModels(building);
+    show("viewerCard");
+
+    const model =
+        getModelVariant(building.id, preferredModelId) ||
+        getDefaultModelVariant(building.id) ||
+        models[0];
+
+    load3DModel(building, model);
+
+    if (scroll) {
+        setTimeout(() => {
+            byId("viewerCard")?.scrollIntoView({
+                behavior: "smooth", block: "start"
+            });
+        }, 50);
+    }
+}
+
+on("show3DModel", "click", () => {
+    const buildingId = viewerBuildingSelect?.value;
+    if (!buildingId) {
+        setText("viewerMessage", "Pilih gedung terlebih dahulu.");
+        return;
+    }
+
+    setText("viewerMessage", "");
+    state.pending3DMarker = null;
+    prepareViewerBuilding(buildingId, null, true);
 });
-function applyDestinationMarker(){
+
+function applyDestinationMarker() {
     hide("destination3DHotspot");
-    if(!state.pending3DMarker)return;
-    const marker=state.pending3DMarker.marker;
-    const element=byId("destination3DHotspot");
-    if(!element)return;
-    element.dataset.position=
+    if (!state.pending3DMarker) return;
+
+    const hotspot = byId("destination3DHotspot");
+    const marker = state.pending3DMarker.marker;
+    if (!hotspot) return;
+
+    hotspot.dataset.position =
         `${marker.x}m ${marker.y}m ${marker.z}m`;
-    setText("destination3DLabel",state.pending3DMarker.label);
+    setText("destination3DLabel", state.pending3DMarker.label);
     show("destination3DHotspot");
 }
 
-/* AR PREVIEW - INDOOR / OUTDOOR */
-const mainARViewer=byId("mainARViewer");
-const launchARCamera=byId("launchARCamera");
-let arPreviewLoaded=false;
+/* =========================================================
+   PRATINJAU MODEL AR
+========================================================= */
 
-function setARLoading(building,model){
-    const title=model.viewerTitle||building.name;
-    setText("arViewerTitle",title);
-    setText("arCurrentModelName",title+" - "+model.name);
-    setText("arPreloadDescription",model.viewerDescription);
-    setText("arLoadStatus","MEMUAT MODEL AR...");
-    byId("arLoadingDot").className="loading-dot loading";
+const mainARViewer = byId("mainARViewer");
+
+function setARLoading(building, model) {
+    const title = model.viewerTitle || building.name;
+    setText("arViewerTitle", title);
+    setText("arCurrentModelName", title + " - " + model.name);
+    setText("arPreloadDescription", model.viewerDescription);
+    setText("arLoadStatus", "MEMUAT MODEL AR...");
+    byId("arLoadingDot").className = "loading-dot loading";
     show("arLoadingOverlay");
     hide("arUnavailable");
-    arPreviewLoaded=false;
-    if(launchARCamera)launchARCamera.disabled=true;
+
+    const launch = byId("launchARCamera");
+    if (launch) launch.disabled = true;
 }
-function setARReady(building,model){
-    const title=model.viewerTitle||building.name;
-    setText("arViewerTitle",title);
-    setText("arCurrentModelName",title+" - "+model.name);
-    setText("arPreloadDescription",model.viewerDescription);
-    setText("arLoadStatus","MODEL AR SIAP");
-    byId("arLoadingDot").className="loading-dot ready";
+
+function setARReady(building, model) {
+    const title = model.viewerTitle || building.name;
+    setText("arViewerTitle", title);
+    setText("arCurrentModelName", title + " - " + model.name);
+    setText("arPreloadDescription", model.viewerDescription);
+    setText("arLoadStatus", "MODEL AR SIAP");
+    byId("arLoadingDot").className = "loading-dot ready";
     hide("arLoadingOverlay");
     hide("arUnavailable");
-    arPreviewLoaded=true;
-    if(launchARCamera)launchARCamera.disabled=false;
+
+    const launch = byId("launchARCamera");
+    if (launch) launch.disabled = false;
 }
-function setARUnavailable(building,model){
-    const title=model.viewerTitle||building.name;
-    setText("arViewerTitle",title);
-    setText("arCurrentModelName",title+" - "+model.name);
-    setText("arLoadStatus","MODEL BELUM TERSEDIA");
-    byId("arLoadingDot").className="loading-dot error";
+
+function setARUnavailable(building, model) {
+    const title = model.viewerTitle || building.name;
+    setText("arViewerTitle", title);
+    setText("arCurrentModelName", title + " - " + model.name);
+    setText("arLoadStatus", "MODEL BELUM TERSEDIA");
+    byId("arLoadingDot").className = "loading-dot error";
     hide("arLoadingOverlay");
     show("arUnavailable");
-    arPreviewLoaded=false;
-    if(launchARCamera)launchARCamera.disabled=true;
-}
-function loadARModel(buildingId,modelId){
-    const building=getBuildingById(buildingId);
-    if(!building)return;
-    const model=getModelVariant(buildingId,modelId)
-        ||getDefaultModelVariant(buildingId);
-    if(!model)return;
 
-    state.arBuildingId=buildingId;
-    state.arModelId=model.id;
+    const launch = byId("launchARCamera");
+    if (launch) launch.disabled = true;
+}
+
+function loadARModel(buildingId, modelId) {
+    const building = getBuildingById(buildingId);
+    if (!building) return;
+
+    const model = getModelVariant(buildingId, modelId) ||
+        getDefaultModelVariant(buildingId);
+    if (!model) return;
+
+    state.arBuildingId = building.id;
+    state.arModelId = model.id;
+
     preloadBuildingModels(building);
     show("arViewerCard");
 
     renderModelSwitch({
         building,
-        activeModelId:model.id,
-        containerId:"arModelSwitch",
-        singleBadgeId:"arSingleModeBadge",
-        onChange:id=>loadARModel(building.id,id)
+        activeModelId: model.id,
+        containerId: "arModelSwitch",
+        singleBadgeId: "arSingleModeBadge",
+        onChange: nextModelId => loadARModel(building.id, nextModelId)
     });
 
-    setARLoading(building,model);
-    if(mainARViewer){
-        if(mainARViewer.getAttribute("src")===model.src){
-            if(mainARViewer.loaded){
-                setARReady(building,model);
-            }
-        }else{
-            mainARViewer.setAttribute("src",model.src);
+    setARLoading(building, model);
+
+    if (mainARViewer) {
+        if (mainARViewer.getAttribute("src") !== model.src) {
+            mainARViewer.setAttribute("src", model.src);
+        } else if (mainARViewer.loaded) {
+            setARReady(building, model);
         }
     }
 }
-mainARViewer?.addEventListener("load",()=>{
-    const building=getBuildingById(state.arBuildingId);
-    const model=getModelVariant(
-        state.arBuildingId,state.arModelId
+
+mainARViewer?.addEventListener("load", () => {
+    const building = getBuildingById(state.arBuildingId);
+    const model = getModelVariant(
+        state.arBuildingId, state.arModelId
     );
-    if(building&&model)setARReady(building,model);
+    if (!building || !model) return;
+    if (mainARViewer.getAttribute("src") !== model.src) return;
+    setARReady(building, model);
 });
-mainARViewer?.addEventListener("error",()=>{
-    const building=getBuildingById(state.arBuildingId);
-    const model=getModelVariant(
-        state.arBuildingId,state.arModelId
+
+mainARViewer?.addEventListener("error", () => {
+    const building = getBuildingById(state.arBuildingId);
+    const model = getModelVariant(
+        state.arBuildingId, state.arModelId
     );
-    if(building&&model)setARUnavailable(building,model);
+    if (building && model) setARUnavailable(building, model);
 });
-on("prepareMainAR","click",()=>{
-    const buildingId=arBuildingSelect?.value;
-    if(!buildingId){
-        setText("arMessage","Pilih gedung terlebih dahulu.");
+
+on("prepareMainAR", "click", () => {
+    const id = arBuildingSelect?.value;
+    if (!id) {
+        setText("arMessage", "Pilih gedung terlebih dahulu.");
         return;
     }
-    setText("arMessage","");
-    const model=getDefaultModelVariant(buildingId);
-    if(!model)return;
-    loadARModel(buildingId,model.id);
-    setTimeout(()=>{
+
+    setText("arMessage", "");
+    const preferred = getModelVariant(id, "outdoor")
+        || getDefaultModelVariant(id);
+
+    loadARModel(id, preferred?.id);
+
+    setTimeout(() => {
         byId("arViewerCard")?.scrollIntoView({
-            behavior:"smooth",block:"start"
+            behavior: "smooth", block: "start"
         });
-    },60);
+    }, 60);
 });
-on("launchARCamera","click",()=>{
-    if(!arPreviewLoaded){
-        setText("arMessage","Tunggu model selesai dimuat.");
+
+on("launchARCamera", "click", () => {
+    const model = getModelVariant(
+        state.arBuildingId, state.arModelId
+    );
+    const building = getBuildingById(state.arBuildingId);
+
+    if (!model || !building) {
+        toast("Pilih model terlebih dahulu.");
         return;
     }
-    const building=getBuildingById(state.arBuildingId);
-    const model=getModelVariant(
-        state.arBuildingId,state.arModelId
-    );
-    if(!building||!model)return;
+
+    if (byId("launchARCamera")?.disabled) return;
+
     window.FT_WEBAR?.start(
         model.src,
-        model.viewerTitle||building.name
+        `${building.name} • ${model.name}`
     );
 });
 
-/* DIREKTORI */
-function locationForBuilding(building){
-    return locations.find(item=>
-        item.type==="building"&&item.id===building.id
-    )||null;
+/* =========================================================
+   DIREKTORI GEDUNG DAN RUANGAN
+========================================================= */
+
+function locationForBuilding(building) {
+    return locations.find(
+        location =>
+            location.type === "building" &&
+            location.id === building.id
+    ) || null;
 }
-function locationForRoom(room){
-    return locations.find(item=>
-        item.type==="room"&&item.id===room.id
-    )||null;
+
+function locationForRoom(room) {
+    return locations.find(
+        location =>
+            location.type === "room" &&
+            location.id === room.id
+    ) || null;
 }
-function closeDirectoryRoomItem(item){
-    if(!item)return;
+
+function closeDirectoryRoomItem(item) {
+    if (!item) return;
     item.classList.remove("open");
     item.querySelector(".room-toggle-button")
-        ?.setAttribute("aria-expanded","false");
-    item.querySelector(".room-actions")
-        ?.classList.add("hidden");
+        ?.setAttribute("aria-expanded", "false");
+    item.querySelector(".room-actions")?.classList.add("hidden");
 }
-function closeDirectoryBuildingCard(article){
-    if(!article)return;
-    article.classList.remove("open");
-    article.querySelector(".building-button")
-        ?.setAttribute("aria-expanded","false");
-    article.querySelectorAll(".room-item.open")
+
+function closeDirectoryBuildingCard(card) {
+    if (!card) return;
+    card.classList.remove("open");
+    card.querySelector(".building-button")
+        ?.setAttribute("aria-expanded", "false");
+    card.querySelectorAll(".room-item.open")
         .forEach(closeDirectoryRoomItem);
 }
-function closeOtherDirectoryRooms(current){
-    document.querySelectorAll(".directory .room-item.open")
-        .forEach(item=>{
-            if(item!==current)closeDirectoryRoomItem(item);
-        });
-}
-function closeOtherDirectoryBuildings(current){
-    document.querySelectorAll(".directory .building-card.open")
-        .forEach(item=>{
-            if(item!==current)closeDirectoryBuildingCard(item);
-        });
-}
-function renderRoomList(roomList,container){
-    if(!container)return;
-    container.innerHTML="";
-    if(!roomList.length)return;
-    const grid=document.createElement("div");
-    grid.className="room-grid";
-    roomList.forEach(room=>{
-        const location=locationForRoom(room);
-        const item=document.createElement("div");
-        item.className="room-item";
-        const actionsId=`directory-room-actions-${room.id}`;
-        const hasTendik=room.buildingId==="biro-ft"&&
-            Array.isArray(room.tendik)&&room.tendik.length>0;
 
-        item.innerHTML=`
+function closeOtherDirectoryRooms(current) {
+    document.querySelectorAll(".directory .room-item.open")
+        .forEach(item => {
+            if (item !== current) closeDirectoryRoomItem(item);
+        });
+}
+
+function closeOtherDirectoryBuildings(current) {
+    document.querySelectorAll(".directory .building-card.open")
+        .forEach(card => {
+            if (card !== current) closeDirectoryBuildingCard(card);
+        });
+}
+
+function renderRoomList(roomList, container) {
+    if (!container) return;
+    container.innerHTML = "";
+    if (!roomList.length) return;
+
+    const grid = document.createElement("div");
+    grid.className = "room-grid";
+
+    roomList.forEach(room => {
+        const location = locationForRoom(room);
+        const item = document.createElement("div");
+        const actionsId = `directory-room-actions-${room.id}`;
+
+        item.className = "room-item";
+        const hasTendik =
+            room.buildingId === "biro-ft" &&
+            Array.isArray(room.tendik) &&
+            room.tendik.length > 0;
+
+        item.innerHTML = `
             <button type="button"
                     class="room-row room-toggle-button"
                     aria-expanded="false"
@@ -877,80 +1110,98 @@ function renderRoomList(roomList,container){
             <div id="${actionsId}" class="room-actions hidden">
                 <button type="button" class="room-info">Informasi</button>
                 <button type="button" class="room-nav">Petunjuk Arah</button>
-                ${hasTendik
-                    ?'<button type="button" class="room-tendik">Tendik</button>'
-                    :""}
+                ${
+                    hasTendik
+                        ? '<button type="button" class="room-tendik">Tendik</button>'
+                        : ""
+                }
             </div>
         `;
-        item.querySelector(".room-name").textContent=room.name;
-        item.querySelector(".room-unit-slot").innerHTML=
+
+        item.querySelector(".room-name").textContent = room.name;
+        item.querySelector(".room-unit-slot").innerHTML =
             renderUnitMarkup(room.units);
 
-        const toggle=item.querySelector(".room-toggle-button");
-        const actions=item.querySelector(".room-actions");
-        toggle.addEventListener("click",()=>{
-            const expanded=
-                toggle.getAttribute("aria-expanded")!=="true";
+        const toggle = item.querySelector(".room-toggle-button");
+        const actions = item.querySelector(".room-actions");
+
+        toggle.addEventListener("click", () => {
+            const expanded =
+                toggle.getAttribute("aria-expanded") !== "true";
+
             closeOtherDirectoryRooms(item);
-            toggle.setAttribute("aria-expanded",String(expanded));
-            actions.classList.toggle("hidden",!expanded);
-            item.classList.toggle("open",expanded);
+            toggle.setAttribute("aria-expanded", String(expanded));
+            actions.classList.toggle("hidden", !expanded);
+            item.classList.toggle("open", expanded);
         });
+
         item.querySelector(".room-info")
-            .addEventListener("click",()=>openInfo(location));
+            .addEventListener("click", () => openInfo(location));
+
         item.querySelector(".room-nav")
-            .addEventListener("click",()=>{
+            .addEventListener("click", () => {
                 openNavigationWithDestination(location);
             });
+
         item.querySelector(".room-tendik")
-            ?.addEventListener("click",()=>openTendik(room));
+            ?.addEventListener("click", () => openTendik(room));
+
         grid.appendChild(item);
     });
+
     container.appendChild(grid);
 }
-function renderLaboratory(roomList,container){
-    const floorButtons=document.createElement("div");
-    floorButtons.className="floor-buttons";
-    const roomContainer=document.createElement("div");
-    [1,2,3].forEach(floor=>{
-        const button=document.createElement("button");
-        button.type="button";
-        button.className="floor-button";
-        button.textContent=`Lantai ${floor}`;
-        button.addEventListener("click",()=>{
-            Array.from(floorButtons.children).forEach(element=>{
-                element.classList.remove("active");
+
+function renderLaboratory(roomList, container) {
+    const floorButtons = document.createElement("div");
+    floorButtons.className = "floor-buttons";
+    const roomContainer = document.createElement("div");
+
+    [1, 2, 3].forEach(floor => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "floor-button";
+        button.textContent = `Lantai ${floor}`;
+
+        button.addEventListener("click", () => {
+            Array.from(floorButtons.children).forEach(item => {
+                item.classList.remove("active");
             });
+
             button.classList.add("active");
             renderRoomList(
-                roomList.filter(room=>room.floor===floor),
+                roomList.filter(room => room.floor === floor),
                 roomContainer
             );
         });
         floorButtons.appendChild(button);
     });
+
     container.appendChild(floorButtons);
     container.appendChild(roomContainer);
     floorButtons.firstElementChild?.click();
 }
-function renderDirectory(){
-    const container=byId("directoryContainer");
-    if(!container)return;
-    container.innerHTML="";
-    buildings.forEach((building,index)=>{
-        const buildingRooms=rooms.filter(
-            room=>room.buildingId===building.id
+
+function renderDirectory() {
+    const container = byId("directoryContainer");
+    if (!container) return;
+    container.innerHTML = "";
+
+    buildings.forEach((building, index) => {
+        const buildingRooms = rooms.filter(
+            room => room.buildingId === building.id
         );
-        const location=locationForBuilding(building);
-        const article=document.createElement("article");
-        article.className="building-card";
-        article.innerHTML=`
+        const location = locationForBuilding(building);
+        const card = document.createElement("article");
+        card.className = "building-card";
+
+        card.innerHTML = `
             <button class="building-button"
                     type="button"
                     aria-expanded="false"
                     aria-controls="directory-building-content-${building.id}">
                 <span class="building-number">
-                    ${String(index+1).padStart(2,"0")}
+                    ${String(index + 1).padStart(2, "0")}
                 </span>
                 <span>
                     <strong>${escapeHtml(building.name)}</strong>
@@ -960,439 +1211,611 @@ function renderDirectory(){
             <div id="directory-building-content-${building.id}"
                  class="building-content"></div>
         `;
-        const header=article.querySelector(".building-button");
-        const content=article.querySelector(".building-content");
-        header.addEventListener("click",()=>{
-            const expanded=!article.classList.contains("open");
-            closeOtherDirectoryBuildings(article);
-            article.classList.toggle("open",expanded);
-            header.setAttribute(
-                "aria-expanded",String(expanded)
-            );
+
+        const header = card.querySelector(".building-button");
+        const content = card.querySelector(".building-content");
+
+        header.addEventListener("click", () => {
+            const expanded = !card.classList.contains("open");
+            closeOtherDirectoryBuildings(card);
+            card.classList.toggle("open", expanded);
+            header.setAttribute("aria-expanded", String(expanded));
         });
 
-        const hasLibraryTendik=
-            building.id==="perpustakaan-ft"&&
-            Array.isArray(building.tendik)&&
-            building.tendik.length>0;
+        const hasLibraryTendik =
+            building.id === "perpustakaan-ft" &&
+            Array.isArray(building.tendik) &&
+            building.tendik.length > 0;
 
-        const actions=document.createElement("div");
-        actions.className="building-actions";
-        actions.innerHTML=`
+        const actions = document.createElement("div");
+        actions.className = "building-actions";
+        actions.innerHTML = `
             <button class="button button-primary building-info"
                     type="button">Informasi</button>
             <button class="button button-primary building-nav"
                     type="button">Petunjuk Arah</button>
-            ${hasLibraryTendik
-                ?`<button class="button button-primary building-tendik"
+            ${
+                hasLibraryTendik
+                ? `<button class="button button-primary building-tendik"
                            type="button">Tendik</button>`
-                :""}
+                : ""
+            }
         `;
         content.appendChild(actions);
-        actions.querySelector(".building-info")
-            .addEventListener("click",()=>openInfo(location));
-        actions.querySelector(".building-nav")
-            .addEventListener("click",()=>{
-                openNavigationWithDestination(location);
-            });
-        actions.querySelector(".building-tendik")
-            ?.addEventListener("click",()=>openTendik(location));
 
-        if(buildingRooms.length){
-            const roomHolder=document.createElement("div");
+        actions.querySelector(".building-info")
+            ?.addEventListener("click", () => openInfo(location));
+
+        actions.querySelector(".building-nav")
+            ?.addEventListener("click", () =>
+                openNavigationWithDestination(location));
+
+        actions.querySelector(".building-tendik")
+            ?.addEventListener("click", () => openTendik(location));
+
+        if (buildingRooms.length) {
+            const roomHolder = document.createElement("div");
             content.appendChild(roomHolder);
-            if(building.id==="laboratorium-ft"){
-                renderLaboratory(buildingRooms,roomHolder);
-            }else{
-                renderRoomList(buildingRooms,roomHolder);
+
+            if (building.id === "laboratorium-ft") {
+                renderLaboratory(buildingRooms, roomHolder);
+            } else {
+                renderRoomList(buildingRooms, roomHolder);
             }
         }
-        container.appendChild(article);
+
+        container.appendChild(card);
     });
 }
 
-/* NAVIGATION ENGINE (DIPERTAHANKAN) */
-function setStep(step){
-    ["stepTarget","stepPosition","stepRoute","stepNavigation"]
-        .forEach((id,index)=>{
-            byId(id)?.classList.toggle("active",index+1<=step);
-        });
+/* =========================================================
+   NAVIGASI DIJKSTRA — KODE TETAP DIPERTAHANKAN
+========================================================= */
+
+function setStep(stepNumber) {
+    [
+        "stepTarget",
+        "stepPosition",
+        "stepRoute",
+        "stepNavigation"
+    ].forEach((id, index) => {
+        byId(id)?.classList.toggle(
+            "active", index + 1 <= stepNumber
+        );
+    });
 }
-function getImageContentBox(container,image){
-    if(!container||!image)return null;
-    const cw=container.clientWidth;
-    const ch=container.clientHeight;
-    const nw=image.naturalWidth||cw;
-    const nh=image.naturalHeight||ch;
-    if(!cw||!ch||!nw||!nh)return null;
-    const scale=Math.min(cw/nw,ch/nh);
-    const width=nw*scale,height=nh*scale;
+
+function getImageContentBox(container, image) {
+    if (!container || !image) return null;
+
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const nw = image.naturalWidth || cw;
+    const nh = image.naturalHeight || ch;
+
+    if (!cw || !ch || !nw || !nh) return null;
+
+    const scale = Math.min(cw / nw, ch / nh);
+    const width = nw * scale;
+    const height = nh * scale;
+
     return {
-        left:(cw-width)/2,
-        top:(ch-height)/2,
-        width,height
+        left: (cw - width) / 2,
+        top: (ch - height) / 2,
+        width,
+        height
     };
 }
-function fitContainerToImage(container,image){
-    if(!container||!image?.naturalWidth||!image.naturalHeight)return;
-    container.style.aspectRatio=
+
+function fitContainerToImage(container, image) {
+    if (!container || !image?.naturalWidth ||
+        !image.naturalHeight) return;
+
+    container.style.aspectRatio =
         `${image.naturalWidth} / ${image.naturalHeight}`;
 }
-function fitSvgToImage(svg,container,image){
-    if(!svg||!container||!image)return;
-    const box=getImageContentBox(container,image);
-    if(!box)return;
-    Object.assign(svg.style,{
-        inset:"auto",
-        left:box.left+"px",
-        top:box.top+"px",
-        width:box.width+"px",
-        height:box.height+"px"
-    });
-    svg.setAttribute("viewBox",`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
-    svg.setAttribute("preserveAspectRatio","none");
+
+function fitSvgToImage(svg, container, image) {
+    if (!svg || !container || !image) return;
+    const box = getImageContentBox(container, image);
+    if (!box) return;
+
+    svg.style.inset = "auto";
+    svg.style.left = box.left + "px";
+    svg.style.top = box.top + "px";
+    svg.style.width = box.width + "px";
+    svg.style.height = box.height + "px";
+    svg.setAttribute("viewBox", `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
+    svg.setAttribute("preserveAspectRatio", "none");
 }
-function positionElementOnImage(element,point,container,image){
-    if(!element||!point||!container||!image)return;
-    const box=getImageContentBox(container,image);
-    if(!box)return;
-    element.style.left=
-        box.left+point.x/MAP_WIDTH*box.width+"px";
-    element.style.top=
-        box.top+point.y/MAP_HEIGHT*box.height+"px";
+
+function positionElementOnImage(element, point, container, image) {
+    if (!element || !point || !container || !image) return;
+
+    const box = getImageContentBox(container, image);
+    if (!box) return;
+
+    element.style.left =
+        box.left + point.x / MAP_WIDTH * box.width + "px";
+    element.style.top =
+        box.top + point.y / MAP_HEIGHT * box.height + "px";
 }
-function positionSelectionMapElement(element,point){
+
+function positionSelectionMapElement(element, point) {
     positionElementOnImage(
-        element,point,byId("navigationMap"),
+        element, point,
+        byId("navigationMap"),
         byId("navigationMapImage")
     );
 }
-function positionLiveMapElement(element,point){
-    const container=byId("liveMapContent");
-    if(!container)return;
+
+function positionLiveMapElement(element, point) {
+    const container = byId("liveMapContent");
+    if (!container) return;
+
     positionElementOnImage(
-        element,point,container,
+        element,
+        point,
+        container,
         container.querySelector(".live-map-background")
     );
 }
-function syncNavigationMapGeometry(){
-    const container=byId("navigationMap");
-    const image=byId("navigationMapImage");
-    if(!container||!image)return;
-    fitContainerToImage(container,image);
+
+function syncNavigationMapGeometry() {
+    const container = byId("navigationMap");
+    const image = byId("navigationMapImage");
+    if (!container || !image) return;
+
+    fitContainerToImage(container, image);
     fitSvgToImage(
-        container.querySelector(".route-svg"),container,image
+        container.querySelector(".route-svg"),
+        container, image
     );
-    if(state.routeResult){
+
+    if (state.routeResult) {
         positionSelectionMapElement(
-            byId("userMarker"),state.routeResult.startSnap.point
+            byId("userMarker"), state.routeResult.startSnap.point
         );
         positionSelectionMapElement(
-            byId("entranceMarker"),state.routeResult.entrance
+            byId("entranceMarker"), state.routeResult.entrance
         );
     }
 }
-function syncLiveMapGeometry(){
-    const container=byId("liveMapContent");
-    const image=container?.querySelector(".live-map-background");
-    if(!container||!image)return;
-    fitContainerToImage(container,image);
+
+function syncLiveMapGeometry() {
+    const container = byId("liveMapContent");
+    const image = container?.querySelector(".live-map-background");
+    if (!container || !image) return;
+
+    fitContainerToImage(container, image);
     fitSvgToImage(
-        container.querySelector(".live-route-svg"),container,image
+        container.querySelector(".live-route-svg"),
+        container, image
     );
-    if(state.routeResult){
+
+    if (state.routeResult) {
         positionLiveMapElement(
-            byId("liveUserMarker"),state.routeResult.startSnap.point
+            byId("liveUserMarker"), state.routeResult.startSnap.point
         );
         positionLiveMapElement(
-            byId("liveDestinationMarker"),state.routeResult.entrance
+            byId("liveDestinationMarker"), state.routeResult.entrance
         );
         renderLiveBuildingMarkers();
     }
 }
-function syncAllMapGeometry(){
+
+function syncAllMapGeometry() {
     syncNavigationMapGeometry();
     syncLiveMapGeometry();
 }
-function resetNavigation(){
+
+function resetNavigation() {
     stopGpsTracking();
-    state.destination=null;
-    state.clickedPosition=null;
-    state.routeResult=null;
-    if(byId("navigationSearch"))byId("navigationSearch").value="";
-    byId("activeRoute")?.setAttribute("points","");
+
+    state.destination = null;
+    state.clickedPosition = null;
+    state.routeResult = null;
+
+    if (byId("navigationSearch")) {
+        byId("navigationSearch").value = "";
+    }
+
+    byId("activeRoute")?.setAttribute("points", "");
     [
-        "mapSection","selectedDestination","routeFoundBox",
-        "userMarker","entranceMarker","resetPosition"
+        "mapSection",
+        "selectedDestination",
+        "routeFoundBox",
+        "userMarker",
+        "entranceMarker",
+        "resetPosition"
     ].forEach(hide);
+
     show("mapInstructionArea");
     setStep(1);
-    const results=byId("navigationSearchResults");
-    if(results){
-        results.innerHTML=
+
+    const results = byId("navigationSearchResults");
+    if (results) {
+        results.innerHTML =
             '<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>';
     }
 }
-function selectDestination(location){
-    if(!location)return;
-    state.destination=location;
-    if(byId("navigationSearch")){
-        byId("navigationSearch").value=location.name;
+
+function selectDestination(location) {
+    if (!location) return;
+    state.destination = location;
+
+    if (byId("navigationSearch")) {
+        byId("navigationSearch").value = location.name;
     }
-    setText("selectedDestinationName",location.name);
+
+    setText("selectedDestinationName", location.name);
     setText(
         "selectedDestinationParent",
-        location.parent||"Fakultas Teknik UISU"
+        location.parent || "Fakultas Teknik UISU"
     );
+
     show("selectedDestination");
-    byId("navigationSearchResults").innerHTML="";
+    byId("navigationSearchResults").innerHTML = "";
+
     setText(
         "mapHeadingTitle",
         `Tap pada denah sesuai posisi Anda sekarang, lalu sistem akan memberikan jalur terdekat menuju ${location.name}.`
     );
+
     show("mapInstructionArea");
     show("mapSection");
-    ["routeFoundBox","userMarker","entranceMarker","resetPosition"]
-        .forEach(hide);
-    byId("activeRoute")?.setAttribute("points","");
+
+    [
+        "routeFoundBox",
+        "userMarker",
+        "entranceMarker",
+        "resetPosition"
+    ].forEach(hide);
+
+    byId("activeRoute")?.setAttribute("points", "");
     setStep(2);
-    setTimeout(()=>{
+
+    setTimeout(() => {
         syncNavigationMapGeometry();
         byId("mapSection")?.scrollIntoView({
-            behavior:"smooth",block:"start"
+            behavior: "smooth",
+            block: "start"
         });
-    },80);
+    }, 80);
 }
-on("navigationSearch","input",event=>{
-    const value=event.target.value;
-    const container=byId("navigationSearchResults");
-    if(!container)return;
-    if(!value.trim()){
-        container.innerHTML=
+
+on("navigationSearch", "input", event => {
+    const query = event.target.value;
+    const container = byId("navigationSearchResults");
+    if (!container) return;
+
+    if (!query.trim()) {
+        container.innerHTML =
             '<div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>';
         return;
     }
+
     renderSearchResults(
-        searchLocations(value),container,selectDestination
+        searchLocations(query),
+        container,
+        selectDestination
     );
 });
 
-/* GRAPH DAN DIJKSTRA */
-function pointDistance(a,b){
-    return Math.hypot(a.x-b.x,a.y-b.y);
+function pointDistance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
 }
-const graph={};
-Object.keys(mapNodes).forEach(id=>{graph[id]=[];});
-const preparedEdges=mapEdges.map(edge=>{
-    const points=edge.points.map(p=>({x:p[0],y:p[1]}));
-    let length=0;
-    const cumulative=[0];
-    for(let i=0;i<points.length-1;i++){
-        length+=pointDistance(points[i],points[i+1]);
+
+const graph = {};
+Object.keys(mapNodes).forEach(id => {
+    graph[id] = [];
+});
+
+const preparedEdges = mapEdges.map(edge => {
+    const points = edge.points.map(p => ({
+        x: p[0], y: p[1]
+    }));
+
+    let length = 0;
+    const cumulative = [0];
+
+    for (let i = 0; i < points.length - 1; i++) {
+        length += pointDistance(points[i], points[i + 1]);
         cumulative.push(length);
     }
-    return {...edge,points,length,cumulative};
-});
-const edgeById={};
-preparedEdges.forEach(edge=>{
-    edgeById[edge.id]=edge;
-    graph[edge.from]?.push({
-        node:edge.to,edgeId:edge.id,weight:edge.length
-    });
-    graph[edge.to]?.push({
-        node:edge.from,edgeId:edge.id,weight:edge.length
-    });
-});
-function projectPointToSegment(point,a,b){
-    const dx=b.x-a.x,dy=b.y-a.y;
-    const lengthSquared=dx*dx+dy*dy;
-    const t=lengthSquared
-        ?Math.max(0,Math.min(1,
-            ((point.x-a.x)*dx+(point.y-a.y)*dy)/lengthSquared
-        )):0;
-    const projected={x:a.x+dx*t,y:a.y+dy*t};
+
     return {
-        point:projected,
+        id: edge.id,
+        from: edge.from,
+        to: edge.to,
+        points,
+        length,
+        cumulative
+    };
+});
+
+const edgeById = {};
+preparedEdges.forEach(edge => {
+    edgeById[edge.id] = edge;
+
+    graph[edge.from]?.push({
+        node: edge.to,
+        edgeId: edge.id,
+        weight: edge.length
+    });
+
+    graph[edge.to]?.push({
+        node: edge.from,
+        edgeId: edge.id,
+        weight: edge.length
+    });
+});
+
+function projectPointToSegment(point, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const squared = dx * dx + dy * dy;
+    const projection = squared
+        ? ((point.x - a.x) * dx +
+           (point.y - a.y) * dy) / squared
+        : 0;
+
+    const t = Math.max(0, Math.min(1, projection));
+    const result = {
+        x: a.x + dx * t,
+        y: a.y + dy * t
+    };
+
+    return {
+        point: result,
         t,
-        distance:pointDistance(point,projected)
+        distance: pointDistance(point, result)
     };
 }
-function snapToRoute(point){
-    let best=null;
-    preparedEdges.forEach(edge=>{
-        for(let i=0;i<edge.points.length-1;i++){
-            const a=edge.points[i],b=edge.points[i+1];
-            const projection=projectPointToSegment(point,a,b);
-            const segmentLength=pointDistance(a,b);
-            const along=edge.cumulative[i]+segmentLength*projection.t;
-            if(!best||projection.distance<best.distance){
-                best={
-                    edge,segmentIndex:i,
-                    point:projection.point,
-                    distance:projection.distance,
+
+function snapToRoute(point) {
+    let best = null;
+
+    preparedEdges.forEach(edge => {
+        for (let i = 0; i < edge.points.length - 1; i++) {
+            const projection = projectPointToSegment(
+                point,
+                edge.points[i],
+                edge.points[i + 1]
+            );
+
+            const length = pointDistance(
+                edge.points[i], edge.points[i + 1]
+            );
+            const along =
+                edge.cumulative[i] + length * projection.t;
+
+            if (!best || projection.distance < best.distance) {
+                best = {
+                    edge,
+                    segmentIndex: i,
+                    point: projection.point,
+                    distance: projection.distance,
                     along,
-                    distanceToFrom:along,
-                    distanceToTo:edge.length-along
+                    distanceToFrom: along,
+                    distanceToTo: edge.length - along
                 };
             }
         }
     });
+
     return best;
 }
-function dijkstra(start,target){
-    const ids=Object.keys(graph);
-    if(!ids.includes(start)||!ids.includes(target))return null;
-    const distance={},previous={},previousEdge={};
-    ids.forEach(id=>{
-        distance[id]=Infinity;
-        previous[id]=null;
-        previousEdge[id]=null;
+
+function dijkstra(start, target) {
+    const ids = Object.keys(graph);
+    if (!ids.includes(start) || !ids.includes(target)) return null;
+
+    const distances = {};
+    const previous = {};
+    const previousEdge = {};
+
+    ids.forEach(id => {
+        distances[id] = Infinity;
+        previous[id] = null;
+        previousEdge[id] = null;
     });
-    distance[start]=0;
-    const remaining=new Set(ids);
-    while(remaining.size){
-        let current=null,minimum=Infinity;
-        remaining.forEach(id=>{
-            if(distance[id]<minimum){
-                minimum=distance[id];
-                current=id;
+
+    distances[start] = 0;
+    const unvisited = new Set(ids);
+
+    while (unvisited.size) {
+        let current = null;
+        let minimum = Infinity;
+
+        unvisited.forEach(id => {
+            if (distances[id] < minimum) {
+                minimum = distances[id];
+                current = id;
             }
         });
-        if(current===null||minimum===Infinity)break;
-        if(current===target)break;
-        remaining.delete(current);
-        graph[current].forEach(next=>{
-            if(!remaining.has(next.node))return;
-            const cost=distance[current]+next.weight;
-            if(cost<distance[next.node]){
-                distance[next.node]=cost;
-                previous[next.node]=current;
-                previousEdge[next.node]=next.edgeId;
+
+        if (!current || minimum === Infinity) break;
+        if (current === target) break;
+        unvisited.delete(current);
+
+        graph[current].forEach(connection => {
+            if (!unvisited.has(connection.node)) return;
+
+            const cost =
+                distances[current] + connection.weight;
+
+            if (cost < distances[connection.node]) {
+                distances[connection.node] = cost;
+                previous[connection.node] = current;
+                previousEdge[connection.node] = connection.edgeId;
             }
         });
     }
-    if(distance[target]===Infinity)return null;
-    const nodes=[],edges=[];
-    let cursor=target;
-    while(cursor){
+
+    if (distances[target] === Infinity) return null;
+
+    const nodes = [];
+    const edges = [];
+    let cursor = target;
+
+    while (cursor) {
         nodes.unshift(cursor);
-        if(cursor===start)break;
+        if (cursor === start) break;
         edges.unshift(previousEdge[cursor]);
-        cursor=previous[cursor];
+        cursor = previous[cursor];
     }
-    return {distance:distance[target],nodes,edges};
+
+    return {
+        distance: distances[target],
+        nodes,
+        edges
+    };
 }
-function pointsFromSnapToEndpoint(snap,endpoint){
-    const points=snap.edge.points;
-    const output=[{...snap.point}];
-    if(endpoint===snap.edge.from){
+
+function pointsFromSnapToEndpoint(snap, endpoint) {
+    const points = snap.edge.points;
+    const output = [{ ...snap.point }];
+
+    if (endpoint === snap.edge.from) {
         output.push(points[snap.segmentIndex]);
-        for(let i=snap.segmentIndex-1;i>=0;i--){
+
+        for (let i = snap.segmentIndex - 1; i >= 0; i--) {
             output.push(points[i]);
         }
-    }else{
-        output.push(points[snap.segmentIndex+1]);
-        for(let i=snap.segmentIndex+2;i<points.length;i++){
+    } else {
+        output.push(points[snap.segmentIndex + 1]);
+
+        for (let i = snap.segmentIndex + 2; i < points.length; i++) {
             output.push(points[i]);
         }
     }
+
     return output;
 }
-function routeNodePolyline(route){
-    const output=[];
-    route.edges.forEach((edgeId,index)=>{
-        const edge=edgeById[edgeId];
-        if(!edge)return;
-        const forward=edge.from===route.nodes[index];
-        let pts=forward
-            ?edge.points.slice()
-            :edge.points.slice().reverse();
-        if(output.length)pts=pts.slice(1);
-        output.push(...pts);
+
+function routeNodePolyline(route) {
+    const output = [];
+
+    route.edges.forEach((edgeId, index) => {
+        const edge = edgeById[edgeId];
+        if (!edge) return;
+
+        let points = edge.from === route.nodes[index]
+            ? edge.points.slice()
+            : edge.points.slice().reverse();
+
+        if (output.length) points = points.slice(1);
+        output.push(...points);
     });
+
     return output;
 }
-function dedupePoints(points){
-    const output=[];
-    points.forEach(point=>{
-        const last=output[output.length-1];
-        if(!last||pointDistance(last,point)>.5){
+
+function dedupePoints(points) {
+    const output = [];
+
+    points.forEach(point => {
+        const previous = output[output.length - 1];
+        if (!previous || pointDistance(previous, point) > .5) {
             output.push(point);
         }
     });
+
     return output;
 }
-function buildRoute(clickedPoint){
-    if(!state.destination)return null;
-    const entrance=getNavigationEntrance(state.destination);
-    if(!entrance)return null;
-    const snap=snapToRoute(clickedPoint);
-    if(!snap)return null;
 
-    const fromRoute=dijkstra(snap.edge.from,entrance.nodeId);
-    const toRoute=dijkstra(snap.edge.to,entrance.nodeId);
-    const candidates=[];
-    if(fromRoute){
+function buildRoute(clickedPoint) {
+    if (!state.destination) return null;
+
+    const entrance = getNavigationEntrance(state.destination);
+    if (!entrance) return null;
+
+    const snap = snapToRoute(clickedPoint);
+    if (!snap) return null;
+
+    const fromRoute = dijkstra(
+        snap.edge.from, entrance.nodeId
+    );
+    const toRoute = dijkstra(
+        snap.edge.to, entrance.nodeId
+    );
+
+    const candidates = [];
+
+    if (fromRoute) {
         candidates.push({
-            endpoint:snap.edge.from,
-            route:fromRoute,
-            cost:snap.distanceToFrom+fromRoute.distance
+            endpoint: snap.edge.from,
+            route: fromRoute,
+            cost: snap.distanceToFrom + fromRoute.distance
         });
     }
-    if(toRoute){
+    if (toRoute) {
         candidates.push({
-            endpoint:snap.edge.to,
-            route:toRoute,
-            cost:snap.distanceToTo+toRoute.distance
+            endpoint: snap.edge.to,
+            route: toRoute,
+            cost: snap.distanceToTo + toRoute.distance
         });
     }
-    if(!candidates.length)return null;
-    candidates.sort((a,b)=>a.cost-b.cost);
-    const best=candidates[0];
-    const startPart=pointsFromSnapToEndpoint(snap,best.endpoint);
-    const graphPart=routeNodePolyline(best.route);
+
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => a.cost - b.cost);
+
+    const best = candidates[0];
+
     return {
-        startSnap:snap,
+        startSnap: snap,
         entrance,
-        graphDistance:best.cost,
-        points:dedupePoints([
-            ...startPart,
-            ...graphPart,
-            {x:entrance.x,y:entrance.y}
+        graphDistance: best.cost,
+        points: dedupePoints([
+            ...pointsFromSnapToEndpoint(snap, best.endpoint),
+            ...routeNodePolyline(best.route),
+            { x: entrance.x, y: entrance.y }
         ])
     };
 }
-on("navigationMap","pointerdown",event=>{
-    if(!state.destination)return;
-    const map=byId("navigationMap");
-    const image=byId("navigationMapImage");
-    const rect=map.getBoundingClientRect();
-    const box=getImageContentBox(map,image);
-    if(!box)return;
-    const x=event.clientX-rect.left;
-    const y=event.clientY-rect.top;
-    if(x<box.left||x>box.left+box.width||
-       y<box.top||y>box.top+box.height)return;
-    const point={
-        x:(x-box.left)/box.width*MAP_WIDTH,
-        y:(y-box.top)/box.height*MAP_HEIGHT
+
+on("navigationMap", "pointerdown", event => {
+    if (!state.destination) return;
+
+    const map = byId("navigationMap");
+    const image = byId("navigationMapImage");
+    const rect = map.getBoundingClientRect();
+    const box = getImageContentBox(map, image);
+
+    if (!box) return;
+
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (x < box.left || x > box.left + box.width ||
+        y < box.top || y > box.top + box.height) return;
+
+    const point = {
+        x: (x - box.left) / box.width * MAP_WIDTH,
+        y: (y - box.top) / box.height * MAP_HEIGHT
     };
-    const route=buildRoute(point);
-    if(!route){
+    const route = buildRoute(point);
+    if (!route) {
         toast("Rute belum ditemukan.");
         return;
     }
-    state.clickedPosition=point;
-    state.routeResult=route;
+
+    state.clickedPosition = point;
+    state.routeResult = route;
+
     byId("activeRoute")?.setAttribute(
-        "points",route.points.map(p=>`${p.x},${p.y}`).join(" ")
+        "points",
+        route.points.map(p => `${p.x},${p.y}`).join(" ")
+    );
+
+    positionSelectionMapElement(
+        byId("userMarker"), route.startSnap.point
     );
     positionSelectionMapElement(
-        byId("userMarker"),route.startSnap.point
+        byId("entranceMarker"), route.entrance
     );
-    positionSelectionMapElement(
-        byId("entranceMarker"),route.entrance
-    );
+
     show("userMarker");
     show("entranceMarker");
     hide("mapInstructionArea");
@@ -1400,1380 +1823,1929 @@ on("navigationMap","pointerdown",event=>{
     show("resetPosition");
     setStep(3);
 });
-on("resetPosition","click",()=>{
-    state.clickedPosition=null;
-    state.routeResult=null;
-    byId("activeRoute")?.setAttribute("points","");
-    ["userMarker","entranceMarker","routeFoundBox","resetPosition"]
-        .forEach(hide);
+
+on("resetPosition", "click", () => {
+    state.clickedPosition = null;
+    state.routeResult = null;
+
+    byId("activeRoute")?.setAttribute("points", "");
+    [
+        "userMarker",
+        "entranceMarker",
+        "routeFoundBox",
+        "resetPosition"
+    ].forEach(hide);
+
     show("mapInstructionArea");
     setStep(2);
 });
 
-/* PETUNJUK RUTE */
-function turnAngle(a,b,c){
-    const ax=b.x-a.x,ay=b.y-a.y;
-    const bx=c.x-b.x,by=c.y-b.y;
+function turnAngle(a, b, c) {
+    const ax = b.x - a.x;
+    const ay = b.y - a.y;
+    const bx = c.x - b.x;
+    const by = c.y - b.y;
+
     return Math.atan2(
-        ax*by-ay*bx,
-        ax*bx+ay*by
-    )*180/Math.PI;
+        ax * by - ay * bx,
+        ax * bx + ay * by
+    ) * 180 / Math.PI;
 }
-function simplifyInstructionPoints(points){
-    if(!points||points.length<=2)return points?.slice()||[];
-    const result=[points[0]];
-    for(let i=1;i<points.length-1;i++){
-        if(Math.abs(turnAngle(
-            points[i-1],points[i],points[i+1]
-        ))>=28){
+
+function simplifyInstructionPoints(points) {
+    if (!points || points.length <= 2) {
+        return points?.slice() || [];
+    }
+
+    const result = [points[0]];
+
+    for (let i = 1; i < points.length - 1; i++) {
+        if (Math.abs(turnAngle(
+            points[i - 1], points[i], points[i + 1]
+        )) >= 28) {
             result.push(points[i]);
         }
     }
-    result.push(points[points.length-1]);
+
+    result.push(points[points.length - 1]);
     return result;
 }
-function createNavigationInstructions(){
-    if(!state.routeResult||!state.destination)return [];
-    const points=simplifyInstructionPoints(
+
+function createNavigationInstructions() {
+    if (!state.routeResult || !state.destination) return [];
+
+    const points = simplifyInstructionPoints(
         state.routeResult.points
     );
-    const output=[{
-        icon:"●",title:"Lokasi Anda saat ini",
-        description:"Mulai dari posisi yang Anda tandai pada denah."
+    const result = [{
+        icon: "●",
+        title: "Lokasi Anda saat ini",
+        description: "Mulai dari posisi yang Anda tandai pada denah."
     }];
-    for(let i=1;i<points.length-1;i++){
-        const angle=turnAngle(
-            points[i-1],points[i],points[i+1]
+
+    for (let i = 1; i < points.length - 1; i++) {
+        const angle = turnAngle(
+            points[i - 1], points[i], points[i + 1]
         );
-        if(angle>28){
-            output.push({
-                icon:"↱",title:"Belok kanan",
-                description:"Ikuti jalur hingga persimpangan berikutnya."
+
+        if (angle > 28) {
+            result.push({
+                icon: "↱",
+                title: "Belok kanan",
+                description:
+                    "Ikuti jalur hingga persimpangan berikutnya."
             });
-        }else if(angle<-28){
-            output.push({
-                icon:"↰",title:"Belok kiri",
-                description:"Ikuti jalur hingga persimpangan berikutnya."
+        } else if (angle < -28) {
+            result.push({
+                icon: "↰",
+                title: "Belok kiri",
+                description:
+                    "Ikuti jalur hingga persimpangan berikutnya."
             });
         }
     }
-    output.push({
-        icon:"◎",title:"Entrance tujuan di depan",
-        description:state.routeResult.entrance.name
+
+    result.push({
+        icon: "◎",
+        title: "Entrance tujuan di depan",
+        description: state.routeResult.entrance.name
     });
-    output.push({
-        icon:"✓",title:"Anda sudah tiba",
+
+    result.push({
+        icon: "✓",
+        title: "Anda sudah tiba",
         description:
             `Anda sudah tiba di entrance menuju ${state.destination.name}.`
     });
-    return output;
+
+    return result;
 }
-function renderLiveBuildingMarkers(){
-    const container=byId("liveBuildingMarkers");
-    if(!container)return;
-    container.innerHTML="";
-    buildings.forEach(building=>{
-        if(!building.liveMarker)return;
-        const marker=document.createElement("div");
-        marker.className="live-building-marker";
-        marker.innerHTML=`<span></span><label>${escapeHtml(building.name)}</label>`;
+
+function renderLiveBuildingMarkers() {
+    const container = byId("liveBuildingMarkers");
+    if (!container) return;
+    container.innerHTML = "";
+
+    buildings.forEach(building => {
+        if (!building.liveMarker) return;
+        const marker = document.createElement("div");
+        marker.className = "live-building-marker";
+        marker.innerHTML = `<span></span><label>${escapeHtml(building.name)}</label>`;
         container.appendChild(marker);
-        positionLiveMapElement(marker,building.liveMarker);
+        positionLiveMapElement(marker, building.liveMarker);
     });
 }
-function renderRouteDetail(){
-    const container=byId("routeInstructionList");
-    if(!container)return;
-    container.innerHTML="";
-    state.liveInstructions.forEach(item=>{
-        const row=document.createElement("div");
-        row.className="route-instruction-item";
-        row.innerHTML=`
-            <div class="route-step-icon">${item.icon}</div>
+
+function renderRouteDetail() {
+    const container = byId("routeInstructionList");
+    if (!container) return;
+    container.innerHTML = "";
+
+    state.liveInstructions.forEach(step => {
+        const item = document.createElement("div");
+        item.className = "route-instruction-item";
+        item.innerHTML = `
+            <div class="route-step-icon">${step.icon}</div>
             <div class="route-step-copy">
-                <strong>${escapeHtml(item.title)}</strong>
-                <span>${escapeHtml(item.description)}</span>
+                <strong>${escapeHtml(step.title)}</strong>
+                <span>${escapeHtml(step.description)}</span>
             </div>
         `;
-        container.appendChild(row);
+        container.appendChild(item);
     });
 }
-function renderLiveNavigation(){
-    if(!state.routeResult||!state.destination)return;
-    const route=state.routeResult;
+
+function renderLiveNavigation() {
+    if (!state.routeResult || !state.destination) return;
+    const route = state.routeResult;
+
     byId("liveRoute")?.setAttribute(
-        "points",route.points.map(p=>`${p.x},${p.y}`).join(" ")
+        "points",
+        route.points.map(p => `${p.x},${p.y}`).join(" ")
     );
+
     syncLiveMapGeometry();
+
     positionLiveMapElement(
-        byId("liveUserMarker"),route.startSnap.point
+        byId("liveUserMarker"), route.startSnap.point
     );
     positionLiveMapElement(
-        byId("liveDestinationMarker"),route.entrance
+        byId("liveDestinationMarker"), route.entrance
     );
+
     show("liveUserMarker");
     show("liveDestinationMarker");
-    setText("liveDestinationMarkerLabel",state.destination.name);
-    setText("liveTargetName",state.destination.name);
-    setText("liveRouteDestination",state.destination.name);
-    setText("liveRouteEntrance",route.entrance.name);
+
+    setText("liveDestinationMarkerLabel", state.destination.name);
+    setText("liveTargetName", state.destination.name);
+    setText("liveRouteDestination", state.destination.name);
+    setText("liveRouteEntrance", route.entrance.name);
+
     renderLiveBuildingMarkers();
-    state.liveInstructions=createNavigationInstructions();
+
+    state.liveInstructions = createNavigationInstructions();
     renderRouteDetail();
-    const next=state.liveInstructions.find(item=>
-        item.title!=="Lokasi Anda saat ini"
+
+    const next = state.liveInstructions.find(
+        item => item.title !== "Lokasi Anda saat ini"
     );
-    if(next){
-        setText("liveNextInstruction",next.title);
-        setText("liveDirectionIcon",next.icon);
+    if (next) {
+        setText("liveNextInstruction", next.title);
+        setText("liveDirectionIcon", next.icon);
     }
 }
 
-/* GPS */
-function solveAffine(calibration,lat,lon){
-    if(!Array.isArray(calibration)||calibration.length<3){
+function solveAffine(calibration, lat, lon) {
+    if (!Array.isArray(calibration) || calibration.length < 3) {
         return null;
     }
-    const [p1,p2,p3]=calibration;
-    const determinant=
-        p1.lon*(p2.lat-p3.lat)-
-        p1.lat*(p2.lon-p3.lon)+
-        (p2.lon*p3.lat-p3.lon*p2.lat);
-    if(Math.abs(determinant)<1e-12)return null;
-    function solve(v1,v2,v3){
-        const a=(
-            v1*(p2.lat-p3.lat)+
-            v2*(p3.lat-p1.lat)+
-            v3*(p1.lat-p2.lat)
-        )/determinant;
-        const b=(
-            v1*(p3.lon-p2.lon)+
-            v2*(p1.lon-p3.lon)+
-            v3*(p2.lon-p1.lon)
-        )/determinant;
-        const c=(
-            v1*(p2.lon*p3.lat-p3.lon*p2.lat)+
-            v2*(p3.lon*p1.lat-p1.lon*p3.lat)+
-            v3*(p1.lon*p2.lat-p2.lon*p1.lat)
-        )/determinant;
-        return {a,b,c};
+
+    const [p1, p2, p3] = calibration;
+    const determinant =
+        p1.lon * (p2.lat - p3.lat) -
+        p1.lat * (p2.lon - p3.lon) +
+        p2.lon * p3.lat - p3.lon * p2.lat;
+
+    if (Math.abs(determinant) < 1e-12) return null;
+
+    function solve(v1, v2, v3) {
+        const a = (
+            v1 * (p2.lat - p3.lat) +
+            v2 * (p3.lat - p1.lat) +
+            v3 * (p1.lat - p2.lat)
+        ) / determinant;
+
+        const b = (
+            v1 * (p3.lon - p2.lon) +
+            v2 * (p1.lon - p3.lon) +
+            v3 * (p2.lon - p1.lon)
+        ) / determinant;
+
+        const c = (
+            v1 * (p2.lon * p3.lat - p3.lon * p2.lat) +
+            v2 * (p3.lon * p1.lat - p1.lon * p3.lat) +
+            v3 * (p1.lon * p2.lat - p2.lon * p1.lat)
+        ) / determinant;
+
+        return { a, b, c };
     }
-    const cx=solve(p1.x,p2.x,p3.x);
-    const cy=solve(p1.y,p2.y,p3.y);
+
+    const cx = solve(p1.x, p2.x, p3.x);
+    const cy = solve(p1.y, p2.y, p3.y);
+
     return {
-        x:cx.a*lon+cx.b*lat+cx.c,
-        y:cy.a*lon+cy.b*lat+cy.c
+        x: cx.a * lon + cx.b * lat + cx.c,
+        y: cy.a * lon + cy.b * lat + cy.c
     };
 }
-function stopGpsTracking(){
-    if(state.gpsWatchId!==null&&navigator.geolocation){
+
+function stopGpsTracking() {
+    if (state.gpsWatchId !== null && navigator.geolocation) {
         navigator.geolocation.clearWatch(state.gpsWatchId);
     }
-    state.gpsWatchId=null;
+    state.gpsWatchId = null;
 }
-function startGpsTracking(){
+
+function startGpsTracking() {
     stopGpsTracking();
-    if(mapCalibration.length<3)return;
-    if(!navigator.geolocation)return;
-    state.gpsWatchId=navigator.geolocation.watchPosition(
-        position=>{
-            const point=solveAffine(
+    if (mapCalibration.length < 3) return;
+    if (!navigator.geolocation) return;
+
+    state.gpsWatchId = navigator.geolocation.watchPosition(
+        position => {
+            const point = solveAffine(
                 mapCalibration,
                 position.coords.latitude,
                 position.coords.longitude
             );
-            if(!point)return;
-            const snap=snapToRoute(point);
+            if (!point) return;
+
+            const snap = snapToRoute(point);
             positionLiveMapElement(
-                byId("liveUserMarker"),snap?.point||point
+                byId("liveUserMarker"),
+                snap?.point || point
             );
         },
-        error=>console.warn("GPS:",error),
+        error => console.warn("GPS:", error),
         {
-            enableHighAccuracy:true,
-            maximumAge:1000,
-            timeout:10000
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 10000
         }
     );
 }
-on("startNavigation","click",()=>{
-    if(!state.routeResult||!state.destination){
+
+on("startNavigation", "click", () => {
+    if (!state.routeResult || !state.destination) {
         toast("Pilih posisi terlebih dahulu.");
         return;
     }
     showPage("navigationActive");
-    setTimeout(()=>{
+    setTimeout(() => {
         syncLiveMapGeometry();
         renderLiveNavigation();
         startGpsTracking();
-    },80);
+    }, 80);
     setStep(4);
 });
-on("toggleRouteDetail","click",()=>{
+
+on("toggleRouteDetail", "click", () => {
     byId("routeDetailPanel")?.classList.toggle("hidden");
 });
-on("endRoute","click",()=>{
+
+on("endRoute", "click", () => {
     stopGpsTracking();
     resetNavigation();
-    state.pageHistory=[];
-    showPage("navigation",false);
+    state.pageHistory = [];
+    showPage("navigation", false);
     toast("Navigasi telah diakhiri.");
 });
-function showDestinationIn3D(){
-    if(!state.destination)return;
-    const location=state.destination;
-    const buildingId=location.buildingId||location.id;
-    const building=getBuildingById(buildingId);
-    if(!building)return;
-    let model=location.type==="room"
-        ?getModelVariant(building.id,"indoor")
-        :null;
-    if(!model)model=getDefaultModelVariant(building.id);
-    showPage("viewer");
-    if(viewerBuildingSelect){
-        viewerBuildingSelect.value=building.id;
-    }
-    state.pending3DMarker=location.modelMarker
-        ?{marker:location.modelMarker,label:location.name}
-        :null;
-    prepareViewerBuilding(building.id,model?.id,false);
-}
-on("showDestination3D","click",showDestinationIn3D);
 
-/* MENU */
-function openNavigationWithDestination(location=null){
-    if(!NAVIGATION_ENABLED)return;
+function showDestinationIn3D() {
+    if (!state.destination) return;
+
+    const destination = state.destination;
+    const buildingId = destination.buildingId || destination.id;
+    const building = getBuildingById(buildingId);
+    if (!building) return;
+
+    let model = destination.type === "room"
+        ? getModelVariant(buildingId, "indoor")
+        : null;
+
+    if (!model) model = getDefaultModelVariant(buildingId);
+
+    showPage("viewer");
+    viewerBuildingSelect.value = buildingId;
+
+    state.pending3DMarker = destination.modelMarker
+        ? {
+            marker: destination.modelMarker,
+            label: destination.name
+        }
+        : null;
+
+    prepareViewerBuilding(buildingId, model?.id, false);
+}
+
+on("showDestination3D", "click", showDestinationIn3D);
+
+/* =========================================================
+   MENU UTAMA
+========================================================= */
+
+function openNavigationWithDestination(location = null) {
+    if (!NAVIGATION_ENABLED) return;
     showPage("navigation");
     resetNavigation();
-    if(location)selectDestination(location);
+    if (location) selectDestination(location);
 }
-["menu3D","feature3D"].forEach(id=>{
-    on(id,"click",()=>showPage("viewer"));
-});
-["menuAR","featureAR"].forEach(id=>{
-    on(id,"click",()=>showPage("ar"));
-});
-["menuNavigation","featureNav"].forEach(id=>{
-    on(id,"click",()=>openNavigationWithDestination());
-});
-["menuDirectory","featureDirectory"].forEach(id=>{
-    on(id,"click",()=>showPage("directory"));
-});
+
+["menu3D", "feature3D"].forEach(id =>
+    on(id, "click", () => showPage("viewer"))
+);
+["menuAR", "featureAR"].forEach(id =>
+    on(id, "click", () => showPage("ar"))
+);
+["menuDirectory", "featureDirectory"].forEach(id =>
+    on(id, "click", () => showPage("directory"))
+);
+["menuNavigation", "featureNav"].forEach(id =>
+    on(id, "click", () => openNavigationWithDestination())
+);
 
 /* TOAST */
-let toastTimer=null;
-function toast(message){
-    const element=byId("toast");
-    if(!element)return;
-    element.textContent=message;
+let toastTimer = null;
+function toast(message) {
+    const element = byId("toast");
+    if (!element) return;
+
+    element.textContent = message;
     element.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer=setTimeout(()=>{
+
+    toastTimer = setTimeout(() => {
         element.classList.remove("show");
-    },2600);
+    }, 2600);
 }
-document.addEventListener("keydown",event=>{
-    if(event.key!=="Escape")return;
+
+document.addEventListener("keydown", event => {
+    if (event.key !== "Escape") return;
     closeDrawer();
-    if(!byId("tendikModal")?.classList.contains("hidden")){
+
+    if (!byId("tendikModal")?.classList.contains("hidden")) {
         closeTendik();
         return;
     }
-    if(!byId("infoModal")?.classList.contains("hidden")){
+    if (!byId("infoModal")?.classList.contains("hidden")) {
         closeInfo();
         return;
     }
-    if(state.currentPage!=="home")goBack();
+    if (state.currentPage !== "home") goBack();
 });
 
 /* MAP RESIZE */
-function registerMapImageEvents(){
-    const selection=byId("navigationMapImage");
-    if(selection){
-        if(selection.complete&&selection.naturalWidth){
+function registerMapImageEvents() {
+    const selection = byId("navigationMapImage");
+    if (selection) {
+        if (selection.complete && selection.naturalWidth) {
             syncNavigationMapGeometry();
-        }else{
+        } else {
             selection.addEventListener(
-                "load",syncNavigationMapGeometry
+                "load", syncNavigationMapGeometry
             );
         }
     }
-    const live=byId("liveMapContent")
+
+    const live = byId("liveMapContent")
         ?.querySelector(".live-map-background");
-    if(live){
-        if(live.complete&&live.naturalWidth){
+
+    if (live) {
+        if (live.complete && live.naturalWidth) {
             syncLiveMapGeometry();
-        }else{
-            live.addEventListener("load",syncLiveMapGeometry);
+        } else {
+            live.addEventListener("load", syncLiveMapGeometry);
         }
     }
 }
-let resizeTimer=null;
-window.addEventListener("resize",()=>{
+
+let resizeTimer = null;
+
+window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
-    resizeTimer=setTimeout(syncAllMapGeometry,80);
-});
-window.addEventListener("orientationchange",()=>{
-    setTimeout(syncAllMapGeometry,250);
+    resizeTimer = setTimeout(syncAllMapGeometry, 80);
 });
 
-/* INIT */
-function startApp(){
+window.addEventListener("orientationchange", () => {
+    setTimeout(syncAllMapGeometry, 250);
+});
+
+/* INITIALIZATION */
+function startApp() {
     renderDirectory();
     applyFeatureVisibility();
     showSlide(0);
     showLandingModel(0);
-    showPage("home",false);
+    showPage("home", false);
     registerMapImageEvents();
     registerServiceWorker();
 
-    const preload=()=>preloadPriorityModels();
-    if("requestIdleCallback" in window){
-        requestIdleCallback(preload,{timeout:2000});
-    }else{
-        setTimeout(preload,1000);
+    const preload = () => preloadPriorityModels();
+
+    if ("requestIdleCallback" in window) {
+        requestIdleCallback(preload, { timeout: 2000 });
+    } else {
+        setTimeout(preload, 1000);
     }
-    setTimeout(syncAllMapGeometry,120);
-    console.log("FT UISU Explorer Revision 7 loaded");
+
+    setTimeout(syncAllMapGeometry, 120);
+    console.log("FT UISU Explorer Revisi 8 (No Navigate)");
 }
+
 startApp();
+
 })();
 
-/* =====================================================
-   FULLSCREEN MODEL VIEWER
-===================================================== */
-(function(){
+/* =========================================================
+   FULLSCREEN 3D
+========================================================= */
+
+(function () {
 "use strict";
-const card=document.getElementById("viewerCard");
-const page=document.getElementById("viewerPage");
-const viewer=document.getElementById("main3DViewer");
-const status=document.getElementById("viewerLoadingDot");
-const openButton=document.getElementById("viewerFullscreenButton");
-const closeButton=document.getElementById("viewerFullscreenExit");
-if(!card||!page||!viewer||!status||!openButton||!closeButton)return;
-if(card.dataset.fullscreenInitialized)return;
-card.dataset.fullscreenInitialized="true";
 
-const root=document.documentElement;
-const native=()=>document.fullscreenElement||
-    document.webkitFullscreenElement;
-const visible=()=>page.classList.contains("active")&&
+const card = document.getElementById("viewerCard");
+const page = document.getElementById("viewerPage");
+const viewer = document.getElementById("main3DViewer");
+const status = document.getElementById("viewerLoadingDot");
+const openButton = document.getElementById("viewerFullscreenButton");
+const closeButton = document.getElementById("viewerFullscreenExit");
+
+if (!card || !page || !viewer || !status ||
+    !openButton || !closeButton) return;
+
+if (card.dataset.fullscreenInitialized) return;
+card.dataset.fullscreenInitialized = "true";
+
+const root = document.documentElement;
+const nativeElement = () =>
+    document.fullscreenElement || document.webkitFullscreenElement;
+
+const visible = () =>
+    page.classList.contains("active") &&
     !card.classList.contains("hidden");
-const ready=()=>visible()&&status.classList.contains("ready");
-let current=null;
 
-function updateButtons(){
-    if(current&&!visible()){
+const ready = () =>
+    visible() && status.classList.contains("ready");
+
+let session = null;
+
+function updateButtons() {
+    if (session && !visible()) {
         closeFullscreen(false);
         return;
     }
-    openButton.classList.toggle("hidden",!ready()||!!current);
-    closeButton.classList.toggle("hidden",!current);
+    openButton.classList.toggle("hidden", !ready() || !!session);
+    closeButton.classList.toggle("hidden", !session);
+    closeButton.disabled = !!session?.closing;
 }
-function finish(session){
-    if(current!==session)return;
-    current=null;
+
+function finish(current) {
+    if (session !== current) return;
+
+    session = null;
     card.classList.remove("viewer-is-fullscreen");
     root.classList.remove("viewer-fullscreen-open");
     root.style.removeProperty("--viewer-fullscreen-scroll-top");
+
     card.removeAttribute("role");
     card.removeAttribute("aria-modal");
     card.removeAttribute("aria-labelledby");
     updateButtons();
-    if(session.restore&&visible()){
+
+    if (current.restore && visible()) {
         window.scrollTo({
-            left:session.x,top:session.y,behavior:"instant"
+            left: current.x,
+            top: current.y,
+            behavior: "instant"
         });
-        (ready()?openButton:viewer).focus({preventScroll:true});
+        (ready() ? openButton : viewer).focus({
+            preventScroll: true
+        });
     }
 }
-async function openFullscreen(){
-    if(current||!ready()||native())return;
-    const session={
-        x:window.scrollX,
-        y:window.scrollY,
-        restore:true,
-        fallback:false
+
+function exitNativeQuietly() {
+    const exit = document.exitFullscreen ||
+        document.webkitExitFullscreen;
+
+    if (exit && nativeElement() === card) {
+        try {
+            Promise.resolve(exit.call(document)).catch(() => {});
+        } catch (error) {}
+    }
+}
+
+async function openFullscreen() {
+    if (session || !ready() || nativeElement()) return;
+
+    const current = {
+        x: window.scrollX,
+        y: window.scrollY,
+        pending: true,
+        fallback: false,
+        closing: false,
+        restore: true
     };
-    current=session;
+    session = current;
+
     root.style.setProperty(
-        "--viewer-fullscreen-scroll-top",`${-session.y}px`
+        "--viewer-fullscreen-scroll-top",
+        `${-current.y}px`
     );
     root.classList.add("viewer-fullscreen-open");
     card.classList.add("viewer-is-fullscreen");
-    card.setAttribute("role","dialog");
-    card.setAttribute("aria-modal","true");
-    card.setAttribute("aria-labelledby","viewerTitle");
-    updateButtons();
-    closeButton.focus({preventScroll:true});
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-labelledby", "viewerTitle");
 
-    const request=card.requestFullscreen||
+    updateButtons();
+    closeButton.focus({ preventScroll: true });
+
+    const request = card.requestFullscreen ||
         card.webkitRequestFullscreen;
-    if(request){
-        try{
-            await request.call(card);
-            session.fallback=native()!==card;
-        }catch(error){
-            session.fallback=true;
+    const enabled = document.fullscreenEnabled ??
+        document.webkitFullscreenEnabled ?? true;
+
+    if (!request || !enabled) {
+        current.pending = false;
+        current.fallback = true;
+        return;
+    }
+
+    try {
+        await request.call(card);
+        if (session !== current) {
+            if (!session) exitNativeQuietly();
+            return;
         }
-    }else{
-        session.fallback=true;
+        current.pending = false;
+        current.fallback = nativeElement() !== card;
+    } catch (error) {
+        if (session !== current) return;
+        current.pending = false;
+        current.fallback = true;
     }
+
+    closeButton.focus({ preventScroll: true });
+    updateButtons();
 }
-async function closeFullscreen(restore=true){
-    if(!current)return;
-    const session=current;
-    if(!restore)session.restore=false;
-    if(native()===card){
-        const exit=document.exitFullscreen||
+
+async function closeFullscreen(restore = true) {
+    const current = session;
+    if (!current) return;
+
+    if (!restore) current.restore = false;
+    if (current.closing) return;
+
+    current.closing = true;
+    updateButtons();
+
+    if (nativeElement() === card) {
+        const exit = document.exitFullscreen ||
             document.webkitExitFullscreen;
-        try{await exit?.call(document);}catch(error){}
+
+        try {
+            if (!exit) throw new Error("Fullscreen exit unavailable");
+            await exit.call(document);
+        } catch (error) {
+            if (session === current && nativeElement() === card) {
+                current.closing = false;
+                closeButton.disabled = false;
+                return;
+            }
+        }
     }
-    finish(session);
+
+    finish(current);
 }
-openButton.addEventListener("click",openFullscreen);
-closeButton.addEventListener("click",()=>closeFullscreen());
-document.addEventListener("fullscreenchange",()=>{
-    if(current&&!native()&&!current.fallback){
-        finish(current);
+
+function onNativeChange() {
+    if (nativeElement() === card) {
+        if (!session) {
+            exitNativeQuietly();
+            return;
+        }
+        session.pending = false;
+        session.fallback = false;
+    } else if (session &&
+               !session.pending &&
+               !session.fallback) {
+        if (!visible()) session.restore = false;
+        finish(session);
     }
-});
-document.addEventListener("webkitfullscreenchange",()=>{
-    if(current&&!native()&&!current.fallback){
-        finish(current);
-    }
-});
-document.addEventListener("keydown",event=>{
-    if(!current)return;
-    if(event.key==="Escape"){
+}
+
+openButton.addEventListener("click", openFullscreen);
+closeButton.addEventListener("click", () => closeFullscreen());
+document.addEventListener("fullscreenchange", onNativeChange);
+document.addEventListener("webkitfullscreenchange", onNativeChange);
+
+document.addEventListener("keydown", event => {
+    if (!session) return;
+
+    if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
         closeFullscreen();
+    } else if (event.key === "Tab") {
+        const controls = Array.from(card.querySelectorAll(
+            "button:not([disabled]), select:not([disabled]), a[href], [tabindex], model-viewer"
+        )).filter(element =>
+            element.tabIndex >= 0 && element.getClientRects().length
+        );
+        if (!controls.length) return;
+
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey &&
+                   document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        } else if (!card.contains(document.activeElement)) {
+            event.preventDefault();
+            closeButton.focus();
+        }
     }
-},true);
-const observer=new MutationObserver(updateButtons);
-[page,card,status].forEach(element=>{
-    observer.observe(element,{
-        attributes:true,
-        attributeFilter:["class"]
+}, true);
+
+const observer = new MutationObserver(updateButtons);
+
+[page, card, status].forEach(element => {
+    observer.observe(element, {
+        attributes: true,
+        attributeFilter: ["class"]
     });
 });
-viewer.addEventListener("load",updateButtons);
-viewer.addEventListener("error",updateButtons);
+
+viewer.addEventListener("load", updateButtons);
+viewer.addEventListener("error", updateButtons);
 updateButtons();
+
 })();
 
-/* =====================================================
-   WEBAR MARKERLESS - REVISI 7
-   CAMERA FALLBACK, TRACKING, INDOOR / OUTDOOR
-===================================================== */
-(function(){
+/* =========================================================
+   REVISI 8 — WEBAR MARKERLESS
+   LAPISAN 1: KAMERA VIDEO
+   LAPISAN 2: XR8 SLAM CANVAS
+   LAPISAN 3: THREE.JS TRANSPARAN
+========================================================= */
+
+(function () {
 "use strict";
 
-const $=id=>document.getElementById(id);
-const overlay=$("webarOverlay");
-const canvas=$("webarCamera");
-const video=$("webarPreview");
-if(!overlay||!canvas||!video)return;
+const byId = id => document.getElementById(id);
+const overlay = byId("webarOverlay");
+const feed = byId("webarPreview");
+const stage = byId("webarCamera");
+const xrCanvas = byId("webarEngineCanvas");
 
-const ENGINE=
+if (!overlay || !feed || !stage || !xrCanvas) return;
+
+const XR_URL =
     "https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js";
-const EXTRAS=
-    "https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js";
-const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
-const mobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||
-    (navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const THREE_MODULE = "three";
 
-const s={
-    active:false,
-    opening:false,
-    token:0,
-    src:"",
-    title:"",
-    stream:null,
-    xrRunning:false,
-    hasVideo:false,
-    visibleFrame:false,
-    frameSamples:0,
-    blankSamples:0,
-    lastProbe:0,
-    watchdog:null,
-    THREE:null,
-    Loader:null,
-    Draco:null,
-    Ktx:null,
-    scene:null,
-    camera:null,
-    renderer:null,
-    anchor:null,
-    pivot:null,
-    object:null,
-    modelReady:false,
-    tracking:false,
-    candidate:null,
-    stable:0,
-    placed:false,
-    lastMessage:0,
-    zoom:1,
-    yaw:0,
-    pointers:new Map(),
-    pinch:0,
-    orientationAllowed:false
+const clamp = (value, low, high) =>
+    Math.min(high, Math.max(low, value));
+
+const mobile = () =>
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" &&
+     navigator.maxTouchPoints > 1);
+
+const state = {
+    active: false,
+    token: 0,
+    src: "",
+    title: "",
+    mode: "idle",
+    previewStream: null,
+    xrStream: null,
+    cameraReady: false,
+    xrReady: false,
+    engineStarted: false,
+    librariesReady: false,
+    motionRequired: false,
+    motionGranted: false,
+    prepared: false,
+    xrTimer: null,
+    frameCount: 0,
+    lastUpdate: 0,
+    lastStatus: 0,
+    tracking: false,
+    trackedFrames: 0,
+    stableFrames: 0,
+    hit: null,
+    placed: false,
+    modelReady: false,
+    modelError: null,
+    modelRoot: null,
+    THREE: null,
+    loaderClass: null,
+    dracoClass: null,
+    ktxClass: null,
+    draco: null,
+    ktx: null,
+    renderer: null,
+    scene: null,
+    camera: null,
+    anchor: null,
+    turntable: null,
+    reticle3d: null,
+    rotation: 0,
+    zoom: 1,
+    pointers: new Map(),
+    pinch: 0,
+    diagnosticTimer: null
 };
 
-function message(heading,description){
-    if(!s.active)return;
-    $("webarStatus").textContent=heading;
-    if(description!==undefined){
-        $("webarInstructions").textContent=description;
+function tokenAlive(token) {
+    return state.active && state.token === token;
+}
+function control(id, visible) {
+    byId(id)?.classList.toggle("hidden", !visible);
+}
+function status(message, detail) {
+    if (!state.active) return;
+    byId("webarStatus").textContent = message;
+    if (detail !== undefined) {
+        byId("webarInstructions").textContent = detail;
     }
 }
-function errorMessage(error){
-    if(error?.name==="NotAllowedError"){
-        return "Akses kamera ditolak. Aktifkan izin kamera untuk situs ini di pengaturan browser.";
-    }
-    if(error?.name==="NotFoundError"){
-        return "Kamera belakang tidak ditemukan.";
-    }
-    if(error?.name==="NotReadableError"){
-        return "Kamera sedang digunakan aplikasi lain.";
-    }
-    return error?.message||String(error)||
-        "Terjadi kesalahan kamera atau mesin AR.";
+
+function updateDiagnostics() {
+    if (!state.active) return;
+
+    const target = byId("webarDiagnostic");
+    if (!target) return;
+
+    target.textContent =
+        `Kamera: ${state.cameraReady ? "aktif" : "menunggu"} · ` +
+        `SLAM: ${state.tracking ? "normal" : "mencari"} · ` +
+        `GLB: ${state.modelReady ? "siap" : state.modelError ? "gagal" : "memuat"} · ` +
+        `Render: ${state.renderer ? "siap" : "menunggu"}`;
 }
-function ui(id,visible){
-    $(id)?.classList.toggle("hidden",!visible);
-}
-function viewCanvas(visible){
-    canvas.classList.toggle("webar-waiting",!visible);
-    canvas.classList.toggle("webar-live",visible);
-    video.classList.toggle("hidden",visible);
-}
-function stopPreview(){
-    s.stream?.getTracks().forEach(track=>track.stop());
-    s.stream=null;
-    try{video.pause();}catch(error){}
-    video.srcObject=null;
-}
-async function startPreview(token){
-    if(!s.active||token!==s.token)return;
-    if(!navigator.mediaDevices?.getUserMedia){
-        throw new Error("Browser tidak mendukung akses kamera.");
+
+function describe(error) {
+    if (error?.name === "NotAllowedError" ||
+        error?.name === "PermissionDeniedError") {
+        return "Akses kamera ditolak. Izinkan kamera pada pengaturan Safari/Chrome untuk situs ini.";
     }
-    stopPreview();
-    const stream=await navigator.mediaDevices.getUserMedia({
-        audio:false,
-        video:{facingMode:{ideal:"environment"}}
+    if (error?.name === "NotReadableError") {
+        return "Kamera digunakan aplikasi lain. Tutup aplikasi kamera, kemudian coba lagi.";
+    }
+    if (error?.name === "NotFoundError") {
+        return "Perangkat tidak memiliki kamera yang bisa digunakan.";
+    }
+    return error?.message || String(error) || "Kesalahan tidak dikenal";
+}
+
+function resetControls() {
+    [
+        "webarPlace",
+        "webarRetry",
+        "webarMotion",
+        "webarReset",
+        "webarReticle"
+    ].forEach(id => control(id, false));
+
+    if (state.reticle3d) {
+        state.reticle3d.visible = false;
+    }
+}
+
+function stopPreviewTracks() {
+    if (state.previewStream) {
+        state.previewStream.getTracks().forEach(track => track.stop());
+        state.previewStream = null;
+    }
+}
+
+function unlinkFeed() {
+    try {
+        feed.pause();
+    } catch (error) {}
+    feed.srcObject = null;
+    state.cameraReady = false;
+}
+
+async function attachStream(stream, token, source) {
+    if (!tokenAlive(token) || !stream) return;
+
+    if (feed.srcObject !== stream) {
+        feed.srcObject = stream;
+        feed.muted = true;
+        feed.playsInline = true;
+        feed.setAttribute("playsinline", "");
+    }
+
+    try {
+        await feed.play();
+    } catch (error) {
+        console.warn("AR video play:", error);
+    }
+
+    if (!tokenAlive(token)) return;
+
+    state.cameraReady =
+        feed.readyState >= 2 && feed.videoWidth > 0;
+
+    if (!state.cameraReady) {
+        await Promise.race([
+            new Promise(resolve => {
+                feed.addEventListener("loadeddata", resolve, {
+                    once: true
+                });
+            }),
+            new Promise(resolve => setTimeout(resolve, 3000))
+        ]);
+    }
+
+    if (!tokenAlive(token)) return;
+
+    state.cameraReady =
+        feed.readyState >= 2 && feed.videoWidth > 0;
+
+    if (state.cameraReady && source === "xr") {
+        status(
+            "Kamera aktif — mulai tracking",
+            "Arahkan kamera ke lantai dengan detail/tekstur dan gerakkan perlahan."
+        );
+    }
+    updateDiagnostics();
+}
+
+async function openPreview(token) {
+    if (!navigator.mediaDevices?.getUserMedia ||
+        !window.isSecureContext) {
+        throw new Error(
+            "Kamera memerlukan situs HTTPS dan browser yang mendukung getUserMedia."
+        );
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+            facingMode: { ideal: "environment" }
+        }
     });
-    if(!s.active||token!==s.token){
-        stream.getTracks().forEach(track=>track.stop());
+
+    if (!tokenAlive(token)) {
+        stream.getTracks().forEach(track => track.stop());
         return;
     }
-    s.stream=stream;
-    video.srcObject=stream;
-    video.muted=true;
-    video.setAttribute("playsinline","");
-    try{await video.play();}catch(error){
-        console.warn("Preview camera:",error);
-    }
-    viewCanvas(false);
+
+    state.previewStream = stream;
+    await attachStream(stream, token, "preview");
 }
-function scriptOnce(id,url,globalName,timeout=30000){
-    if(window[globalName]){
+
+function loadScript(url, globalName, timeoutMs = 35000) {
+    if (window[globalName]) {
         return Promise.resolve(window[globalName]);
     }
-    return new Promise((resolve,reject)=>{
-        const script=document.getElementById(id)||
-            document.createElement("script");
-        let finished=false;
-        const eventName=globalName==="XR8"
-            ?"xrloaded"
-            :"xrextrasloaded";
-        let timer;
-        function cleanup(){
-            window.removeEventListener(eventName,ready);
-            script.removeEventListener("load",ready);
-            script.removeEventListener("error",failed);
+
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = url;
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        script.dataset.preloadChunks = "slam";
+
+        let settled = false;
+        const handle = () => {
+            if (window[globalName]) finish();
+        };
+        const fail = () => finish(
+            new Error(
+                "Paket engine tidak dapat diunduh. Periksa sambungan internet."
+            )
+        );
+        const timer = setTimeout(() => {
+            finish(new Error(
+                "Paket engine melewati batas waktu pemuatan."
+            ));
+        }, timeoutMs);
+
+        function finish(error) {
+            if (settled) return;
+            settled = true;
+
             clearTimeout(timer);
-        }
-        function finish(error){
-            if(finished)return;
-            finished=true;
-            cleanup();
-            if(error){
+            window.removeEventListener("xrloaded", handle);
+            script.removeEventListener("load", handle);
+            script.removeEventListener("error", fail);
+
+            if (error) {
                 script.remove();
                 reject(error);
-            }else{
+            } else {
                 resolve(window[globalName]);
             }
         }
-        function ready(){
-            if(window[globalName])finish();
-        }
-        function failed(){
-            finish(new Error(
-                "Gagal mengunduh "+globalName+" dari CDN."
-            ));
-        }
-        timer=setTimeout(()=>{
-            finish(new Error(
-                globalName+" tidak siap dalam "+
-                Math.round(timeout/1000)+" detik."
-            ));
-        },timeout);
-        window.addEventListener(eventName,ready);
-        script.addEventListener("load",ready);
-        script.addEventListener("error",failed);
-        if(!script.isConnected){
-            script.id=id;
-            script.async=true;
-            script.src=url;
-            script.crossOrigin="anonymous";
-            if(globalName==="XR8"){
-                script.dataset.preloadChunks="slam";
-            }
-            document.head.appendChild(script);
-        }
-        ready();
+
+        script.addEventListener("load", handle);
+        script.addEventListener("error", fail);
+        window.addEventListener("xrloaded", handle);
+        document.head.appendChild(script);
+        handle();
     });
 }
-async function ensureLibraries(){
-    if(!s.THREE){
-        const [THREE,loader]=await Promise.all([
-            import("three"),
-            import("three/addons/loaders/GLTFLoader.js")
-        ]);
-        s.THREE=THREE;
-        s.Loader=loader.GLTFLoader;
-        window.THREE=THREE;
 
-        const extras=await Promise.allSettled([
+async function loadDependencies() {
+    if (!state.THREE) {
+        const [three, gltf, draco, ktx] = await Promise.all([
+            import(THREE_MODULE),
+            import("three/addons/loaders/GLTFLoader.js"),
             import("three/addons/loaders/DRACOLoader.js"),
             import("three/addons/loaders/KTX2Loader.js")
         ]);
-        s.Draco=extras[0].status==="fulfilled"
-            ?extras[0].value.DRACOLoader:null;
-        s.Ktx=extras[1].status==="fulfilled"
-            ?extras[1].value.KTX2Loader:null;
-    }
-    await scriptOnce("ft-xrextras-r7",EXTRAS,"XRExtras");
-    await scriptOnce("ft-engine-r7",ENGINE,"XR8",40000);
-    if(!window.XR8?.XrController||!window.XR8?.Threejs){
-        throw new Error(
-            "Modul SLAM atau renderer 3D tidak tersedia."
-        );
-    }
-    if(typeof window.XR8.loadChunk==="function"){
-        await Promise.race([
-            Promise.resolve(window.XR8.loadChunk("slam")),
-            new Promise((_,reject)=>{
-                setTimeout(()=>{
-                    reject(new Error("Modul SLAM tidak siap."));
-                },25000);
-            })
-        ]);
-    }
-}
-function attachModel(root){
-    if(!s.active||!s.pivot)return;
-    const THREE=s.THREE;
-    root.updateMatrixWorld(true);
-    const bounds=new THREE.Box3().setFromObject(root);
-    if(bounds.isEmpty()){
-        throw new Error("GLB tidak memiliki mesh 3D.");
-    }
-    const size=bounds.getSize(new THREE.Vector3());
-    const center=bounds.getCenter(new THREE.Vector3());
-    const scale=.9/Math.max(
-        size.x,size.z,size.y*.6,.001
-    );
-    root.scale.multiplyScalar(scale);
-    root.position.set(
-        -center.x*scale,
-        -bounds.min.y*scale,
-        -center.z*scale
-    );
-    root.traverse(node=>{
-        if(!node.isMesh)return;
-        node.frustumCulled=false;
-        node.castShadow=true;
-        const materials=Array.isArray(node.material)
-            ?node.material:[node.material];
-        materials.filter(Boolean).forEach(material=>{
-            material.needsUpdate=true;
-        });
-    });
-    s.object=root;
-    s.pivot.add(root);
-    s.modelReady=true;
-    message(
-        "Model siap — pindai permukaan",
-        "Arahkan kamera ke lantai/meja dengan pola dan pencahayaan cukup."
-    );
-}
-function loadModel(token){
-    const loader=new s.Loader();
-    if(s.Draco){
-        const decoder=new s.Draco();
-        decoder.setDecoderPath(
-            "https://www.gstatic.com/draco/v1/decoders/"
-        );
-        loader.setDRACOLoader(decoder);
-    }
-    if(s.Ktx&&s.renderer){
-        const ktx=new s.Ktx();
-        ktx.setTranscoderPath(
-            "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/basis/"
-        );
-        ktx.detectSupport(s.renderer);
-        loader.setKTX2Loader(ktx);
+
+        state.THREE = three;
+        state.loaderClass = gltf.GLTFLoader;
+        state.dracoClass = draco.DRACOLoader;
+        state.ktxClass = ktx.KTX2Loader;
+        window.THREE = three;
     }
 
-    const source=new URL(s.src,document.baseURI);
-    source.searchParams.set("arVersion","7");
+    await loadScript(XR_URL, "XR8");
+
+    const xr = window.XR8;
+    if (!xr?.XrController?.pipelineModule ||
+        !xr?.GlTextureRenderer?.pipelineModule) {
+        throw new Error(
+            "XR8 dimuat tetapi modul pelacakan dunia tidak tersedia."
+        );
+    }
+
+    if (typeof xr.loadChunk === "function") {
+        await xr.loadChunk("slam");
+    }
+
+    state.librariesReady = true;
+}
+
+/* =========================================================
+   THREE.JS RENDERER
+========================================================= */
+
+function sceneSetup() {
+    if (state.renderer) return;
+
+    const T = state.THREE;
+    const renderer = new T.WebGLRenderer({
+        canvas: stage,
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance"
+    });
+
+    renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio || 1, 1.75)
+    );
+    renderer.outputColorSpace = T.SRGBColorSpace;
+    renderer.toneMapping = T.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+
+    state.renderer = renderer;
+    state.scene = new T.Scene();
+    state.camera = new T.PerspectiveCamera(
+        60, 1, 0.01, 200
+    );
+    state.camera.position.set(0, 1.6, 0);
+
+    state.scene.add(
+        new T.HemisphereLight(
+            0xffffff, 0x9eabb0, 2.1
+        )
+    );
+
+    const sun = new T.DirectionalLight(0xffffff, 2.1);
+    sun.position.set(3, 6, 4);
+    state.scene.add(sun);
+
+    state.anchor = new T.Group();
+    state.anchor.visible = false;
+    state.scene.add(state.anchor);
+
+    state.turntable = new T.Group();
+    state.anchor.add(state.turntable);
+
+    const disc = new T.Mesh(
+        new T.RingGeometry(.34, .36, 72),
+        new T.MeshBasicMaterial({
+            color: 0x3addc4,
+            side: T.DoubleSide,
+            transparent: true,
+            opacity: .8,
+            depthWrite: false
+        })
+    );
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = .006;
+
+    state.anchor.add(disc);
+    state.reticle3d = disc;
+    resize();
+}
+
+function resize() {
+    if (!state.active ||
+        !state.renderer ||
+        !state.camera) return;
+
+    const width = Math.max(2, overlay.clientWidth);
+    const height = Math.max(2, overlay.clientHeight);
+
+    state.renderer.setSize(width, height, false);
+    state.camera.aspect = width / height;
+
+    if (!state.xrReady) {
+        state.camera.updateProjectionMatrix();
+    }
+}
+
+/* =========================================================
+   GLB MODEL
+========================================================= */
+
+function loadGLB(token) {
+    if (!tokenAlive(token) || !state.renderer) return;
+
+    const T = state.THREE;
+    const loader = new state.loaderClass();
+
+    state.draco?.dispose();
+    state.ktx?.dispose();
+
+    state.draco = new state.dracoClass();
+    state.draco.setDecoderPath(
+        "https://www.gstatic.com/draco/v1/decoders/"
+    );
+    loader.setDRACOLoader(state.draco);
+
+    state.ktx = new state.ktxClass();
+    state.ktx.setTranscoderPath(
+        "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/libs/basis/"
+    );
+    state.ktx.detectSupport(state.renderer);
+    loader.setKTX2Loader(state.ktx);
+
+    const url = new URL(state.src, document.baseURI);
+    url.searchParams.set("r", "8");
+
     loader.load(
-        source.href,
-        gltf=>{
-            if(!s.active||token!==s.token)return;
-            try{
-                attachModel(gltf.scene);
-            }catch(error){
-                fatal("Model tidak bisa dirender",error);
+        url.href,
+        gltf => {
+            if (!tokenAlive(token)) return;
+
+            try {
+                const root = gltf.scene;
+                root.updateMatrixWorld(true);
+
+                const bbox = new T.Box3().setFromObject(root);
+                if (bbox.isEmpty()) {
+                    throw new Error(
+                        "Berkas GLB tidak mengandung mesh 3D."
+                    );
+                }
+
+                const size = bbox.getSize(new T.Vector3());
+                const center = bbox.getCenter(new T.Vector3());
+
+                const scale = .8 / Math.max(
+                    size.x, size.z, size.y * .65, .001
+                );
+
+                root.scale.multiplyScalar(scale);
+                root.position.set(
+                    -center.x * scale,
+                    -bbox.min.y * scale,
+                    -center.z * scale
+                );
+
+                root.traverse(object => {
+                    if (!object.isMesh) return;
+
+                    object.frustumCulled = false;
+                    const materials =
+                        Array.isArray(object.material)
+                            ? object.material
+                            : [object.material];
+
+                    materials.filter(Boolean).forEach(material => {
+                        material.needsUpdate = true;
+                    });
+                });
+
+                state.turntable.add(root);
+                state.modelRoot = root;
+                state.modelReady = true;
+                updateDiagnostics();
+
+                status(
+                    "Objek 3D siap",
+                    "Cari lantai dengan tekstur. Tunggu hingga pelacakan normal agar model dapat ditempatkan."
+                );
+            } catch (error) {
+                state.modelError = describe(error);
+                status(
+                    "File model 3D tidak dapat digunakan",
+                    state.modelError
+                );
+                control("webarRetry", true);
+                updateDiagnostics();
             }
         },
         undefined,
-        error=>{
-            if(s.active&&token===s.token){
-                fatal("GLB gagal dimuat",error);
-            }
+        error => {
+            if (!tokenAlive(token)) return;
+            state.modelError = describe(error);
+
+            status("GLB gagal dimuat", state.modelError);
+            control("webarRetry", true);
+            updateDiagnostics();
         }
     );
 }
-function sceneStart(token){
-    const xr=window.XR8;
-    const THREE=s.THREE;
-    const {scene,camera,renderer}=xr.Threejs.xrScene();
-    if(!scene||!camera||!renderer){
-        throw new Error("Scene WebGL tidak berhasil dibuat.");
+
+/* =========================================================
+   CAMERA POSE & FLOOR TRACKING
+========================================================= */
+
+function applyPose(reality) {
+    if (!state.camera || !reality) return;
+
+    const { position, rotation, intrinsics } = reality;
+
+    if (position &&
+        [position.x, position.y, position.z].every(Number.isFinite)) {
+        state.camera.position.set(
+            position.x, position.y, position.z
+        );
     }
-    s.scene=scene;
-    s.camera=camera;
-    s.renderer=renderer;
 
-    // Jangan hapus gambar dari GlTextureRenderer.
-    renderer.autoClear=false;
-    renderer.autoClearColor=false;
-    renderer.autoClearDepth=true;
-    scene.background=null;
-    renderer.outputColorSpace=THREE.SRGBColorSpace;
-    renderer.shadowMap.enabled=true;
+    if (rotation &&
+        [rotation.x, rotation.y, rotation.z, rotation.w]
+            .every(Number.isFinite)) {
+        state.camera.quaternion.set(
+            rotation.x, rotation.y, rotation.z, rotation.w
+        );
+    }
 
-    scene.add(
-        new THREE.HemisphereLight(
-            0xffffff,0xb5cbd0,2
-        )
-    );
-    const sun=new THREE.DirectionalLight(
-        0xffffff,2
-    );
-    sun.position.set(3,6,4);
-    sun.castShadow=true;
-    scene.add(sun);
+    if (intrinsics && intrinsics.length === 16) {
+        state.camera.projectionMatrix.fromArray(intrinsics);
+        state.camera.projectionMatrixInverse.copy(
+            state.camera.projectionMatrix
+        ).invert();
+    }
 
-    s.anchor=new THREE.Group();
-    s.anchor.visible=false;
-    scene.add(s.anchor);
-
-    s.pivot=new THREE.Group();
-    s.anchor.add(s.pivot);
-
-    const shadow=new THREE.Mesh(
-        new THREE.PlaneGeometry(2.5,2.5),
-        new THREE.ShadowMaterial({opacity:.19})
-    );
-    shadow.rotation.x=-Math.PI/2;
-    shadow.position.y=.003;
-    shadow.receiveShadow=true;
-    s.anchor.add(shadow);
-
-    camera.position.set(0,1.6,0);
-    xr.XrController.updateCameraProjectionMatrix({
-        origin:camera.position,
-        facing:camera.quaternion
-    });
-    loadModel(token);
+    state.camera.updateMatrixWorld(true);
 }
-function valid(point){
-    return point&&
-        [point.x,point.y,point.z].every(Number.isFinite);
-}
-function surfacePoint(reality){
-    if(!s.camera||
-       !reality||
-       reality.trackingStatus!=="NORMAL")return null;
-    const xr=window.XR8;
-    if(typeof xr?.XrController?.hitTest!=="function"){
+
+function findFloorCandidate(reality) {
+    if (!state.camera || !state.THREE ||
+        reality?.trackingStatus !== "NORMAL") {
         return null;
     }
-    const hits=[];
-    for(const [u,v] of [
-        [.50,.63],[.40,.66],[.60,.66],[.50,.75]
-    ]){
-        try{
-            const result=xr.XrController.hitTest(
-                u,v,["FEATURE_POINT"]
-            )||[];
-            const hit=result.find(item=>
-                valid(item.position)
-            );
-            if(hit)hits.push(hit.position);
-        }catch(error){}
-    }
-    if(hits.length<2)return null;
-    const heights=hits.map(p=>p.y).sort((a,b)=>a-b);
-    const y=heights[Math.floor(heights.length/2)];
-    const same=hits.filter(p=>Math.abs(p.y-y)<.10);
-    if(same.length<2||s.camera.position.y-y<.15)return null;
 
-    const point=new s.THREE.Vector3(
-        same.reduce((sum,p)=>sum+p.x,0)/same.length,
-        y,
-        same.reduce((sum,p)=>sum+p.z,0)/same.length
+    const T = state.THREE;
+    const ray = new T.Raycaster();
+
+    ray.setFromCamera(
+        new T.Vector2(0, .15),
+        state.camera
     );
-    const distance=s.camera.position.distanceTo(point);
-    return distance>.25&&distance<5?point:null;
-}
-function place(){
-    if(!s.modelReady||
-       !s.visibleFrame||
-       !s.tracking||
-       !s.candidate||
-       !s.anchor)return;
 
-    s.anchor.position.copy(s.candidate);
-    s.anchor.visible=true;
-    s.placed=true;
-    ui("webarPlace",false);
-    ui("webarReticle",false);
-    ui("webarReset",true);
-    message(
-        "Model ditempatkan di permukaan",
-        "Satu jari untuk memutar, dua jari untuk zoom. Geser posisi ponsel untuk melihat sudut berbeda."
+    const point = new T.Vector3();
+    const hit = ray.ray.intersectPlane(
+        new T.Plane(new T.Vector3(0, 1, 0), 0),
+        point
     );
+
+    if (!hit) return null;
+
+    const distance = state.camera.position.distanceTo(point);
+    if (distance < .35 || distance > 5.5) return null;
+    if (point.y > state.camera.position.y - .25) return null;
+
+    return point;
 }
-function trackingUpdate(reality){
-    if(!s.active||!s.modelReady)return;
-    s.tracking=reality?.trackingStatus==="NORMAL";
 
-    if(s.placed){
-        if(s.anchor){
-            s.anchor.visible=s.tracking&&s.visibleFrame;
+function updateTracking(reality) {
+    if (!state.active || !state.xrReady ||
+        !state.renderer) return;
+
+    state.tracking = reality?.trackingStatus === "NORMAL";
+    if (reality) applyPose(reality);
+
+    if (!state.tracking || !state.cameraReady) {
+        state.trackedFrames = 0;
+        state.stableFrames = 0;
+
+        if (!state.placed) {
+            state.hit = null;
+            control("webarPlace", false);
+            control("webarReticle", false);
         }
-        if(!s.tracking&&
-           performance.now()-s.lastMessage>1500){
-            s.lastMessage=performance.now();
-            message(
-                "Tracking hilang sementara",
-                "Gerakkan kamera ke area yang sudah dipindai sebelumnya."
-            );
-        }
-        return;
-    }
-    if(!s.visibleFrame)return;
-    const point=surfacePoint(reality);
 
-    if(!point){
-        s.stable=0;
-        s.candidate=null;
-        ui("webarPlace",false);
-        ui("webarReticle",false);
+        if (state.anchor) state.anchor.visible = false;
 
-        if(performance.now()-s.lastMessage>1300){
-            s.lastMessage=performance.now();
-            message(
-                s.tracking
-                    ?"Mencari bidang datar..."
-                    :"Memulai pelacakan SLAM...",
-                "Arahkan kamera ke bawah perlahan pada lantai atau meja yang bertekstur."
+        if (performance.now() - state.lastStatus > 1800) {
+            state.lastStatus = performance.now();
+
+            status(
+                state.cameraReady
+                    ? "Mencari pelacakan SLAM..."
+                    : "Menunggu video kamera...",
+                "Pilih permukaan berpola, pencahayaan cukup, gerakkan perangkat perlahan."
             );
         }
         return;
     }
 
-    if(s.candidate&&
-       s.candidate.distanceTo(point)<.14){
-        s.candidate.lerp(point,.24);
-        s.stable++;
-    }else{
-        s.candidate=point.clone();
-        s.stable=1;
-    }
+    state.trackedFrames++;
 
-    const ready=s.stable>=4;
-    ui("webarPlace",ready);
-    ui("webarReticle",ready);
-    if(s.stable>=16){
-        place();
+    if (state.placed) {
+        state.anchor.visible = true;
         return;
     }
-    if(performance.now()-s.lastMessage>1300){
-        s.lastMessage=performance.now();
-        message(
-            "Bidang ditemukan, menstabilkan...",
-            "Tahan posisi atau tekan Tempatkan Model."
+
+    const candidate = findFloorCandidate(reality);
+
+    if (!candidate || !state.modelReady) {
+        state.hit = null;
+        state.stableFrames = 0;
+        control("webarPlace", false);
+        control("webarReticle", false);
+
+        if (performance.now() - state.lastStatus > 1700) {
+            state.lastStatus = performance.now();
+
+            status(
+                state.modelReady
+                    ? "Cari bidang datar yang dapat dilacak..."
+                    : "Memuat model 3D...",
+                "Arahkan kamera perlahan ke permukaan lantai dengan pola/tekstur."
+            );
+        }
+        return;
+    }
+
+    if (state.hit &&
+        state.hit.distanceTo(candidate) < .17) {
+        state.hit.lerp(candidate, .25);
+        state.stableFrames++;
+    } else {
+        state.hit = candidate.clone();
+        state.stableFrames = 1;
+    }
+
+    const ready = state.stableFrames > 5;
+    control("webarPlace", ready);
+    control("webarReticle", ready);
+
+    if (ready &&
+        performance.now() - state.lastStatus > 1500) {
+        state.lastStatus = performance.now();
+
+        status(
+            "Permukaan terlacak — siap menempatkan model",
+            "Tekan 'Tempatkan Model'. Setelah itu, gerakkan kamera untuk melihat objek dari sudut lain."
         );
     }
 }
-function sampleVideoFrame(){
-    if(!s.active||!s.hasVideo||!s.renderer)return;
-    const now=performance.now();
-    if(now-s.lastProbe<1200)return;
-    s.lastProbe=now;
-    try{
-        const gl=s.renderer.getContext();
-        const width=gl.drawingBufferWidth;
-        const height=gl.drawingBufferHeight;
-        if(width<10||height<10)return;
-        const rgba=new Uint8Array(4);
-        let bright=0;
-        for(const [x,y] of [
-            [.2,.2],[.5,.35],[.7,.6],[.4,.8],[.85,.75]
-        ]){
-            gl.readPixels(
-                Math.round(width*x),
-                Math.round(height*y),
-                1,1,
-                gl.RGBA,
-                gl.UNSIGNED_BYTE,
-                rgba
-            );
-            if(rgba[0]+rgba[1]+rgba[2]>42)bright++;
-        }
-        s.frameSamples++;
-        if(bright){
-            s.visibleFrame=true;
-            s.blankSamples=0;
-            if(canvas.classList.contains("webar-waiting")){
-                viewCanvas(true);
-                message(
-                    "Kamera AR aktif",
-                    "Memuat model dan mencari bidang datar..."
-                );
-            }
-        }else{
-            s.blankSamples++;
-            if(s.blankSamples>=6&&!s.visibleFrame){
-                fallback(
-                    "Lapisan kamera XR berwarna hitam. Pratinjau kamera biasa diaktifkan; tracking AR belum tersedia."
-                );
-            }
-        }
-    }catch(error){
-        s.visibleFrame=true;
-        viewCanvas(true);
+
+function place() {
+    if (!state.active ||
+        !state.cameraReady ||
+        !state.tracking ||
+        !state.xrReady ||
+        !state.modelReady ||
+        !state.hit ||
+        state.stableFrames <= 5 ||
+        !state.anchor) {
+        return;
     }
+
+    state.anchor.position.copy(state.hit);
+    state.anchor.visible = true;
+    state.placed = true;
+
+    control("webarPlace", false);
+    control("webarReticle", false);
+    control("webarReset", true);
+
+    status(
+        "Model telah ditempatkan",
+        "Putar objek dengan satu jari, zoom dengan dua jari. Untuk mengubah posisinya, gerakkan kamera atau gunakan Ulangi Penempatan."
+    );
 }
-function pipeline(token){
+
+/* =========================================================
+   XR8 CAMERA PIPELINE
+========================================================= */
+
+function pipeline(token) {
     return {
-        name:"ft-uisu-r7-slam-scene",
-        onStart:()=>{
-            if(!s.active||token!==s.token)return;
-            try{
-                sceneStart(token);
-            }catch(error){
-                fatal("Renderer AR gagal dibuat",error);
+        name: "ft-uisu-r8-ground-tracker",
+
+        onCameraStatusChange: ({
+            status: cameraStatus,
+            error,
+            stream
+        }) => {
+            if (!tokenAlive(token)) return;
+
+            if (stream) {
+                void attachStream(stream, token, "xr");
             }
-        },
-        onCameraStatusChange:({status,error})=>{
-            if(!s.active||token!==s.token)return;
-            if(status==="hasVideo"){
-                s.hasVideo=true;
-                message(
-                    "Kamera XR terhubung",
-                    "Memeriksa tampilan video sebelum membuka lapisan AR..."
-                );
-            }else if(status==="failed"){
-                fatal("Kamera XR gagal",error);
-            }else if(status==="requesting"){
-                message(
-                    "Mengaktifkan kamera XR...",
-                    "Izinkan kamera bila diminta browser."
+
+            if (cameraStatus === "requesting") {
+                status(
+                    "Mesin AR meminta izin kamera...",
+                    "Izinkan kamera pada Safari atau Chrome."
                 );
             }
-        },
-        onUpdate:({processCpuResult})=>{
-            if(s.active&&token===s.token){
-                trackingUpdate(processCpuResult?.reality);
+
+            if (cameraStatus === "failed") {
+                recover(token, describe(error));
             }
         },
-        onRender:()=>{
-            if(s.active&&token===s.token){
-                sampleVideoFrame();
+
+        onAttach: ({ stream, video }) => {
+            if (!tokenAlive(token)) return;
+
+            const activeStream =
+                stream || video?.srcObject;
+
+            if (activeStream) {
+                state.xrStream = activeStream;
+                void attachStream(activeStream, token, "xr");
             }
         },
-        onException:error=>{
-            if(s.active&&token===s.token){
-                fatal("Mesin WebAR gagal",error);
+
+        onStart: ({ stream, video }) => {
+            if (!tokenAlive(token)) return;
+
+            const activeStream =
+                stream || video?.srcObject;
+
+            if (activeStream) {
+                state.xrStream = activeStream;
+                void attachStream(activeStream, token, "xr");
             }
+
+            try {
+                sceneSetup();
+                state.xrReady = true;
+
+                window.XR8.XrController
+                    .updateCameraProjectionMatrix({
+                        origin: state.camera.position,
+                        facing: state.camera.quaternion
+                    });
+
+                loadGLB(token);
+            } catch (error) {
+                recover(
+                    token,
+                    "Renderer model 3D: " + describe(error)
+                );
+            }
+        },
+
+        onCanvasSizeChange: () => resize(),
+
+        onUpdate: ({ processCpuResult }) => {
+            if (!tokenAlive(token)) return;
+
+            state.lastUpdate = performance.now();
+            updateTracking(processCpuResult?.reality);
+        },
+
+        onRender: () => {
+            if (!tokenAlive(token) ||
+                !state.renderer ||
+                !state.scene ||
+                !state.camera) return;
+
+            state.frameCount++;
+            state.renderer.render(
+                state.scene, state.camera
+            );
+        },
+
+        onException: error => {
+            recover(
+                token,
+                "Kesalahan engine: " + describe(error)
+            );
         }
     };
 }
-function stopXR(){
-    clearTimeout(s.watchdog);
-    s.watchdog=null;
-    if(s.xrRunning){
-        try{window.XR8?.stop?.();}catch(error){
-            console.warn(error);
-        }
-        try{
-            window.XR8?.clearCameraPipelineModules?.();
-        }catch(error){}
-    }
-    s.xrRunning=false;
-    s.hasVideo=false;
-    s.visibleFrame=false;
-    s.scene=null;
-    s.camera=null;
-    s.renderer=null;
-    s.anchor=null;
-    s.pivot=null;
-    s.object=null;
-    s.modelReady=false;
-}
-async function fallback(reason){
-    if(!s.active)return;
-    const token=s.token;
-    stopXR();
-    s.placed=false;
-    viewCanvas(false);
-    ui("webarRetry",true);
-    ui("webarPlace",false);
-    ui("webarReset",false);
-    message(
-        "Kamera pratinjau — AR belum aktif",
-        reason
-    );
-    try{
-        await startPreview(token);
-    }catch(error){
-        if(s.active&&token===s.token){
-            message(
-                "Kamera gagal",
-                errorMessage(error)
-            );
-        }
-    }
-}
-function fatal(context,error){
-    console.error(context,error);
-    if(s.active){
-        fallback(context+": "+errorMessage(error));
-    }
-}
-async function runEngine(token){
-    await ensureLibraries();
-    if(!s.active||token!==s.token)return;
 
-    if(!mobile()){
-        message(
+async function runXR(token) {
+    if (!tokenAlive(token)) return;
+
+    if (!mobile()) {
+        state.mode = "preview";
+        status(
             "Pratinjau kamera desktop",
-            "Tracking SLAM memerlukan perangkat mobile. Gunakan Safari iPhone atau Chrome Android."
+            "AR dengan tracking SLAM dijalankan pada Safari iOS atau Chrome Android. Kamera desktop tidak dipakai untuk penempatan 3D."
         );
-        ui("webarRetry",false);
+        updateDiagnostics();
         return;
     }
 
-    const xr=window.XR8;
-    const extras=window.XRExtras;
-    if(!extras?.FullWindowCanvas?.pipelineModule){
-        throw new Error(
-            "Modul layar penuh XRExtras tidak tersedia."
-        );
-    }
+    const xr = window.XR8;
+    state.mode = "starting";
 
-    stopPreview();
-    viewCanvas(false);
-    message(
-        "Memulai kamera AR...",
-        "Menguji lapisan kamera agar tidak hitam."
+    status(
+        "Memulai mesin SLAM...",
+        "Mengalihkan kamera pratinjau ke kamera pelacakan. Harap tunggu beberapa detik."
     );
 
-    try{
-        xr.stop?.();
-        xr.clearCameraPipelineModules?.();
-    }catch(error){}
+    stopPreviewTracks();
+    unlinkFeed();
+
+    xr.stop?.();
+    xr.clearCameraPipelineModules?.();
 
     xr.XrController.configure({
-        disableWorldTracking:false,
-        enableWorldPoints:true,
-        scale:"absolute"
+        disableWorldTracking: false,
+        enableWorldPoints: true,
+        scale: "absolute"
     });
+
+    const dpr = Math.min(
+        window.devicePixelRatio || 1,
+        1.5
+    );
+
+    xrCanvas.width = Math.max(
+        2, Math.round(overlay.clientWidth * dpr)
+    );
+    xrCanvas.height = Math.max(
+        2, Math.round(overlay.clientHeight * dpr)
+    );
 
     xr.addCameraPipelineModules([
         xr.GlTextureRenderer.pipelineModule(),
-        xr.Threejs.pipelineModule(),
         xr.XrController.pipelineModule(),
-        extras.FullWindowCanvas.pipelineModule(),
         pipeline(token)
     ]);
 
-    s.xrRunning=true;
-    const result=xr.run({
-        canvas,
-        cameraConfig:{
-            direction:xr.XrConfig.camera().BACK
+    state.engineStarted = true;
+
+    const runResult = xr.run({
+        canvas: xrCanvas,
+        cameraConfig: {
+            direction: xr.XrConfig.camera().BACK
         },
-        allowedDevices:xr.XrConfig.device().MOBILE,
-        glContextConfig:{
-            alpha:false,
-            preserveDrawingBuffer:false
-        }
+        allowedDevices: xr.XrConfig.device().MOBILE
     });
 
-    if(result&&typeof result.then==="function"){
-        await result;
-    }
-    s.watchdog=setTimeout(()=>{
-        if(s.active&&token===s.token&&!s.visibleFrame){
-            fallback(
-                "Mesin XR tidak menampilkan gambar kamera dalam 18 detik. Tekan Coba Lagi atau kembali memilih model."
+    if (runResult?.then) await runResult;
+    state.mode = "xr";
+
+    state.xrTimer = setTimeout(() => {
+        if (tokenAlive(token) &&
+            (!state.cameraReady ||
+             state.frameCount < 2)) {
+
+            recover(
+                token,
+                !state.cameraReady
+                    ? "Video kamera XR tidak diterima browser."
+                    : "Pipeline AR tidak menghasilkan frame."
             );
         }
-    },18000);
+    }, 16000);
 }
-function start(src,title){
-    if(s.active||s.opening)return;
 
-    s.active=true;
-    s.opening=true;
-    s.token++;
-    const token=s.token;
+/* =========================================================
+   INISIALISASI KAMERA
+========================================================= */
 
-    s.src=src;
-    s.title=title;
-    s.xrRunning=false;
-    s.hasVideo=false;
-    s.visibleFrame=false;
-    s.blankSamples=0;
-    s.frameSamples=0;
-    s.lastProbe=0;
-    s.modelReady=false;
-    s.tracking=false;
-    s.candidate=null;
-    s.stable=0;
-    s.placed=false;
-    s.zoom=1;
-    s.yaw=0;
-    s.pointers.clear();
+async function begin() {
+    if (state.motionRequired &&
+        !state.motionGranted) {
+        control("webarMotion", true);
 
-    $("webarTitle").textContent=title;
-    [
-        "webarRetry","webarMotion",
-        "webarPlace","webarReset","webarReticle"
-    ].forEach(id=>ui(id,false));
+        status(
+            "Izin sensor gerak iPhone diperlukan",
+            "Tekan Izinkan Sensor Gerak agar SLAM memperoleh data orientasi perangkat."
+        );
+        return;
+    }
 
-    ui(
-        "webarMotion",
-        typeof window.DeviceOrientationEvent?.requestPermission==="function"
+    const token = state.token;
+    try {
+        await runXR(token);
+    } catch (error) {
+        if (tokenAlive(token)) {
+            recover(token, describe(error));
+        }
+    }
+}
+
+function start(src, title) {
+    if (state.active) return;
+
+    state.token++;
+    const token = state.token;
+
+    Object.assign(state, {
+        active: true,
+        src,
+        title,
+        mode: "preview",
+        cameraReady: false,
+        xrReady: false,
+        engineStarted: false,
+        modelReady: false,
+        modelError: null,
+        frameCount: 0,
+        placed: false,
+        hit: null,
+        stableFrames: 0,
+        trackedFrames: 0,
+        tracking: false,
+        librariesReady: false,
+        motionGranted: false,
+        lastStatus: 0,
+        renderer: null,
+        scene: null,
+        camera: null,
+        anchor: null,
+        turntable: null
+    });
+
+    state.motionRequired = Boolean(
+        window.DeviceOrientationEvent?.requestPermission ||
+        window.DeviceMotionEvent?.requestPermission
     );
+
+    byId("webarTitle").textContent = title;
+    resetControls();
 
     overlay.classList.remove("hidden");
     document.documentElement.classList.add("webar-open");
-    viewCanvas(false);
 
-    document.querySelectorAll("model-viewer").forEach(item=>{
-        try{item.pause?.();}catch(error){}
+    document.querySelectorAll("model-viewer").forEach(viewer => {
+        try {
+            viewer.pause?.();
+        } catch (error) {}
     });
-    message(
-        "Meminta izin kamera...",
-        "Izinkan kamera melalui browser untuk memulai AR."
+
+    status(
+        "Meminta akses kamera...",
+        "Izinkan kamera belakang ketika diminta oleh browser."
     );
+    updateDiagnostics();
 
-    // Request pertama harus berjalan dari interaksi klik.
-    const request=window.isSecureContext&&
+    const cameraPromise =
+        window.isSecureContext &&
         navigator.mediaDevices?.getUserMedia
-        ?navigator.mediaDevices.getUserMedia({
-            audio:false,
-            video:{facingMode:{ideal:"environment"}}
-        })
-        :Promise.reject(new Error(
-            "Kamera membutuhkan HTTPS dan browser yang mendukung getUserMedia."
-        ));
+            ? navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    facingMode: { ideal: "environment" }
+                }
+            })
+            : Promise.reject(new Error(
+                "Akses kamera hanya tersedia melalui HTTPS."
+            ));
 
-    (async()=>{
-        try{
-            const stream=await request;
-            if(!s.active||token!==s.token){
-                stream.getTracks().forEach(track=>track.stop());
+    (async () => {
+        try {
+            const stream = await cameraPromise;
+
+            if (!tokenAlive(token)) {
+                stream.getTracks().forEach(track => track.stop());
                 return;
             }
-            s.stream=stream;
-            video.srcObject=stream;
-            try{
-                await video.play();
-            }catch(error){}
 
-            message(
-                "Kamera siap",
-                "Mengunduh mesin pelacakan bidang..."
+            state.previewStream = stream;
+            await attachStream(
+                stream, token, "preview"
             );
-            await runEngine(token);
-        }catch(error){
-            if(s.active&&token===s.token){
-                console.error("WebAR start:",error);
-                await fallback(errorMessage(error));
-            }
-        }finally{
-            if(token===s.token){
-                s.opening=false;
+
+            if (!tokenAlive(token)) return;
+
+            status(
+                "Pratinjau kamera berhasil",
+                "Menyiapkan mesin XR dan pustaka GLB..."
+            );
+
+            await loadDependencies();
+            if (!tokenAlive(token)) return;
+
+            await begin();
+        } catch (error) {
+            if (tokenAlive(token)) {
+                recover(token, describe(error));
             }
         }
     })();
 }
-function reset(){
-    if(!s.active||!s.xrRunning)return;
-    s.placed=false;
-    s.candidate=null;
-    s.stable=0;
-    s.zoom=1;
-    s.yaw=0;
 
-    if(s.anchor)s.anchor.visible=false;
-    if(s.pivot){
-        s.pivot.rotation.y=0;
-        s.pivot.scale.setScalar(1);
+async function grantMotion() {
+    if (!state.active) return;
+
+    try {
+        const tasks = [];
+
+        if (typeof window.DeviceMotionEvent
+            ?.requestPermission === "function") {
+            tasks.push(
+                window.DeviceMotionEvent.requestPermission()
+            );
+        }
+
+        if (typeof window.DeviceOrientationEvent
+            ?.requestPermission === "function") {
+            tasks.push(
+                window.DeviceOrientationEvent.requestPermission()
+            );
+        }
+
+        const results = await Promise.all(tasks);
+
+        if (results.some(result => result !== "granted")) {
+            throw new Error("Izin sensor tidak diberikan.");
+        }
+
+        state.motionGranted = true;
+        control("webarMotion", false);
+        await begin();
+    } catch (error) {
+        status(
+            "Sensor gerak belum diizinkan",
+            describe(error)
+        );
+    }
+}
+
+/* =========================================================
+   ERROR RECOVERY
+========================================================= */
+
+async function recover(token, reason) {
+    if (!tokenAlive(token) ||
+        state.mode === "recovering") return;
+
+    state.mode = "recovering";
+    clearTimeout(state.xrTimer);
+
+    if (state.engineStarted) {
+        try {
+            window.XR8?.stop?.();
+        } catch (error) {}
+
+        state.engineStarted = false;
     }
 
-    ui("webarReset",false);
-    ui("webarPlace",false);
-    ui("webarReticle",false);
-    message(
-        "Ulangi pencarian permukaan",
-        "Gerakkan kamera perlahan untuk melacak bidang baru."
-    );
-}
-function close(){
-    if(!s.active)return;
-    s.active=false;
-    s.opening=false;
-    s.token++;
+    state.xrReady = false;
+    state.tracking = false;
+    state.placed = false;
 
-    stopXR();
-    stopPreview();
-    s.pointers.clear();
+    control("webarPlace", false);
+    control("webarReset", false);
+    control("webarRetry", true);
+
+    status(
+        "AR belum berhasil dimulai",
+        `${reason} Kamera biasa akan ditampilkan; ini belum merupakan pelacakan AR.`
+    );
+
+    if (state.xrStream) {
+        state.xrStream = null;
+        unlinkFeed();
+    }
+
+    if (!state.cameraReady) {
+        try {
+            await openPreview(token);
+        } catch (error) {
+            status(
+                "Kamera gagal diakses",
+                describe(error)
+            );
+        }
+    }
+
+    updateDiagnostics();
+}
+
+function reset() {
+    if (!state.active || !state.xrReady) return;
+
+    state.placed = false;
+    state.hit = null;
+    state.stableFrames = 0;
+    state.zoom = 1;
+    state.rotation = 0;
+    state.pointers.clear();
+
+    if (state.anchor) {
+        state.anchor.visible = false;
+    }
+
+    if (state.turntable) {
+        state.turntable.rotation.y = 0;
+        state.turntable.scale.setScalar(1);
+    }
+
+    control("webarReset", false);
+    control("webarPlace", false);
+
+    status(
+        "Mencari bidang baru...",
+        "Arahkan kamera ke lantai dengan detail tekstur yang jelas."
+    );
+
+    try {
+        window.XR8?.XrController?.recenter?.();
+    } catch (error) {}
+}
+
+function close() {
+    if (!state.active) return;
+
+    state.active = false;
+    state.token++;
+    clearTimeout(state.xrTimer);
+
+    if (state.engineStarted) {
+        try {
+            window.XR8?.stop?.();
+        } catch (error) {}
+
+        try {
+            window.XR8?.clearCameraPipelineModules?.();
+        } catch (error) {}
+    }
+
+    state.engineStarted = false;
+
+    state.previewStream?.getTracks()
+        .forEach(track => track.stop());
+
+    state.previewStream = null;
+    state.xrStream = null;
+    unlinkFeed();
+
+    state.renderer?.dispose();
+    state.draco?.dispose();
+    state.ktx?.dispose();
+
+    state.renderer = null;
+    state.scene = null;
+    state.camera = null;
+    state.anchor = null;
+    state.turntable = null;
+    state.pointers.clear();
 
     overlay.classList.add("hidden");
     document.documentElement.classList.remove("webar-open");
-    viewCanvas(false);
 
-    document.querySelectorAll("model-viewer").forEach(item=>{
-        try{item.play?.();}catch(error){}
+    document.querySelectorAll("model-viewer").forEach(viewer => {
+        try {
+            viewer.play?.();
+        } catch (error) {}
     });
 }
-function retry(){
-    if(!s.active)return;
-    const src=s.src;
-    const title=s.title;
+
+function retry() {
+    if (!state.active) return;
+    const { src, title } = state;
     close();
-    start(src,title);
+    start(src, title);
 }
-function grantMotion(){
-    const fn=window.DeviceOrientationEvent?.requestPermission;
-    if(!fn){
-        ui("webarMotion",false);
-        return;
-    }
-    Promise.resolve(
-        fn.call(window.DeviceOrientationEvent)
-    ).then(permission=>{
-        s.orientationAllowed=permission==="granted";
-        ui("webarMotion",false);
-    }).catch(error=>{
-        message(
-            "Sensor gerak belum diizinkan",
-            errorMessage(error)
-        );
-    });
-}
-function gestureDistance(){
-    const points=[...s.pointers.values()];
-    if(points.length!==2)return 0;
+
+/* =========================================================
+   ROTATE DAN ZOOM
+========================================================= */
+
+function pinchDistance() {
+    const points = [...state.pointers.values()];
+
+    if (points.length !== 2) return 0;
+
     return Math.hypot(
-        points[0].x-points[1].x,
-        points[0].y-points[1].y
+        points[0].x - points[1].x,
+        points[0].y - points[1].y
     );
 }
 
-canvas.addEventListener("pointerdown",event=>{
-    if(!s.placed)return;
+stage.addEventListener("pointerdown", event => {
+    if (!state.placed) return;
+
     event.preventDefault();
-    try{
-        canvas.setPointerCapture(event.pointerId);
-    }catch(error){}
-    s.pointers.set(event.pointerId,{
-        x:event.clientX,
-        y:event.clientY
+
+    try {
+        stage.setPointerCapture(event.pointerId);
+    } catch (error) {}
+
+    state.pointers.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY
     });
-    s.pinch=gestureDistance();
+
+    state.pinch = pinchDistance();
 });
-canvas.addEventListener("pointermove",event=>{
-    if(!s.placed||
-       !s.pivot||
-       !s.pointers.has(event.pointerId))return;
+
+stage.addEventListener("pointermove", event => {
+    if (!state.placed ||
+        !state.turntable ||
+        !state.pointers.has(event.pointerId)) return;
+
     event.preventDefault();
 
-    const old=s.pointers.get(event.pointerId);
-    s.pointers.set(event.pointerId,{
-        x:event.clientX,
-        y:event.clientY
+    const previous = state.pointers.get(
+        event.pointerId
+    );
+
+    state.pointers.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY
     });
 
-    if(s.pointers.size===2){
-        const distance=gestureDistance();
-        if(s.pinch>0){
-            s.zoom=clamp(
-                s.zoom*distance/s.pinch,.35,3.5
+    if (state.pointers.size === 2) {
+        const distance = pinchDistance();
+
+        if (state.pinch > 0) {
+            state.zoom = clamp(
+                state.zoom * distance / state.pinch,
+                .4, 3
             );
-            s.pivot.scale.setScalar(s.zoom);
+            state.turntable.scale.setScalar(state.zoom);
         }
-        s.pinch=distance;
-    }else if(s.pointers.size===1){
-        s.yaw+=(event.clientX-old.x)*.008;
-        s.pivot.rotation.y=s.yaw;
+
+        state.pinch = distance;
+    } else if (state.pointers.size === 1) {
+        state.rotation +=
+            (event.clientX - previous.x) * .008;
+
+        state.turntable.rotation.y = state.rotation;
     }
-},{passive:false});
-function endPointer(event){
-    s.pointers.delete(event.pointerId);
-    s.pinch=gestureDistance();
-}
-canvas.addEventListener("pointerup",endPointer);
-canvas.addEventListener("pointercancel",endPointer);
-canvas.addEventListener("wheel",event=>{
-    if(!s.placed||!s.pivot)return;
+}, { passive: false });
+
+["pointerup", "pointercancel", "lostpointercapture"]
+    .forEach(eventName => {
+        stage.addEventListener(eventName, event => {
+            state.pointers.delete(event.pointerId);
+            state.pinch = pinchDistance();
+        });
+    });
+
+stage.addEventListener("wheel", event => {
+    if (!state.placed || !state.turntable) return;
+
     event.preventDefault();
-    s.zoom=clamp(
-        s.zoom*(event.deltaY>0?.93:1.07),
-        .35,3.5
+
+    state.zoom = clamp(
+        state.zoom * (event.deltaY > 0 ? .92 : 1.08),
+        .4, 3
     );
-    s.pivot.scale.setScalar(s.zoom);
-},{passive:false});
 
-$("webarPlace")?.addEventListener("click",place);
-$("webarReset")?.addEventListener("click",reset);
-$("webarRetry")?.addEventListener("click",retry);
-$("webarClose")?.addEventListener("click",close);
-$("webarBackBottom")?.addEventListener("click",close);
-$("webarMotion")?.addEventListener("click",grantMotion);
+    state.turntable.scale.setScalar(state.zoom);
+}, { passive: false });
 
-document.addEventListener("keydown",event=>{
-    if(s.active&&event.key==="Escape"){
+/* =========================================================
+   WEBAR EVENTS
+========================================================= */
+
+byId("webarClose")?.addEventListener("click", close);
+byId("webarBackBottom")?.addEventListener("click", close);
+byId("webarPlace")?.addEventListener("click", place);
+byId("webarReset")?.addEventListener("click", reset);
+byId("webarRetry")?.addEventListener("click", retry);
+byId("webarMotion")?.addEventListener("click", grantMotion);
+
+window.addEventListener("resize", resize);
+window.visualViewport?.addEventListener("resize", resize);
+
+document.addEventListener("keydown", event => {
+    if (state.active && event.key === "Escape") {
         event.preventDefault();
         event.stopImmediatePropagation();
         close();
     }
-},true);
-document.addEventListener("visibilitychange",()=>{
-    if(s.active&&document.hidden)close();
+}, true);
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state.active) {
+        close();
+    }
 });
-window.FT_WEBAR={start,close,reset};
+
+state.diagnosticTimer = setInterval(
+    updateDiagnostics,
+    850
+);
+
+window.FT_WEBAR = {
+    start,
+    close,
+    reset
+};
+
 })();
