@@ -1,15 +1,20 @@
 /* =========================================================
-   FT UISU EXPLORER — REVISI 4 (NO NAVIGATION)
+   FT UISU EXPLORER — REVISI 5 (NO NAVIGATION)
+   DATABASE GEDUNG, RUANGAN, DAN TENDIK
 
-   Seluruh database Revisi 44 dipertahankan:
-   - 5 gedung
-   - 7 model 3D
-   - Database ruangan dan Tendik
-   - Entrance
-   - Graph navigasi
-   - Kalibrasi GPS
+   TENDIK:
+   - 16 ruangan Biro Fakultas Teknik
+   - 1 Perpustakaan
+   - 22 data orang/jabatan
+   - Foto tersimpan di assets/images/tendik/
 
-   Navigasi hanya disembunyikan oleh script.js/style.css.
+   Kolom kosong:
+   jabatan: "-"
+   name: "-"
+   phone: "-"
+   photo: ""
+
+   Jangan menghapus graph navigasi.
 ========================================================= */
 
 (function(){
@@ -20,6 +25,10 @@ const MAP_HEIGHT=1024;
 
 const NAVIGATION_MAP="./assets/maps/denah-v1.png";
 const FULL_DETAIL_REFERENCE="./assets/maps/denah-full-detail.png";
+
+/* =========================================================
+   GEDUNG
+========================================================= */
 
 const buildings=[
     {
@@ -66,7 +75,16 @@ const buildings=[
         description:"Ruang belajar dan mencari referensi yang menyediakan bahan bacaan serta sumber informasi untuk mendukung perkuliahan, tugas, dan penelitian skripsi mahasiswa.",
         actualFloor:1,
         floorCount:1,
-        tendik:[],
+
+        tendik:[
+            {
+                jabatan:"Pegawai Pustaka",
+                photo:"",
+                name:"Andrian Arif Siagian, ST",
+                phone:"0851 7425 1128"
+            }
+        ],
+
         defaultEntranceId:"library-e1",
         defaultModel:"indoor",
         liveMarker:{x:686,y:249},
@@ -170,7 +188,9 @@ const buildings=[
     }
 ];
 
-/* ENTRANCE NAVIGASI TETAP DIPERTAHANKAN */
+/* =========================================================
+   ENTRANCE — TETAP DIPERTAHANKAN
+========================================================= */
 
 const entrances=[
     {
@@ -249,22 +269,14 @@ const entrances=[
 ];
 
 /* =========================================================
-   ROOM DATABASE
-
-   Format pengisian Tendik:
-
-   tendik:[
-       {
-           name:"Nama Lengkap",
-           phone:"081234567890",
-           photo:"./assets/images/tendik/nama-file.jpg"
-       }
-   ]
+   DATABASE RUANGAN
 ========================================================= */
 
 const rooms=[
 
-/* BIRO FAKULTAS TEKNIK */
+/* ---------------------------------------------------------
+   BIRO FAKULTAS TEKNIK
+--------------------------------------------------------- */
 
 {
     id:"ruang-dosen",
@@ -276,66 +288,145 @@ const rooms=[
     description:"Ruang kerja dosen untuk menyiapkan kegiatan perkuliahan, berdiskusi, melakukan bimbingan, serta melayani kebutuhan akademik mahasiswa.",
     modelMarker:null
 },
+
 {
     id:"gudang-mini",
     name:"Gudang Mini",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Pegawai Kerumahtanggaan",
+            photo:"./assets/images/tendik/gudang-mini-01.webp",
+            name:"M.Hatta Hasibuan",
+            phone:"-"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang penyimpanan perlengkapan dan barang penunjang kegiatan operasional Fakultas Teknik.",
     modelMarker:null
 },
+
 {
     id:"prodi-industri",
     name:"Program Studi Teknik Industri",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ketua Program Studi",
+            photo:"./assets/images/tendik/dekan-01.webp",
+            name:"Ir. Hj. Darlina Tanjung, MT",
+            phone:"085358710145"
+        },
+        {
+            jabatan:"Tata Usaha",
+            photo:"",
+            name:"M. Fahmi Marzuqi Hsb, S.Pdi",
+            phone:"0813 9670 7170"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan akademik Program Studi Teknik Industri sekaligus tempat mahasiswa mendapatkan informasi dan layanan terkait perkuliahan, kurikulum, serta kegiatan prodi.",
     modelMarker:null
 },
+
 {
     id:"prodi-mesin",
     name:"Program Studi Teknik Mesin",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ketua Program Studi",
+            photo:"./assets/images/tendik/prodi-mesin-01.webp",
+            name:"Ahmad Bakhori, ST, MT",
+            phone:"081260660169"
+        },
+        {
+            jabatan:"Tata Usaha",
+            photo:"./assets/images/tendik/prodi-mesin-02.webp",
+            name:"Iskandar Nasution, ST",
+            phone:"0813 7698 6090"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan akademik Program Studi Teknik Mesin dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang keilmuan teknik mesin.",
     modelMarker:null
 },
+
 {
     id:"prodi-sipil",
     name:"Program Studi Teknik Sipil",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ketua Program Studi",
+            photo:"./assets/images/tendik/prodi-sipil-01.webp",
+            name:"Ir. Jupriah Sarifah, MT",
+            phone:"081361756472"
+        },
+        {
+            jabatan:"Tata Usaha",
+            photo:"./assets/images/tendik/prodi-sipil-02.webp",
+            name:"Ismail Ahmad, S. Pd",
+            phone:"0813 7600 4006"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan akademik Program Studi Teknik Sipil dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang konstruksi dan infrastruktur.",
     modelMarker:null
 },
+
 {
     id:"prodi-elektro",
     name:"Program Studi Teknik Elektro",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ketua Program Studi",
+            photo:"./assets/images/tendik/prodi-elektro-01.webp",
+            name:"-",
+            phone:"-"
+        },
+        {
+            jabatan:"Tata Usaha",
+            photo:"",
+            name:"Ir. Sudaryanto",
+            phone:"0813 6146 1643"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan akademik Program Studi Teknik Elektro dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang kelistrikan dan elektronika.",
     modelMarker:null
 },
+
 {
     id:"prodi-informatika",
     name:"Program Studi Teknik Informatika",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ketua Program Studi",
+            photo:"./assets/images/tendik/prodi-informatika-01.webp",
+            name:"Mhd. Zulfansyuri S.,ST., M.Kom",
+            phone:"082277150767"
+        },
+        {
+            jabatan:"Tata Usaha",
+            photo:"./assets/images/tendik/prodi-informatika-02.webp",
+            name:"Habibi Lubis, SE",
+            phone:"0813 7636 4670"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan akademik Program Studi Teknik Informatika dan layanan mahasiswa terkait perkuliahan, kegiatan prodi, serta bidang komputasi dan teknologi informasi.",
     modelMarker:null
 },
+
 {
     id:"lpmf",
     name:"Lembaga Penjamin Mutu Fakultas (LPMF)",
@@ -346,76 +437,133 @@ const rooms=[
     description:"Unit yang membantu menjaga dan meningkatkan mutu kegiatan akademik melalui pemantauan, evaluasi, dokumentasi mutu, dan persiapan akreditasi di tingkat fakultas.",
     modelMarker:null
 },
+
 {
     id:"wakil-dekan-adi",
     name:"Wakil Dekan Akademik dan Dakwah Islamiyah (WD-1 ADI)",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Wakil Dekan Akademik dan Dakwah Islamiyah",
+            photo:"./assets/images/tendik/wakil-dekan-adi-01.webp",
+            name:"Dr. Hermansyah Alam, MT",
+            phone:"081370082893"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang Wakil Dekan bidang Akademik dan Dakwah Islamiyah yang membantu mengoordinasikan kegiatan akademik serta pelaksanaan nilai dan kegiatan dakwah Islamiyah di lingkungan fakultas.",
     modelMarker:null
 },
+
 {
     id:"wakil-dekan-stk",
     name:"Wakil Dekan Sumber Daya dan Tata Kelola (WD-2 STK)",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Wakil Dekan Sumber Daya dan Tata Kelola",
+            photo:"./assets/images/tendik/wakil-dekan-stk-01.webp",
+            name:"Ir. Marwan Lubis, MT",
+            phone:"081362333359"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang Wakil Dekan bidang Sumber Daya dan Tata Kelola yang membantu mengelola sumber daya, administrasi, sarana, dan tata kelola fakultas.",
     modelMarker:null
 },
+
 {
     id:"wakil-dekan-kak",
     name:"Wakil Dekan Kewirausahaan, Alumni dan Kemahasiswaan (WD-3 KAK)",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Wakil Dekan Kewirausahaan, Alumni dan Kemahasiswaan",
+            photo:"./assets/images/tendik/wakil-dekan-kak-01.webp",
+            name:"Ir. Bonar Harahap, MT",
+            phone:"081375798333"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang Wakil Dekan yang menangani kegiatan mahasiswa, hubungan dengan alumni, pengembangan kewirausahaan, serta berbagai kegiatan kemahasiswaan fakultas.",
     modelMarker:null
 },
+
 {
     id:"dekan",
     name:"Dekan",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Dekan",
+            photo:"./assets/images/tendik/dekan-01.webp",
+            name:"Ir. Hj. Darlina Tanjung, MT",
+            phone:"085358710145"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang kerja pimpinan Fakultas Teknik yang mengoordinasikan kegiatan akademik, administrasi, pengembangan fakultas, serta pelaksanaan program kerja secara keseluruhan.",
     modelMarker:null
 },
+
 {
     id:"loket-pembayaran",
     name:"Loket Pembayaran Mahasiswa",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Pegawai Administrasi Biro",
+            photo:"",
+            name:"Indah Rahmawani",
+            phone:"0813 6190 9369"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Tempat mahasiswa memperoleh layanan dan informasi yang berkaitan dengan pembayaran serta administrasi keuangan perkuliahan.",
     modelMarker:null
 },
+
 {
     id:"kasubbag-keuangan",
     name:"KaSubBag Keuangan",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ka.Sub.Bag.Keuangan",
+            photo:"./assets/images/tendik/kasubbag-keuangan-01.webp",
+            name:"Leni Agustina, SE, M.AK",
+            phone:"0812 6420 9456"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang bagian yang menangani administrasi keuangan, anggaran, pembayaran, pencatatan, serta kebutuhan keuangan Fakultas Teknik.",
     modelMarker:null
 },
+
 {
     id:"kasubbag-akademik",
     name:"KaSubBag Akademik IT dan Kerjasama",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ka.Sub.Bag.Akademik",
+            photo:"./assets/images/tendik/kasubbag-akademik-01.webp",
+            name:"M. Syahrial Syah, S.Kom",
+            phone:"0813 9774 3354"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan layanan akademik, dukungan sistem dan teknologi informasi, serta administrasi kegiatan kerja sama fakultas.",
     modelMarker:null
 },
+
 {
     id:"kasubbag-kemahasiswaan",
     name:"KaSubBag Kemahasiswaan",
@@ -426,38 +574,64 @@ const rooms=[
     description:"Ruang yang menangani administrasi dan layanan kegiatan mahasiswa, organisasi kemahasiswaan, prestasi, serta kebutuhan kemahasiswaan lainnya.",
     modelMarker:null
 },
+
 {
     id:"kasubbag-siakad",
     name:"KaSubBag SIAKAD",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Operator Siakad",
+            photo:"./assets/images/tendik/kasubbag-siakad-01.webp",
+            name:"Rajuddin Siregar",
+            phone:"0821 6140 0188"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang pengelolaan Sistem Informasi Akademik yang membantu menangani data mahasiswa, mata kuliah, nilai, jadwal, dan administrasi akademik berbasis sistem.",
     modelMarker:null
 },
+
 {
     id:"kasubbag-umum",
     name:"KaSubBag Umum dan Perlengkapan Kerumahtanggaan",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Ka.Sub.Bag.Umum Perlengkapan & Kerumahtanggaan",
+            photo:"./assets/images/tendik/kasubbag-umum-01.webp",
+            name:"Fadil Habib Nasution, ST, M.Kom",
+            phone:"0853 7030 7502"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang yang menangani kebutuhan umum, perlengkapan, fasilitas, inventaris, dan berbagai kebutuhan operasional Fakultas Teknik.",
     modelMarker:null
 },
+
 {
     id:"kepala-tata-usaha-ktu",
     name:"Kepala Tata Usaha-KTU",
     buildingId:"biro-ft",
     floor:2,
-    tendik:[],
+    tendik:[
+        {
+            jabatan:"Kepala Tata Usaha",
+            photo:"./assets/images/tendik/kepala-tata-usaha-ktu-01.webp",
+            name:"Zulfan AZ, S. Hi, M.H",
+            phone:"0812 6809 4324"
+        }
+    ],
     navigationEntranceId:"biro-main-e1",
     description:"Ruang Kepala Tata Usaha yang mengoordinasikan layanan administrasi, akademik, keuangan, dokumen, sarana, dan kegiatan tata usaha fakultas.",
     modelMarker:null
 },
 
-/* GEDUNG PERKULIAHAN */
+/* ---------------------------------------------------------
+   GEDUNG PERKULIAHAN
+--------------------------------------------------------- */
 
 {
     id:"ruang-kuliah-1",
@@ -540,7 +714,9 @@ const rooms=[
     modelMarker:null
 },
 
-/* LABORATORIUM LANTAI 1 */
+/* ---------------------------------------------------------
+   LABORATORIUM LANTAI 1
+--------------------------------------------------------- */
 
 {
     id:"lab-hidrolika",
@@ -609,7 +785,9 @@ const rooms=[
     modelMarker:null
 },
 
-/* LABORATORIUM LANTAI 2 */
+/* ---------------------------------------------------------
+   LABORATORIUM LANTAI 2
+--------------------------------------------------------- */
 
 {
     id:"ruang-kuliah-9",
@@ -774,7 +952,9 @@ const rooms=[
     modelMarker:null
 },
 
-/* LABORATORIUM LANTAI 3 */
+/* ---------------------------------------------------------
+   LABORATORIUM LANTAI 3
+--------------------------------------------------------- */
 
 {
     id:"ruang-kuliah-11",
@@ -842,8 +1022,7 @@ const rooms=[
 const people=[];
 
 /* =========================================================
-   NAVIGATION GRAPH
-   TETAP DIPERTAHANKAN WALAUPUN NAVIGASI DIHIDE
+   GRAPH NAVIGASI (NONAKTIF DI UI, DATA DIPERTAHANKAN)
 ========================================================= */
 
 const mapNodes={
@@ -925,7 +1104,9 @@ const mapEdges=[
 
 const mapCalibration=[];
 
-/* HELPERS */
+/* =========================================================
+   HELPER DATABASE
+========================================================= */
 
 function getBuildingById(id){
     return buildings.find(building=>building.id===id)||null;
@@ -937,8 +1118,7 @@ function getEntranceById(id){
     return entrances.find(entrance=>entrance.id===id)||null;
 }
 function getBuildingModels(buildingId){
-    const building=getBuildingById(buildingId);
-    return building?building.models||[]:[];
+    return getBuildingById(buildingId)?.models||[];
 }
 function getModelVariant(buildingId,modelId){
     return getBuildingModels(buildingId)
@@ -946,23 +1126,24 @@ function getModelVariant(buildingId,modelId){
 }
 function getDefaultModelVariant(buildingId){
     const building=getBuildingById(buildingId);
-    if(!building){return null;}
+    if(!building)return null;
     return getModelVariant(buildingId,building.defaultModel)
-        ||building.models[0]||null;
+        ||building.models?.[0]||null;
 }
 function getNavigationEntranceForLocation(location){
-    if(!location){return null;}
+    if(!location)return null;
     if(location.type==="room"&&location.navigationEntranceId){
         return getEntranceById(location.navigationEntranceId);
     }
     const building=getBuildingById(
         location.buildingId||location.id
     );
-    if(!building){return null;}
-    return getEntranceById(building.defaultEntranceId);
+    return building
+        ?getEntranceById(building.defaultEntranceId)
+        :null;
 }
 
-/* GLOBAL DATABASE */
+/* GLOBAL */
 
 window.FT_DATA={
     MAP_WIDTH,
