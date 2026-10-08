@@ -1,7 +1,9 @@
-/* =========================================================
-   FT UISU EXPLORER — REVISI 6 NO NAVIGATE
-   DATA GEDUNG, RUANGAN, MODEL, TENDIK, DAN NAVIGASI
-========================================================= */
+
+/* =====================================================
+   FT UISU EXPLORER
+   DATABASE REV 7 (NO NAVIGATE)
+   GEDUNG, RUANGAN, TENDIK, ENTRANCE, GRAPH
+===================================================== */
 (function(){
 "use strict";
 
@@ -12,238 +14,237 @@ const FULL_DETAIL_REFERENCE="./assets/maps/denah-full-detail.png";
 
 /* GEDUNG */
 const buildings=[
-{
-    id:"biro-ft",
-    modelMenuName:"Biro Fakultas Teknik UISU",
-    modelMenuOrder:1,
-    name:"Biro Fakultas Teknik UISU",
-    shortName:"Biro FT",
-    description:"Biro Fakultas Teknik UISU berada di lantai 2 pada gedung yang sama dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3.",
-    actualFloor:2,
-    floorCount:1,
-    defaultEntranceId:"biro-main-e1",
-    defaultModel:"indoor",
-    liveMarker:{x:666,y:532},
-    models:[
-        {
-            id:"outdoor",
-            name:"Outdoor",
-            viewerTitle:"Biro Fakultas Teknik UISU",
-            src:"./assets/models/gedung_biro_outdoor.glb",
-            defaultCameraOrbit:"0deg 72deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model outdoor menampilkan bangunan tempat Biro Fakultas Teknik UISU berada di lantai 2, dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3."
-        },
-        {
-            id:"indoor",
-            name:"Indoor",
-            viewerTitle:"Biro Fakultas Teknik UISU",
-            src:"./assets/models/gedung_biro_indoor.glb",
-            defaultCameraOrbit:"-35deg 68deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model indoor menampilkan interior Biro Fakultas Teknik UISU di lantai 2 beserta susunan ruangannya."
-        }
-    ]
-},
-{
-    id:"perpustakaan-ft",
-    modelMenuName:"Perpustakaan Fakultas Teknik UISU",
-    modelMenuOrder:5,
-    name:"Perpustakaan Fakultas Teknik UISU",
-    shortName:"Perpustakaan FT",
-    description:"Ruang belajar dan mencari referensi yang menyediakan bahan bacaan serta sumber informasi untuk mendukung perkuliahan, tugas, dan penelitian skripsi mahasiswa.",
-    actualFloor:1,
-    floorCount:1,
-    tendik:[
-        {
-            jabatan:"Pegawai Pustaka",
-            photo:"",
-            name:"Andrian Arif Siagian, ST",
-            phone:"0851 7425 1128"
-        }
-    ],
-    defaultEntranceId:"library-e1",
-    defaultModel:"indoor",
-    liveMarker:{x:686,y:249},
-    models:[
-        {
-            id:"indoor",
-            name:"Indoor",
-            viewerTitle:"Perpustakaan Fakultas Teknik UISU",
-            src:"./assets/models/perpustakaan_indoor.glb",
-            defaultCameraOrbit:"-18deg 68deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model indoor menampilkan interior Perpustakaan Fakultas Teknik UISU yang berada di lantai 1, pada gedung di sudut seberang lapangan."
-        }
-    ]
-},
-{
-    id:"serbaguna-ft",
-    modelMenuName:"Ruang Serbaguna Fakultas Teknik UISU",
-    modelMenuOrder:4,
-    name:"Ruang Serbaguna Fakultas Teknik UISU",
-    shortName:"Serbaguna FT",
-    description:"Ruang yang digunakan untuk berbagai kegiatan fakultas seperti seminar, sidang, rapat, presentasi, pelatihan, kegiatan mahasiswa, dan acara akademik lainnya.",
-    actualFloor:1,
-    floorCount:1,
-    defaultEntranceId:"serbaguna-e1",
-    defaultModel:"indoor",
-    liveMarker:{x:644,y:121},
-    models:[
-        {
-            id:"indoor",
-            name:"Indoor",
-            viewerTitle:"Ruang Serbaguna Fakultas Teknik UISU",
-            src:"./assets/models/serbaguna_indoor.glb",
-            defaultCameraOrbit:"-12deg 70deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model indoor menampilkan interior Ruang Serbaguna FT yang berada di lantai 1 pada gedung Fakultas Hukum."
-        }
-    ]
-},
-{
-    id:"perkuliahan-ft",
-    modelMenuName:"Gedung Perkuliahan Fakultas Teknik UISU",
-    modelMenuOrder:2,
-    name:"Gedung Perkuliahan Fakultas Teknik UISU",
-    shortName:"Perkuliahan FT",
-    description:"Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3 pada gedung di seberang Biro Fakultas Teknik UISU.",
-    actualFloor:3,
-    floorCount:1,
-    defaultEntranceId:"class-main-e1",
-    defaultModel:"outdoor",
-    liveMarker:{x:465,y:755},
-    models:[
-        {
-            id:"outdoor",
-            name:"Outdoor",
-            viewerTitle:"Gedung Perkuliahan Fakultas Teknik UISU",
-            src:"./assets/models/gedung_perkuliahan_outdoor.glb",
-            defaultCameraOrbit:"0deg 72deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model outdoor menampilkan bangunan tempat Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3, di seberang Biro Fakultas Teknik UISU."
-        },
-        {
-            id:"indoor",
-            name:"Indoor",
-            viewerTitle:"Gedung Perkuliahan Fakultas Teknik UISU",
-            src:"./assets/models/gedung_perkuliahan_indoor.glb",
-            defaultCameraOrbit:"0deg 75deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model indoor menampilkan interior Gedung Perkuliahan Fakultas Teknik UISU di lantai 3, dari Ruang Kuliah 1 sampai Ruang Kuliah 8."
-        }
-    ]
-},
-{
-    id:"laboratorium-ft",
-    modelMenuName:"Laboratorium Fakultas Teknik UISU",
-    modelMenuOrder:3,
-    name:"Laboratorium Fakultas Teknik UISU",
-    shortName:"Laboratorium FT",
-    description:"Laboratorium Fakultas Teknik UISU terdiri dari tiga lantai dan berada di dekat Gedung Perkuliahan Fakultas Teknik UISU.",
-    actualFloor:null,
-    floorCount:3,
-    defaultEntranceId:"lab-main-e1",
-    defaultModel:"outdoor",
-    liveMarker:{x:386,y:850},
-    models:[
-        {
-            id:"outdoor",
-            name:"Outdoor",
-            viewerTitle:"Laboratorium Fakultas Teknik UISU",
-            src:"./assets/models/laboratorium_outdoor.glb",
-            defaultCameraOrbit:"32deg 66deg auto",
-            defaultCameraTarget:"auto auto auto",
-            defaultFieldOfView:"35deg",
-            viewerDescription:"Model outdoor menampilkan Laboratorium Fakultas Teknik UISU tiga lantai beserta area laboratorium dan ruang kuliah di dalamnya."
-        }
-    ]
-}
+    {
+        id:"biro-ft",
+        modelMenuName:"Biro Fakultas Teknik UISU",
+        modelMenuOrder:1,
+        name:"Biro Fakultas Teknik UISU",
+        shortName:"Biro FT",
+        description:"Biro Fakultas Teknik UISU berada di lantai 2 pada gedung yang sama dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3.",
+        actualFloor:2,
+        floorCount:1,
+        defaultEntranceId:"biro-main-e1",
+        defaultModel:"indoor",
+        liveMarker:{x:666,y:532},
+        models:[
+            {
+                id:"outdoor",
+                name:"Outdoor",
+                viewerTitle:"Biro Fakultas Teknik UISU",
+                src:"./assets/models/gedung_biro_outdoor.glb",
+                defaultCameraOrbit:"0deg 72deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model outdoor menampilkan bangunan tempat Biro Fakultas Teknik UISU berada di lantai 2, dengan Fakultas Agama Islam di lantai 1 dan Fakultas Sastra di lantai 3."
+            },
+            {
+                id:"indoor",
+                name:"Indoor",
+                viewerTitle:"Biro Fakultas Teknik UISU",
+                src:"./assets/models/gedung_biro_indoor.glb",
+                defaultCameraOrbit:"-35deg 68deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model indoor menampilkan interior Biro Fakultas Teknik UISU di lantai 2 beserta susunan ruangannya."
+            }
+        ]
+    },
+    {
+        id:"perpustakaan-ft",
+        modelMenuName:"Perpustakaan Fakultas Teknik UISU",
+        modelMenuOrder:5,
+        name:"Perpustakaan Fakultas Teknik UISU",
+        shortName:"Perpustakaan FT",
+        description:"Ruang belajar dan mencari referensi yang menyediakan bahan bacaan serta sumber informasi untuk mendukung perkuliahan, tugas, dan penelitian skripsi mahasiswa.",
+        actualFloor:1,
+        floorCount:1,
+        tendik:[
+            {
+                jabatan:"Pegawai Pustaka",
+                photo:"",
+                name:"Andrian Arif Siagian, ST",
+                phone:"0851 7425 1128"
+            }
+        ],
+        defaultEntranceId:"library-e1",
+        defaultModel:"indoor",
+        liveMarker:{x:686,y:249},
+        models:[
+            {
+                id:"indoor",
+                name:"Indoor",
+                viewerTitle:"Perpustakaan Fakultas Teknik UISU",
+                src:"./assets/models/perpustakaan_indoor.glb",
+                defaultCameraOrbit:"-18deg 68deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model indoor menampilkan interior Perpustakaan Fakultas Teknik UISU yang berada di lantai 1, pada gedung di sudut seberang lapangan."
+            }
+        ]
+    },
+    {
+        id:"serbaguna-ft",
+        modelMenuName:"Ruang Serbaguna Fakultas Teknik UISU",
+        modelMenuOrder:4,
+        name:"Ruang Serbaguna Fakultas Teknik UISU",
+        shortName:"Serbaguna FT",
+        description:"Ruang yang digunakan untuk berbagai kegiatan fakultas seperti seminar, sidang, rapat, presentasi, pelatihan, kegiatan mahasiswa, dan acara akademik lainnya.",
+        actualFloor:1,
+        floorCount:1,
+        defaultEntranceId:"serbaguna-e1",
+        defaultModel:"indoor",
+        liveMarker:{x:644,y:121},
+        models:[
+            {
+                id:"indoor",
+                name:"Indoor",
+                viewerTitle:"Ruang Serbaguna Fakultas Teknik UISU",
+                src:"./assets/models/serbaguna_indoor.glb",
+                defaultCameraOrbit:"-12deg 70deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model indoor menampilkan interior Ruang Serbaguna FT yang berada di lantai 1 pada gedung Fakultas Hukum."
+            }
+        ]
+    },
+    {
+        id:"perkuliahan-ft",
+        modelMenuName:"Gedung Perkuliahan Fakultas Teknik UISU",
+        modelMenuOrder:2,
+        name:"Gedung Perkuliahan Fakultas Teknik UISU",
+        shortName:"Perkuliahan FT",
+        description:"Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3 pada gedung di seberang Biro Fakultas Teknik UISU.",
+        actualFloor:3,
+        floorCount:1,
+        defaultEntranceId:"class-main-e1",
+        defaultModel:"outdoor",
+        liveMarker:{x:465,y:755},
+        models:[
+            {
+                id:"outdoor",
+                name:"Outdoor",
+                viewerTitle:"Gedung Perkuliahan Fakultas Teknik UISU",
+                src:"./assets/models/gedung_perkuliahan_outdoor.glb",
+                defaultCameraOrbit:"0deg 72deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model outdoor menampilkan bangunan tempat Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3, di seberang Biro Fakultas Teknik UISU."
+            },
+            {
+                id:"indoor",
+                name:"Indoor",
+                viewerTitle:"Gedung Perkuliahan Fakultas Teknik UISU",
+                src:"./assets/models/gedung_perkuliahan_indoor.glb",
+                defaultCameraOrbit:"0deg 75deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model indoor menampilkan interior Gedung Perkuliahan Fakultas Teknik UISU di lantai 3, dari Ruang Kuliah 1 sampai Ruang Kuliah 8."
+            }
+        ]
+    },
+    {
+        id:"laboratorium-ft",
+        modelMenuName:"Laboratorium Fakultas Teknik UISU",
+        modelMenuOrder:3,
+        name:"Laboratorium Fakultas Teknik UISU",
+        shortName:"Laboratorium FT",
+        description:"Laboratorium Fakultas Teknik UISU terdiri dari tiga lantai dan berada di dekat Gedung Perkuliahan Fakultas Teknik UISU.",
+        actualFloor:null,
+        floorCount:3,
+        defaultEntranceId:"lab-main-e1",
+        defaultModel:"outdoor",
+        liveMarker:{x:386,y:850},
+        models:[
+            {
+                id:"outdoor",
+                name:"Outdoor",
+                viewerTitle:"Laboratorium Fakultas Teknik UISU",
+                src:"./assets/models/laboratorium_outdoor.glb",
+                defaultCameraOrbit:"32deg 66deg auto",
+                defaultCameraTarget:"auto auto auto",
+                defaultFieldOfView:"35deg",
+                viewerDescription:"Model outdoor menampilkan Laboratorium Fakultas Teknik UISU tiga lantai beserta area laboratorium dan ruang kuliah di dalamnya."
+            }
+        ]
+    }
 ];
 
 /* ENTRANCE */
 const entrances=[
-{
-    id:"serbaguna-e1",
-    buildingId:"serbaguna-ft",
-    name:"Entrance Ruang Serbaguna Fakultas Teknik UISU",
-    floor:1,x:644,y:210,
-    nodeId:"E_SERBAGUNA",
-    deadEnd:true
-},
-{
-    id:"library-e1",
-    buildingId:"perpustakaan-ft",
-    name:"Entrance Perpustakaan Fakultas Teknik UISU",
-    floor:1,x:691,y:356,
-    nodeId:"E_LIBRARY",
-    deadEnd:true
-},
-{
-    id:"biro-main-e1",
-    buildingId:"biro-ft",
-    name:"Entrance Biro Fakultas Teknik UISU",
-    floor:2,x:640,y:527,
-    nodeId:"E_BIRO",
-    deadEnd:false
-},
-{
-    id:"class-main-e1",
-    buildingId:"perkuliahan-ft",
-    name:"Entrance Gedung Perkuliahan Fakultas Teknik UISU",
-    floor:3,x:462,y:685,
-    nodeId:"E_CLASS",
-    deadEnd:false
-},
-{
-    id:"lab-main-e1",
-    buildingId:"laboratorium-ft",
-    name:"Entrance Utama Laboratorium Fakultas Teknik UISU",
-    floor:1,x:384,y:686,
-    nodeId:"E_LAB_MAIN",
-    deadEnd:false
-},
-{
-    id:"lab-west-e1",
-    buildingId:"laboratorium-ft",
-    name:"Entrance Barat Laboratorium Fakultas Teknik UISU",
-    floor:1,x:341,y:805,
-    nodeId:"E_LAB_WEST",
-    deadEnd:true,
-    accessOnly:[
-        "lab-hidrolika",
-        "lab-teknologi-mekanik"
-    ]
-},
-{
-    id:"lab-south-e1",
-    buildingId:"laboratorium-ft",
-    name:"Entrance Selatan Laboratorium Fakultas Teknik UISU",
-    floor:1,x:460,y:953,
-    nodeId:"E_LAB_SOUTH",
-    deadEnd:true,
-    accessOnly:[
-        "lab-jalan-raya",
-        "lab-beton",
-        "lab-mekanika-tanah",
-        "lab-ilmu-ukur-tanah"
-    ]
-}
+    {
+        id:"serbaguna-e1",
+        buildingId:"serbaguna-ft",
+        name:"Entrance Ruang Serbaguna Fakultas Teknik UISU",
+        floor:1,x:644,y:210,
+        nodeId:"E_SERBAGUNA",
+        deadEnd:true
+    },
+    {
+        id:"library-e1",
+        buildingId:"perpustakaan-ft",
+        name:"Entrance Perpustakaan Fakultas Teknik UISU",
+        floor:1,x:691,y:356,
+        nodeId:"E_LIBRARY",
+        deadEnd:true
+    },
+    {
+        id:"biro-main-e1",
+        buildingId:"biro-ft",
+        name:"Entrance Biro Fakultas Teknik UISU",
+        floor:2,x:640,y:527,
+        nodeId:"E_BIRO",
+        deadEnd:false
+    },
+    {
+        id:"class-main-e1",
+        buildingId:"perkuliahan-ft",
+        name:"Entrance Gedung Perkuliahan Fakultas Teknik UISU",
+        floor:3,x:462,y:685,
+        nodeId:"E_CLASS",
+        deadEnd:false
+    },
+    {
+        id:"lab-main-e1",
+        buildingId:"laboratorium-ft",
+        name:"Entrance Utama Laboratorium Fakultas Teknik UISU",
+        floor:1,x:384,y:686,
+        nodeId:"E_LAB_MAIN",
+        deadEnd:false
+    },
+    {
+        id:"lab-west-e1",
+        buildingId:"laboratorium-ft",
+        name:"Entrance Barat Laboratorium Fakultas Teknik UISU",
+        floor:1,x:341,y:805,
+        nodeId:"E_LAB_WEST",
+        deadEnd:true,
+        accessOnly:["lab-hidrolika","lab-teknologi-mekanik"]
+    },
+    {
+        id:"lab-south-e1",
+        buildingId:"laboratorium-ft",
+        name:"Entrance Selatan Laboratorium Fakultas Teknik UISU",
+        floor:1,x:460,y:953,
+        nodeId:"E_LAB_SOUTH",
+        deadEnd:true,
+        accessOnly:[
+            "lab-jalan-raya",
+            "lab-beton",
+            "lab-mekanika-tanah",
+            "lab-ilmu-ukur-tanah"
+        ]
+    }
 ];
 
-/* =========================================================
-   DATABASE RUANGAN DAN TENDIK
-   Ganti foto, nama, jabatan, nomor WA pada tendik:[]
-========================================================= */
+/* =====================================================
+   54 RUANGAN DAN TENDIK
+   Jika ingin mengganti foto/nomor:
+   photo:"./assets/images/tendik/namafoto.webp"
+   phone:"081234567890"
+===================================================== */
 const rooms=[
 
-/* BIRO FAKULTAS TEKNIK */
+/* BIRO */
 {
     id:"ruang-dosen",
     name:"Ruang Dosen",
@@ -954,9 +955,10 @@ const rooms=[
 }
 ];
 
+/* CIVITAS */
 const people=[];
 
-/* GRAF NAVIGASI — DISIMPAN */
+/* NAVIGATION GRAPH (TERSEMBUNYI, TIDAK DIHAPUS) */
 const mapNodes={
     GATE_MAIN:{x:61,y:488},
     NORTH_WEST:{x:97,y:198},
@@ -990,7 +992,6 @@ const mapNodes={
     E_LAB_WEST:{x:341,y:805},
     E_LAB_SOUTH:{x:460,y:953}
 };
-
 const mapEdges=[
     {id:"R01",from:"GATE_MAIN",to:"PARKING_WEST",points:[[61,488],[112,488],[165,492]]},
     {id:"R02",from:"PARKING_WEST",to:"PARKING_CENTER",points:[[165,492],[245,498],[326,505]]},
@@ -1036,44 +1037,43 @@ const mapEdges=[
 
 const mapCalibration=[];
 
-/* HELPERS */
+/* DATABASE HELPERS */
 function getBuildingById(id){
-    return buildings.find(building=>building.id===id)||null;
+    return buildings.find(item=>item.id===id)||null;
 }
 function getRoomById(id){
-    return rooms.find(room=>room.id===id)||null;
+    return rooms.find(item=>item.id===id)||null;
 }
 function getEntranceById(id){
-    return entrances.find(entrance=>entrance.id===id)||null;
+    return entrances.find(item=>item.id===id)||null;
 }
-function getBuildingModels(buildingId){
-    const building=getBuildingById(buildingId);
-    return building?building.models||[]:[];
+function getBuildingModels(id){
+    return getBuildingById(id)?.models||[];
 }
 function getModelVariant(buildingId,modelId){
     return getBuildingModels(buildingId)
-        .find(model=>model.id===modelId)||null;
+        .find(item=>item.id===modelId)||null;
 }
 function getDefaultModelVariant(buildingId){
     const building=getBuildingById(buildingId);
     if(!building)return null;
     return getModelVariant(buildingId,building.defaultModel)
-        ||building.models[0]||null;
+        ||building.models?.[0]||null;
 }
 function getNavigationEntranceForLocation(location){
     if(!location)return null;
-
     if(location.type==="room"&&location.navigationEntranceId){
         return getEntranceById(location.navigationEntranceId);
     }
     const building=getBuildingById(
         location.buildingId||location.id
     );
-    if(!building)return null;
-    return getEntranceById(building.defaultEntranceId);
+    return building
+        ?getEntranceById(building.defaultEntranceId)
+        :null;
 }
 
-/* GLOBAL DATABASE */
+/* EXPORT GLOBAL */
 window.FT_DATA={
     MAP_WIDTH,
     MAP_HEIGHT,
@@ -1094,5 +1094,4 @@ window.FT_DATA={
     getDefaultModelVariant,
     getNavigationEntranceForLocation
 };
-
 })();
