@@ -1,5 +1,5 @@
 /* =========================================================
-   FT UISU EXPLORER — REVISI 1 (NO NAVIGATION)
+   FT UISU EXPLORER — REVISI 2 (NO NAVIGATION)
 
    Seluruh database Revisi 44 dipertahankan:
    - 5 gedung
