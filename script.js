@@ -2,7 +2,7 @@
 "use strict";
 
 /* =========================================================
-   REVISI 1 (NO NAVIGATION)
+   REVISI 2 (NO NAVIGATION)
    false : navigasi tersembunyi tetapi seluruh kode tetap ada.
    true  : navigasi kembali berfungsi seperti Revisi 44.
 ========================================================= */
@@ -137,7 +137,7 @@ function getNavigationEntrance(location){
     return getEntranceById(building.defaultEntranceId);
 }
 
-const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r1";
+const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r2";
 const PRIORITY_MODELS=[
     "./assets/models/gedung_biro_outdoor.glb",
     "./assets/models/gedung_perkuliahan_outdoor.glb",
@@ -150,7 +150,7 @@ async function registerServiceWorker(){
     if(!("serviceWorker" in navigator)){return;}
     try{
         await navigator.serviceWorker.register(
-            "./sw.js?v=1-no-navigation",
+            "./sw.js?v=2-no-navigation",
             {scope:"./"}
         );
         await navigator.serviceWorker.ready;
@@ -1943,7 +1943,7 @@ async function startApp(){
     }
 
     setTimeout(syncAllMapGeometry,120);
-    console.log("FT UISU Explorer Revision 1 (No Navigation) loaded");
+    console.log("FT UISU Explorer Revision 2 (No Navigation) loaded");
 }
 startApp();
 })();
