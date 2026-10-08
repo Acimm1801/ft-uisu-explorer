@@ -2,7 +2,7 @@
 "use strict";
 
 /* =========================================================
-   REVISI 2 (NO NAVIGATION)
+   REVISI 4 (NO NAVIGATION)
    false : navigasi tersembunyi tetapi seluruh kode tetap ada.
    true  : navigasi kembali berfungsi seperti Revisi 44.
 ========================================================= */
@@ -137,7 +137,7 @@ function getNavigationEntrance(location){
     return getEntranceById(building.defaultEntranceId);
 }
 
-const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r2";
+const MODEL_CACHE_NAME="ft-uisu-models-no-navigation-r4";
 const PRIORITY_MODELS=[
     "./assets/models/gedung_biro_outdoor.glb",
     "./assets/models/gedung_perkuliahan_outdoor.glb",
@@ -150,7 +150,7 @@ async function registerServiceWorker(){
     if(!("serviceWorker" in navigator)){return;}
     try{
         await navigator.serviceWorker.register(
-            "./sw.js?v=2-no-navigation",
+            "./sw.js?v=4-no-navigation",
             {scope:"./"}
         );
         await navigator.serviceWorker.ready;
@@ -857,6 +857,10 @@ on("prepareMainAR","click",()=>{
     if(!model){return;}
     setText("arMessage","");
     loadARModel(buildingId,model.id);
+    window.FT_WEBAR?.start(
+        model.src,
+        model.viewerTitle||getBuildingById(buildingId)?.name||"Gedung"
+    );
 });
 
 function locationForBuilding(building){
@@ -965,6 +969,7 @@ function renderRoomList(roomList,container){
     });
     container.appendChild(grid);
 }
+
 function renderLaboratory(roomList,container){
     const floorButtons=document.createElement("div");
     floorButtons.className="floor-buttons";
@@ -1943,7 +1948,7 @@ async function startApp(){
     }
 
     setTimeout(syncAllMapGeometry,120);
-    console.log("FT UISU Explorer Revision 2 (No Navigation) loaded");
+    console.log("FT UISU Explorer Revision 4 (No Navigation) loaded");
 }
 startApp();
 })();
@@ -2164,4 +2169,629 @@ startApp();
     viewer.addEventListener("load",updateButtons);
     viewer.addEventListener("error",updateButtons);
     updateButtons();
+})();
+
+
+/* =========================================================
+   REVISI 4 (NO NAVIGATION) — WEBAR SLAM ANDROID / IPHONE
+
+   8th Wall Engine Binary (world tracking) + Three.js.
+   - Kamera tetap di browser, tanpa AR Quick Look.
+   - Kandidat bidang horizontal divalidasi dari fitur SLAM.
+   - Setelah terkunci, posisi objek tidak pernah mengikuti sentuhan.
+   - Geser satu jari untuk rotasi Y; pinch untuk skala.
+   - Perpindahan sudut pandang dilakukan dengan menggerakkan kamera.
+   - Pada tracking buruk objek sementara disembunyikan.
+========================================================= */
+(function(){
+    "use strict";
+
+    const $=id=>document.getElementById(id);
+    const overlay=$("webarOverlay");
+    const canvas=$("webarCamera");
+    if(!overlay||!canvas){return;}
+
+    const session={
+        active:false,starting:false,requestId:0,
+        THREE:null,loader:null,group:null,pivot:null,model:null,
+        scene:null,camera:null,renderer:null,ready:false,
+        placed:false,candidate:null,stability:0,trackingGood:false,
+        lastGoodTime:0,baseScale:1,zoom:1,yaw:0,
+        pointers:new Map(),previousDistance:0,previousX:null,
+        uiTimestamp:0,modelUrl:""
+    };
+
+    const setStatus=(message,detail)=>{
+        if(!session.active){return;}
+        $("webarStatus").textContent=message;
+        if(detail!==undefined){$("webarInstructions").textContent=detail;}
+    };
+    const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+
+    const median=values=>{
+        const sorted=values.slice().sort((a,b)=>a-b);
+        return sorted[Math.floor(sorted.length/2)];
+    };
+
+    function validateHorizontalFeatures(reality){
+        if(!reality||reality.trackingStatus!=="NORMAL"||
+           reality.trackingReason==="INITIALIZING"){
+            return null;
+        }
+        const xr=window.XR8;
+        if(!xr?.XrController?.hitTest){return null;}
+
+        const uv=[
+            [.50,.59],[.40,.58],[.60,.58],
+            [.50,.70],[.38,.70],[.62,.70]
+        ];
+        const hits=[];
+        for(const [x,y] of uv){
+            let result=[];
+            try{
+                result=xr.XrController.hitTest(x,y,["FEATURE_POINT"])||[];
+            }catch(error){
+                return null;
+            }
+            if(result[0]?.position){
+                const p=result[0].position;
+                if([p.x,p.y,p.z].every(Number.isFinite)){
+                    hits.push({x:p.x,y:p.y,z:p.z});
+                }
+            }
+        }
+
+        if(!hits.length){return null;}
+        const primary=hits[0];
+        const nearby=(reality.worldPoints||[])
+            .map(point=>point.position)
+            .filter(p=>
+                p&&[p.x,p.y,p.z].every(Number.isFinite)&&
+                Math.hypot(p.x-primary.x,p.z-primary.z)<.9&&
+                Math.abs(p.y-primary.y)<.11
+            );
+        const available=hits.concat(nearby);
+        if(available.length<5){return null;}
+
+        const yLevel=median(available.map(p=>p.y));
+        const planePoints=available.filter(
+            p=>Math.abs(p.y-yLevel)<.055
+        );
+        if(planePoints.length<5){return null;}
+        const variance=median(
+            planePoints.map(p=>Math.abs(p.y-yLevel))
+        );
+        const xs=planePoints.map(p=>p.x);
+        const zs=planePoints.map(p=>p.z);
+        const spanX=Math.max(...xs)-Math.min(...xs);
+        const spanZ=Math.max(...zs)-Math.min(...zs);
+        if(variance>.03||spanX<.12||spanZ<.12){return null;}
+
+        const cam=session.camera;
+        if(!cam){return null;}
+        cam.updateMatrixWorld(true);
+        const plane=new session.THREE.Plane(
+            new session.THREE.Vector3(0,1,0),
+            -yLevel
+        );
+        const raycaster=new session.THREE.Raycaster();
+        raycaster.setFromCamera(
+            new session.THREE.Vector2(0,-.24),
+            cam
+        );
+        const hitPoint=new session.THREE.Vector3();
+        if(!raycaster.ray.intersectPlane(plane,hitPoint)){
+            return null;
+        }
+
+        const distance=cam.position.distanceTo(hitPoint);
+        if(
+            distance<.35||
+            distance>3.5||
+            cam.position.y<=yLevel+.20
+        ){
+            return null;
+        }
+        return hitPoint;
+    }
+
+    function updateTrackedPlane(reality){
+        if(!session.active||!session.ready){return;}
+        session.trackingGood=!!reality&&
+            reality.trackingStatus==="NORMAL"&&
+            reality.trackingReason!=="INITIALIZING";
+        const now=performance.now();
+        if(session.trackingGood){session.lastGoodTime=now;}
+
+        if(session.placed){
+            if(session.pivot){
+                session.pivot.visible=session.trackingGood;
+            }
+            if(!session.trackingGood&&now-session.uiTimestamp>1000){
+                session.uiTimestamp=now;
+                setStatus(
+                    "Pelacakan terputus sementara",
+                    "Gerakkan kamera perlahan ke area yang sebelumnya dipindai."
+                );
+            }else if(
+                session.trackingGood&&
+                now-session.uiTimestamp>1000
+            ){
+                session.uiTimestamp=now;
+                setStatus(
+                    "Model terkunci di bidang datar",
+                    "Satu jari: putar. Dua jari: zoom. Gerakkan ponsel untuk berpindah sudut pandang."
+                );
+            }
+            return;
+        }
+
+        const point=validateHorizontalFeatures(reality);
+        if(!point){
+            session.stability=0;
+            session.candidate=null;
+            if(session.group){session.group.visible=false;}
+            $("webarReticle").classList.add("hidden");
+            if(now-session.uiTimestamp>900){
+                session.uiTimestamp=now;
+                setStatus(
+                    "Mencari bidang datar yang stabil...",
+                    "Arahkan kamera sedikit ke bawah pada meja/lantai yang bertekstur. Jangan bergerak terlalu cepat."
+                );
+            }
+            return;
+        }
+
+        const drift=session.candidate
+            ?session.candidate.distanceTo(point)
+            :Infinity;
+        if(drift<.085){
+            session.stability=Math.min(18,session.stability+1);
+            session.candidate.lerp(point,.20);
+        }else{
+            session.stability=1;
+            session.candidate=point.clone();
+        }
+
+        if(session.group){
+            session.group.visible=true;
+            session.group.position.copy(session.candidate);
+        }
+        $("webarReticle").classList.toggle(
+            "hidden",
+            session.stability<5
+        );
+
+        if(session.stability>=13&&session.model){
+            session.placed=true;
+            session.pivot.visible=true;
+            $("webarReset").classList.remove("hidden");
+            $("webarReticle").classList.add("hidden");
+            setStatus(
+                "Model terkunci di bidang datar",
+                "Satu jari: putar. Dua jari: zoom. Gerakkan ponsel untuk berpindah sudut pandang."
+            );
+        }else if(now-session.uiTimestamp>900){
+            session.uiTimestamp=now;
+            setStatus(
+                "Bidang terdeteksi, menstabilkan posisi...",
+                "Tahan kamera sebentar sampai posisi model terkunci otomatis."
+            );
+        }
+    }
+
+    function configure3D(scene,camera,renderer){
+        const T=session.THREE;
+        session.scene=scene;
+        session.camera=camera;
+        session.renderer=renderer;
+        renderer.shadowMap.enabled=true;
+        renderer.shadowMap.type=T.PCFSoftShadowMap;
+        scene.add(
+            new T.HemisphereLight(0xffffff,0xbecaca,2.1)
+        );
+
+        const sunlight=new T.DirectionalLight(0xffffff,1.8);
+        sunlight.position.set(2,5,4);
+        sunlight.castShadow=true;
+        scene.add(sunlight);
+
+        const anchor=new T.Group();
+        anchor.visible=false;
+        scene.add(anchor);
+        session.group=anchor;
+
+        const root=new T.Group();
+        root.visible=false;
+        anchor.add(root);
+        session.pivot=root;
+
+        const shadow=new T.Mesh(
+            new T.PlaneGeometry(5,5),
+            new T.ShadowMaterial({opacity:.23})
+        );
+        shadow.rotation.x=-Math.PI/2;
+        shadow.position.y=.002;
+        shadow.receiveShadow=true;
+        anchor.add(shadow);
+
+        camera.position.set(0,1.5,0);
+        window.XR8.XrController.updateCameraProjectionMatrix({
+            origin:camera.position,
+            facing:camera.quaternion
+        });
+        session.ready=true;
+    }
+
+    async function importLibraries(){
+        if(session.THREE&&session.loader){return;}
+        const T=await import(
+            "https://esm.sh/three@0.160.1?target=es2020"
+        );
+        const {GLTFLoader}=await import(
+            "https://esm.sh/three@0.160.1/examples/jsm/loaders/GLTFLoader.js?target=es2020"
+        );
+        window.THREE=T;
+        session.THREE=T;
+        session.loader=new GLTFLoader();
+    }
+
+    function waitForEngine(timeout=30000){
+        if(window.XR8){return Promise.resolve(window.XR8);}
+        return new Promise((resolve,reject)=>{
+            const timer=setTimeout(()=>{
+                window.removeEventListener("xrloaded",ready);
+                reject(new Error("Mesin WebAR belum berhasil dimuat."));
+            },timeout);
+
+            function ready(){
+                clearTimeout(timer);
+                window.removeEventListener("xrloaded",ready);
+                if(window.XR8){
+                    resolve(window.XR8);
+                }else{
+                    reject(new Error("Mesin WebAR tidak tersedia."));
+                }
+            }
+
+            window.addEventListener("xrloaded",ready);
+
+            if(!document.getElementById("ft-xr-engine")){
+                const script=document.createElement("script");
+                script.id="ft-xr-engine";
+                script.src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js";
+                script.async=true;
+                script.crossOrigin="anonymous";
+                script.setAttribute("data-preload-chunks","slam");
+                script.onerror=()=>{
+                    clearTimeout(timer);
+                    window.removeEventListener("xrloaded",ready);
+                    script.remove();
+                    reject(
+                        new Error(
+                            "Unduhan mesin WebAR gagal. Periksa koneksi internet."
+                        )
+                    );
+                };
+                document.head.appendChild(script);
+            }
+        });
+    }
+
+    function loadGLB(src){
+        return new Promise((resolve,reject)=>{
+            session.loader.load(
+                src,
+                gltf=>resolve(gltf.scene),
+                undefined,
+                reject
+            );
+        });
+    }
+
+    function prepareModel(model){
+        const T=session.THREE;
+        const bbox=new T.Box3().setFromObject(model);
+        if(bbox.isEmpty()){
+            throw new Error("Geometri model GLB kosong.");
+        }
+        const size=bbox.getSize(new T.Vector3());
+        const center=bbox.getCenter(new T.Vector3());
+        const footprint=Math.max(size.x,size.z,.0001);
+        const baseScale=.9/footprint;
+
+        model.position.set(
+            -center.x*baseScale,
+            -bbox.min.y*baseScale,
+            -center.z*baseScale
+        );
+        model.scale.setScalar(baseScale);
+        model.traverse(child=>{
+            if(child.isMesh){
+                child.castShadow=true;
+                child.receiveShadow=false;
+            }
+        });
+        session.baseScale=baseScale;
+        session.model=model;
+    }
+
+    function modelReady(){
+        if(!session.group||!session.pivot||!session.model){
+            return;
+        }
+        session.pivot.add(session.model);
+        session.pivot.visible=false;
+        session.group.visible=false;
+        session.ready=true;
+        setStatus(
+            "Mencari bidang datar...",
+            "Gerakkan kamera perlahan mengitari bidang datar yang memiliki detail visual."
+        );
+    }
+
+    function pipelineModule(){
+        return {
+            name:"ft-uisu-webar-world-tracking",
+            onStart:()=>{
+                if(!session.active){return;}
+                const {scene,camera,renderer}=
+                    window.XR8.Threejs.xrScene();
+                configure3D(scene,camera,renderer);
+                modelReady();
+            },
+            onUpdate:({processCpuResult})=>{
+                updateTrackedPlane(processCpuResult?.reality);
+            },
+            onException:error=>{
+                console.error("FT WebAR:",error);
+                setStatus(
+                    "Pelacakan AR mengalami masalah",
+                    "Tutup kamera dan coba lagi di area yang lebih terang."
+                );
+            }
+        };
+    }
+
+    async function start(src,title){
+        if(session.active||session.starting){return;}
+        const id=++session.requestId;
+        session.active=true;
+        session.starting=true;
+        session.modelUrl=src;
+        session.stability=0;
+        session.placed=false;
+        session.candidate=null;
+        session.zoom=1;
+        session.yaw=0;
+        session.lastGoodTime=0;
+        session.ready=false;
+        session.pointers.clear();
+        session.previousX=null;
+        session.previousDistance=0;
+
+        $("webarTitle").textContent=title;
+        $("webarReset").classList.add("hidden");
+        $("webarReticle").classList.add("hidden");
+        overlay.classList.remove("hidden");
+        document.documentElement.classList.add("webar-open");
+        setStatus(
+            "Memuat mesin AR dan model 3D...",
+            "Izinkan akses kamera ketika diminta oleh browser."
+        );
+
+        try{
+            if(!window.isSecureContext){
+                throw new Error("AR memerlukan HTTPS.");
+            }
+            if(!navigator.mediaDevices?.getUserMedia){
+                throw new Error(
+                    "Browser ini tidak mendukung kamera WebAR."
+                );
+            }
+
+            await Promise.all([
+                importLibraries(),
+                waitForEngine()
+            ]);
+
+            if(!session.active||id!==session.requestId){
+                return;
+            }
+
+            const model=await loadGLB(src);
+
+            if(!session.active||id!==session.requestId){
+                return;
+            }
+
+            prepareModel(model);
+
+            const xr=window.XR8;
+            if(xr.stop){xr.stop();}
+            if(xr.clearCameraPipelineModules){
+                xr.clearCameraPipelineModules();
+            }
+
+            xr.XrController.configure({
+                disableWorldTracking:false,
+                enableWorldPoints:true,
+                scale:"absolute"
+            });
+
+            xr.addCameraPipelineModules([
+                xr.GlTextureRenderer.pipelineModule(),
+                xr.Threejs.pipelineModule(),
+                xr.XrController.pipelineModule(),
+                pipelineModule()
+            ]);
+
+            xr.run({
+                canvas,
+                cameraConfig:{
+                    direction:xr.XrConfig.camera().BACK
+                },
+                allowedDevices:xr.XrConfig.device().MOBILE
+            });
+        }catch(error){
+            console.error("FT UISU WebAR:",error);
+            setStatus(
+                "WebAR tidak dapat dijalankan",
+                error.message||
+                "Periksa jaringan internet, izin kamera, dan kompatibilitas perangkat."
+            );
+        }finally{
+            session.starting=false;
+        }
+    }
+
+    function close(){
+        if(!session.active){return;}
+        session.active=false;
+        session.requestId++;
+        session.placed=false;
+        session.stability=0;
+        session.pointers.clear();
+        session.group=null;
+        session.pivot=null;
+        session.model=null;
+        session.ready=false;
+        try{
+            window.XR8?.stop?.();
+            window.XR8?.clearCameraPipelineModules?.();
+        }catch(error){
+            console.warn("Hentikan kamera AR:",error);
+        }
+        overlay.classList.add("hidden");
+        document.documentElement.classList.remove("webar-open");
+    }
+
+    function reset(){
+        if(!session.active||!session.ready){return;}
+        session.placed=false;
+        session.stability=0;
+        session.candidate=null;
+        session.zoom=1;
+        session.yaw=0;
+
+        if(session.pivot){
+            session.pivot.visible=false;
+            session.pivot.rotation.set(0,0,0);
+            session.pivot.scale.setScalar(1);
+        }
+        if(session.group){
+            session.group.visible=false;
+        }
+        $("webarReset").classList.add("hidden");
+        setStatus(
+            "Mencari bidang datar baru...",
+            "Arahkan kamera ke permukaan datar bertekstur, tahan hingga stabil."
+        );
+    }
+
+    function spacing(){
+        const p=[...session.pointers.values()];
+        if(p.length<2){return 0;}
+        return Math.hypot(
+            p[0].x-p[1].x,
+            p[0].y-p[1].y
+        );
+    }
+
+    function moveModel(event){
+        if(
+            !session.active||
+            !session.placed||
+            !session.pivot
+        ){
+            return;
+        }
+        if(!session.pointers.has(event.pointerId)){
+            return;
+        }
+
+        const previous=session.pointers.get(event.pointerId);
+        session.pointers.set(
+            event.pointerId,
+            {x:event.clientX,y:event.clientY}
+        );
+
+        if(session.pointers.size===2){
+            const distance=spacing();
+            if(session.previousDistance>0){
+                session.zoom=clamp(
+                    session.zoom*distance/session.previousDistance,
+                    .35,
+                    3
+                );
+                session.pivot.scale.setScalar(session.zoom);
+            }
+            session.previousDistance=distance;
+            return;
+        }
+
+        if(session.pointers.size===1){
+            const delta=event.clientX-previous.x;
+            session.yaw+=delta*.008;
+            session.pivot.rotation.y=session.yaw;
+        }
+    }
+
+    canvas.addEventListener("pointerdown",event=>{
+        if(!session.placed){return;}
+        event.preventDefault();
+        canvas.setPointerCapture(event.pointerId);
+        session.pointers.set(
+            event.pointerId,
+            {x:event.clientX,y:event.clientY}
+        );
+        session.previousDistance=
+            session.pointers.size===2?spacing():0;
+    });
+
+    canvas.addEventListener("pointermove",event=>{
+        if(session.pointers.has(event.pointerId)){
+            event.preventDefault();
+            moveModel(event);
+        }
+    });
+
+    const endPointer=event=>{
+        session.pointers.delete(event.pointerId);
+        session.previousDistance=
+            session.pointers.size===2?spacing():0;
+    };
+
+    canvas.addEventListener("pointerup",endPointer);
+    canvas.addEventListener("pointercancel",endPointer);
+
+    canvas.addEventListener("wheel",event=>{
+        if(!session.placed||!session.pivot){return;}
+        event.preventDefault();
+        session.zoom=clamp(
+            session.zoom*(event.deltaY>0?.93:1.07),
+            .35,
+            3
+        );
+        session.pivot.scale.setScalar(session.zoom);
+    },{passive:false});
+
+    $("webarClose").addEventListener("click",close);
+    $("webarReset").addEventListener("click",reset);
+
+    document.addEventListener("keydown",event=>{
+        if(event.key==="Escape"&&session.active){
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            close();
+        }
+    },true);
+
+    document.addEventListener("visibilitychange",()=>{
+        if(document.hidden&&session.active){
+            close();
+        }
+    });
+
+    window.FT_WEBAR={start,close,reset};
 })();
