@@ -1,16 +1,14 @@
 /* =========================================================
    FT UISU EXPLORER
    SERVICE WORKER
-   REVISION 44
+   REVISION 1 (NO NAVIGATION)
 ========================================================= */
 
 const MODEL_CACHE =
-    "ft-uisu-models-v44";
-
+    "ft-uisu-models-no-navigation-r1";
 
 const STATIC_CACHE =
-    "ft-uisu-static-v44";
-
+    "ft-uisu-static-no-navigation-r1";
 
 
 /* =========================================================
@@ -27,7 +25,6 @@ self.addEventListener(
 );
 
 
-
 /* =========================================================
    ACTIVATE
 ========================================================= */
@@ -42,7 +39,6 @@ self.addEventListener(
 
                 const cacheNames =
                     await caches.keys();
-
 
                 await Promise.all(
 
@@ -63,7 +59,6 @@ self.addEventListener(
 
                             }
 
-
                             if(
                                 name.startsWith(
                                     "ft-uisu-static-"
@@ -78,14 +73,12 @@ self.addEventListener(
 
                             }
 
-
                             return Promise.resolve();
 
                         }
                     )
 
                 );
-
 
                 await self.clients.claim();
 
@@ -95,7 +88,6 @@ self.addEventListener(
 
     }
 );
-
 
 
 /* =========================================================
@@ -109,22 +101,17 @@ self.addEventListener(
         const request =
             event.request;
 
-
         if(
             request.method !==
             "GET"
         ){
-
             return;
-
         }
-
 
         const url =
             new URL(
                 request.url
             );
-
 
         /*
            Jangan intersep range requests.
@@ -135,11 +122,8 @@ self.addEventListener(
                 "range"
             )
         ){
-
             return;
-
         }
-
 
 
         /* =====================================================
@@ -162,11 +146,8 @@ self.addEventListener(
 
             );
 
-
             return;
-
         }
-
 
 
         /* =====================================================
@@ -213,7 +194,6 @@ self.addEventListener(
 );
 
 
-
 /* =========================================================
    MODEL CACHE
 ========================================================= */
@@ -227,7 +207,6 @@ async function modelStaleWhileRevalidate(
             MODEL_CACHE
         );
 
-
     const cached =
         await cache.match(
             request,
@@ -235,7 +214,6 @@ async function modelStaleWhileRevalidate(
                 ignoreSearch:true
             }
         );
-
 
     const networkPromise =
         fetch(
@@ -257,7 +235,6 @@ async function modelStaleWhileRevalidate(
 
                     }
 
-
                     return response;
 
                 }
@@ -266,27 +243,24 @@ async function modelStaleWhileRevalidate(
                 () => null
             );
 
-
     if(cached){
 
-        networkPromise;
+        /*
+           Update cache di background.
+        */
 
+        networkPromise;
 
         return cached;
 
     }
 
-
     const network =
         await networkPromise;
 
-
     if(network){
-
         return network;
-
     }
-
 
     return new Response(
         "",
@@ -297,7 +271,6 @@ async function modelStaleWhileRevalidate(
     );
 
 }
-
 
 
 /* =========================================================
@@ -313,14 +286,12 @@ async function staticNetworkFirst(
             STATIC_CACHE
         );
 
-
     try{
 
         const response =
             await fetch(
                 request
             );
-
 
         if(
             response
@@ -335,7 +306,6 @@ async function staticNetworkFirst(
 
         }
 
-
         return response;
 
     }
@@ -347,13 +317,9 @@ async function staticNetworkFirst(
                 request
             );
 
-
         if(cached){
-
             return cached;
-
         }
-
 
         throw error;
 
