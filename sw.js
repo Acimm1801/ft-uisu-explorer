@@ -1,17 +1,15 @@
+
 /* =========================================================
    FT UISU EXPLORER — SERVICE WORKER
-   REVISI 6 (NO NAVIGATION)
+   REVISI 7 (NO NAVIGATION)
 
-   - Model GLB mencoba jaringan terlebih dahulu
-   - Data Direktori dan foto Tendik tetap didukung
+   - Model GLB mencoba jaringan lebih dahulu
+   - Direktori dan foto Tendik tetap didukung
    - Cache lama dibersihkan saat pembaruan
 ========================================================= */
 
-const MODEL_CACHE=
-    "ft-uisu-models-no-navigation-r6-webar";
-
-const STATIC_CACHE=
-    "ft-uisu-static-no-navigation-r6-webar";
+const MODEL_CACHE="ft-uisu-models-no-navigation-r7-webar";
+const STATIC_CACHE="ft-uisu-static-no-navigation-r7-webar";
 
 /* INSTALL */
 self.addEventListener("install",()=>{
@@ -23,7 +21,6 @@ self.addEventListener("activate",event=>{
     event.waitUntil(
         (async()=>{
             const keys=await caches.keys();
-
             await Promise.all(
                 keys.filter(name=>(
                     (
@@ -36,7 +33,6 @@ self.addEventListener("activate",event=>{
                     )
                 )).map(name=>caches.delete(name))
             );
-
             await self.clients.claim();
         })()
     );
@@ -55,23 +51,19 @@ self.addEventListener("fetch",event=>{
 
     const url=new URL(request.url);
 
-    // Tidak mencegat file CDN XR8 atau Three.js.
+    // CDN XR8 dan Three.js tidak dicegat.
     if(url.origin!==self.location.origin){
         return;
     }
 
-    const pathname=url.pathname.toLowerCase();
+    const path=url.pathname.toLowerCase();
 
-    /* MODEL 3D */
-    if(/\.(glb|gltf)$/.test(pathname)){
+    if(/\.(glb|gltf)$/.test(path)){
         event.respondWith(
             networkFirst(request,MODEL_CACHE)
         );
-    }
-
-    /* FILE STATIS + FOTO TENDIK */
-    else if(
-        /\.(css|js|png|jpg|jpeg|webp|svg)$/.test(pathname)
+    }else if(
+        /\.(css|js|png|jpg|jpeg|webp|svg)$/.test(path)
     ){
         event.respondWith(
             networkFirst(request,STATIC_CACHE)
@@ -89,8 +81,6 @@ async function networkFirst(request,cacheName){
         });
 
         if(response?.ok){
-            // Kegagalan CacheStorage tidak boleh
-            // menghambat pemuatan website.
             cache.put(
                 request,
                 response.clone()
@@ -104,9 +94,7 @@ async function networkFirst(request,cacheName){
             ignoreSearch:true
         });
 
-        if(cached){
-            return cached;
-        }
+        if(cached)return cached;
 
         return new Response("",{
             status:504,
