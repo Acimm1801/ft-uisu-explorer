@@ -413,13 +413,13 @@ const rooms=[
             jabatan:"Ketua Program Studi",
             photo:"./assets/images/tendik/prodi-informatika-01.webp",
             name:"Mhd. Zulfansyuri S.,ST., M.Kom",
-            phone:"082277150767"
+            phone:"082165593733"
         },
         {
             jabatan:"Tata Usaha",
             photo:"./assets/images/tendik/prodi-informatika-02.webp",
             name:"Habibi Lubis, SE",
-            phone:"0813 7636 4670"
+            phone:"082165291629"
         }
     ],
     navigationEntranceId:"biro-main-e1",
