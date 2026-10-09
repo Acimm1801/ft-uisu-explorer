@@ -39,7 +39,7 @@ const buildings = [
         shortName: "Biro FT",
 
         description:
-            "Biro Fakultas Teknik UISU berada di lantai 2, satu gedung dengan Fakultas Agama Islam (lantai 1) dan Fakultas Sastra (lantai 3).",
+            "Biro Fakultas Teknik UISU merupakan pusat pelayanan administrasi dan pengelolaan akademik fakultas, yang mencakup ruang pimpinan, program studi, dan tata usaha. Biro FT berada di lantai 2, satu gedung dengan Fakultas Agama Islam dan Fakultas Sastra.",
 
         actualFloor: 2,
         floorCount: 1,
@@ -172,7 +172,7 @@ const buildings = [
         shortName: "Perkuliahan FT",
 
         description:
-            "Gedung Perkuliahan Fakultas Teknik UISU berada di lantai 3, tepat di seberang Biro Fakultas Teknik UISU.",
+            "Gedung Perkuliahan Fakultas Teknik UISU merupakan fasilitas pembelajaran yang menyediakan ruang kelas untuk kegiatan perkuliahan, diskusi, dan aktivitas akademik mahasiswa. Area perkuliahan ini berada di lantai 3, tepat di seberang Biro Fakultas Teknik UISU.",
 
         actualFloor: 3,
         floorCount: 1,
@@ -215,7 +215,7 @@ const buildings = [
         shortName: "Laboratorium FT",
 
         description:
-            "Laboratorium Fakultas Teknik UISU memiliki tiga lantai dan terletak di dekat Gedung Perkuliahan Fakultas Teknik UISU.",
+            "Laboratorium Fakultas Teknik UISU merupakan fasilitas praktikum dan penelitian yang menunjang pengembangan keterampilan serta penerapan ilmu teknik. Gedung ini terdiri dari tiga lantai dengan berbagai laboratorium sesuai bidang keilmuan program studi Fakultas Teknik.",
 
         actualFloor: null,
         floorCount: 3,
