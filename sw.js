@@ -1,18 +1,21 @@
 
 /* =========================================================
    FT UISU EXPLORER — SERVICE WORKER
-   REVISI 8 (NO NAVIGATION)
+   REVISI 9 (NO NAVIGATE)
 
-   - Model GLB mencoba jaringan terlebih dahulu.
-   - Cache foto Tendik tetap didukung.
-   - Cache lama dibersihkan.
+   Fungsi:
+   - Cache model 3D
+   - Cache CSS dan JavaScript
+   - Cache foto Tendik
+   - Bersihkan cache versi lama
+   - Gunakan jaringan terlebih dahulu
 ========================================================= */
 
 const MODEL_CACHE =
-    "ft-uisu-models-no-navigation-r8-webar";
+    "ft-uisu-models-no-navigation-r9-webar";
 
 const STATIC_CACHE =
-    "ft-uisu-static-no-navigation-r8-webar";
+    "ft-uisu-static-no-navigation-r9-webar";
 
 /* =========================================================
    INSTALL
@@ -32,16 +35,18 @@ self.addEventListener("activate", event => {
             const keys = await caches.keys();
 
             await Promise.all(
-                keys.filter(name => (
-                    (
-                        name.startsWith("ft-uisu-models-") &&
-                        name !== MODEL_CACHE
-                    ) ||
-                    (
-                        name.startsWith("ft-uisu-static-") &&
-                        name !== STATIC_CACHE
-                    )
-                )).map(name => caches.delete(name))
+                keys
+                    .filter(name => (
+                        (
+                            name.startsWith("ft-uisu-models-") &&
+                            name !== MODEL_CACHE
+                        ) ||
+                        (
+                            name.startsWith("ft-uisu-static-") &&
+                            name !== STATIC_CACHE
+                        )
+                    ))
+                    .map(name => caches.delete(name))
             );
 
             await self.clients.claim();
@@ -56,6 +61,7 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
     const request = event.request;
 
+    // Hanya proses permintaan GET biasa.
     if (
         request.method !== "GET" ||
         request.headers.has("range")
@@ -65,14 +71,14 @@ self.addEventListener("fetch", event => {
 
     const url = new URL(request.url);
 
-    // CDN XR8 dan Three.js tidak dicegat.
+    // Jangan intersep CDN XR Engine / Three.js.
     if (url.origin !== self.location.origin) {
         return;
     }
 
     const pathname = url.pathname.toLowerCase();
 
-    /* MODEL 3D */
+    /* MODEL GLB DAN GLTF */
     if (/\.(glb|gltf)$/.test(pathname)) {
         event.respondWith(
             networkFirst(request, MODEL_CACHE)
@@ -101,7 +107,7 @@ async function networkFirst(request, cacheName) {
             cache: "no-cache"
         });
 
-        if (response?.ok) {
+        if (response && response.ok) {
             cache.put(
                 request,
                 response.clone()
@@ -109,7 +115,6 @@ async function networkFirst(request, cacheName) {
         }
 
         return response;
-
     } catch (error) {
         const cached = await cache.match(request, {
             ignoreSearch: true
