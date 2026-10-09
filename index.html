@@ -1,31 +1,46 @@
 
 <!DOCTYPE html>
+<!-- REVISI 9 (NO NAVIGATE): Direktori diperbarui; WebAR Revisi 8 dipertahankan. -->
 <html lang="id" class="navigation-disabled">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#075f59">
 <title>FT UISU Explorer</title>
+
 <!-- XR Engine Binary © 2026 Niantic Spatial, Inc.
      License: https://github.com/8thwall/engine/blob/main/LICENSE -->
-<!-- WebAR XR Engine dimuat sesuai kebutuhan saat tombol "Tampilkan AR" ditekan. -->
-<link rel="stylesheet" href="./style.css?v=8-webar">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+<!-- WebAR XR Engine dimuat ketika tombol Mulai Kamera AR ditekan. -->
+
+<link rel="stylesheet" href="./style.css?v=9-no-nav">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+  }
+}
+</script>
+
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js"></script>
-<script defer src="./data/map-data.js?v=8-webar"></script>
-<script defer src="./script.js?v=8-webar"></script>
+<script defer src="./data/map-data.js?v=9-no-nav"></script>
+<script defer src="./script.js?v=9-no-nav"></script>
 </head>
+
 <body>
 
 <header class="site-header">
     <div class="header-inner">
+
         <button id="logoHome" class="brand" type="button"
                 aria-label="Kembali ke Beranda">
             <span class="brand-icon revision39-brand-icon" aria-hidden="true">
                 <img class="r39-logo-img"
                      src="./assets/images/logo-ft-uisu.png?v=39-fix1"
                      alt="" width="1200" height="1200"
-                     loading="eager" decoding="sync" fetchpriority="high">
+                     loading="eager" decoding="sync"
+                     fetchpriority="high">
             </span>
             <span class="brand-copy">
                 <strong>FT UISU Explorer</strong>
@@ -33,18 +48,25 @@
         </button>
 
         <nav class="header-nav">
-            <button class="header-link active" data-page="home" type="button">Beranda</button>
-            <button class="header-link" data-page="help" type="button">Bantuan</button>
-            <button class="header-link" data-page="about" type="button">Tentang</button>
+            <button class="header-link active"
+                    data-page="home" type="button">Beranda</button>
+            <button class="header-link"
+                    data-page="help" type="button">Bantuan</button>
+            <button class="header-link"
+                    data-page="about" type="button">Tentang</button>
         </nav>
 
-        <button id="hamburgerButton" class="hamburger" type="button"
-                aria-label="Buka Menu">
-            <span></span><span></span><span></span>
+        <button id="hamburgerButton" class="hamburger"
+                type="button" aria-label="Buka Menu">
+            <span></span>
+            <span></span>
+            <span></span>
         </button>
+
     </div>
 </header>
 
+<!-- DRAWER -->
 <div id="drawerOverlay" class="drawer-overlay"></div>
 
 <aside id="drawer" class="drawer">
@@ -53,34 +75,45 @@
             <small>MENU UTAMA</small>
             <h2>FT UISU Explorer</h2>
         </div>
-        <button id="closeDrawer" class="close-button" type="button">×</button>
+        <button id="closeDrawer" class="close-button"
+                type="button">×</button>
     </div>
 
     <div class="drawer-search-wrap">
         <label for="globalSearch">Cari Gedung / Ruangan</label>
+
         <div class="search-box">
             <span class="search-symbol">⌕</span>
             <input id="globalSearch" type="search"
                    placeholder="Contoh: Teknik Informatika"
                    autocomplete="off">
-            <button id="clearGlobalSearch" type="button">×</button>
+            <button id="clearGlobalSearch"
+                    type="button">×</button>
         </div>
 
-        <div id="globalSearchResults" class="search-results hidden"></div>
-        <div id="globalSelected" class="global-selected hidden">
+        <div id="globalSearchResults"
+             class="search-results hidden"></div>
+
+        <div id="globalSelected"
+             class="global-selected hidden">
             <small>LOKASI DIPILIH</small>
             <strong id="globalSelectedName">-</strong>
+
             <div class="global-selected-actions">
-                <button id="globalInfoButton" class="button button-primary"
+                <button id="globalInfoButton"
+                        class="button button-primary"
                         type="button">Informasi</button>
-                <button id="globalNavButton" class="button button-primary"
+                <button id="globalNavButton"
+                        class="button button-primary"
                         type="button">Petunjuk Arah</button>
             </div>
         </div>
     </div>
 
     <nav class="drawer-menu">
-        <button id="menu3D" class="drawer-item" type="button">
+
+        <button id="menu3D" class="drawer-item"
+                type="button">
             <span class="drawer-icon" aria-hidden="true">
                 <img class="r39-logo-img"
                      src="./assets/images/logo_3d.png?v=39-fix1"
@@ -94,7 +127,8 @@
             <b>›</b>
         </button>
 
-        <button id="menuAR" class="drawer-item" type="button">
+        <button id="menuAR" class="drawer-item"
+                type="button">
             <span class="drawer-icon" aria-hidden="true">
                 <img class="r39-logo-img"
                      src="./assets/images/logo_ar.png?v=39-fix1"
@@ -108,7 +142,8 @@
             <b>›</b>
         </button>
 
-        <button id="menuNavigation" class="drawer-item" type="button">
+        <button id="menuNavigation" class="drawer-item"
+                type="button">
             <span class="drawer-icon" aria-hidden="true">
                 <img class="r39-logo-img"
                      src="./assets/images/logo_navigasi.png?v=39-fix1"
@@ -117,13 +152,15 @@
             </span>
             <span>
                 <strong>Navigasi</strong>
-                <small>Denah & Petunjuk Arah</small>
+                <small>Denah &amp; Petunjuk Arah</small>
             </span>
             <b>›</b>
         </button>
 
-        <button id="menuDirectory" class="drawer-item" type="button">
-            <span class="drawer-icon directory-icon" aria-hidden="true">
+        <button id="menuDirectory" class="drawer-item"
+                type="button">
+            <span class="drawer-icon directory-icon"
+                  aria-hidden="true">
                 <img class="r39-logo-img"
                      src="./assets/images/logo_direktori.png?v=39-fix1"
                      alt="" width="1254" height="1254"
@@ -135,118 +172,202 @@
             </span>
             <b>›</b>
         </button>
+
     </nav>
 </aside>
 
 <main>
 
-<!-- BERANDA -->
+<!-- =====================================================
+     BERANDA
+===================================================== -->
 <section id="homePage" class="page active">
+
     <section class="hero">
         <div class="hero-inner">
-            <article class="hero-slide active" data-slide-index="0">
+
+            <article class="hero-slide active"
+                     data-slide-index="0">
+
                 <div class="hero-copy">
-                    <small class="hero-eyebrow">TEKNIK INFORMATIKA • FAKULTAS TEKNIK • UISU</small>
+                    <small class="hero-eyebrow">
+                        TEKNIK INFORMATIKA • FAKULTAS TEKNIK • UISU
+                    </small>
+
                     <h1 class="hero-title">
                         <span>Jelajahi Fakultas</span>
                         <span>Teknik UISU</span>
                         <span class="accent">dengan 3D dan AR</span>
                     </h1>
-                    <p>Cari daftar Gedung, Ruangan atau Civitas Akademik dengan fitur "Direktori" untuk menemukan informasi lokasi / Tendik yang anda cari.</p>
+
+                    <p>
+                        Cari daftar Gedung, Ruangan atau Civitas Akademik
+                        dengan fitur "Direktori" untuk menemukan informasi
+                        lokasi / Tendik yang anda cari.
+                    </p>
                 </div>
+
                 <div class="landing-model-card">
                     <div class="landing-card-head">
-                        <strong id="landingModelName">Biro Fakultas Teknik UISU</strong>
-                        <span id="landingModelCounter" class="landing-model-counter">1 / 3</span>
+                        <strong id="landingModelName">
+                            Biro Fakultas Teknik UISU
+                        </strong>
+                        <span id="landingModelCounter"
+                              class="landing-model-counter">1 / 3</span>
                     </div>
-                    <div id="landingModelStage" class="landing-model-stage">
-                        <model-viewer id="landingModel0" class="landing-model-viewer active"
-                                      src="./assets/models/gedung_biro_outdoor.glb"
-                                      loading="eager" camera-controls shadow-intensity="1"
-                                      environment-image="neutral"
-                                      alt="Biro Fakultas Teknik UISU"></model-viewer>
-                        <model-viewer id="landingModel1" class="landing-model-viewer"
-                                      src="./assets/models/gedung_perkuliahan_outdoor.glb"
-                                      loading="eager" camera-controls shadow-intensity="1"
-                                      environment-image="neutral"
-                                      alt="Gedung Perkuliahan Fakultas Teknik UISU"></model-viewer>
-                        <model-viewer id="landingModel2" class="landing-model-viewer"
-                                      src="./assets/models/laboratorium_outdoor.glb"
-                                      loading="eager" camera-controls shadow-intensity="1"
-                                      environment-image="neutral"
-                                      alt="Laboratorium Fakultas Teknik UISU"></model-viewer>
+
+                    <div id="landingModelStage"
+                         class="landing-model-stage">
+
+                        <model-viewer
+                            id="landingModel0"
+                            class="landing-model-viewer active"
+                            src="./assets/models/gedung_biro_outdoor.glb"
+                            loading="eager"
+                            camera-controls
+                            shadow-intensity="1"
+                            environment-image="neutral"
+                            alt="Biro Fakultas Teknik UISU">
+                        </model-viewer>
+
+                        <model-viewer
+                            id="landingModel1"
+                            class="landing-model-viewer"
+                            src="./assets/models/gedung_perkuliahan_outdoor.glb"
+                            loading="eager"
+                            camera-controls
+                            shadow-intensity="1"
+                            environment-image="neutral"
+                            alt="Gedung Perkuliahan Fakultas Teknik UISU">
+                        </model-viewer>
+
+                        <model-viewer
+                            id="landingModel2"
+                            class="landing-model-viewer"
+                            src="./assets/models/laboratorium_outdoor.glb"
+                            loading="eager"
+                            camera-controls
+                            shadow-intensity="1"
+                            environment-image="neutral"
+                            alt="Laboratorium Fakultas Teknik UISU">
+                        </model-viewer>
+
                     </div>
+
                     <div class="landing-model-footer">
                         <span>DRAG • ROTATE • ZOOM</span>
-                        <button id="landingNextModel" class="landing-next-button" type="button">→</button>
+                        <button id="landingNextModel"
+                                class="landing-next-button"
+                                type="button">→</button>
                     </div>
                 </div>
+
             </article>
         </div>
     </section>
 
+    <!-- FITUR UTAMA -->
     <section class="feature-section">
         <div class="feature-grid">
-            <button id="feature3D" class="feature-card" type="button">
+
+            <button id="feature3D" class="feature-card"
+                    type="button">
                 <span class="feature-icon" aria-hidden="true">
-                    <img class="r39-logo-img" src="./assets/images/logo_3d.png?v=39-fix1"
-                         alt="" width="1920" height="1080" loading="eager" decoding="sync">
+                    <img class="r39-logo-img"
+                         src="./assets/images/logo_3d.png?v=39-fix1"
+                         alt="" width="1920" height="1080"
+                         loading="eager" decoding="sync">
                 </span>
                 <div>
                     <h3>3D OBJEK</h3>
-                    <p>Lihat Bangunan Fakultas Teknik melalui 3D Model Viewer yang bisa di-<em>drag</em>, <em>pinch</em> dan <em>zoom</em>.</p>
+                    <p>
+                        Lihat Bangunan Fakultas Teknik melalui
+                        3D Model Viewer yang bisa di-<em>drag</em>,
+                        <em>pinch</em> dan <em>zoom</em>.
+                    </p>
                 </div>
                 <strong>Buka 3D →</strong>
             </button>
 
-            <button id="featureAR" class="feature-card" type="button">
+            <button id="featureAR" class="feature-card"
+                    type="button">
                 <span class="feature-icon" aria-hidden="true">
-                    <img class="r39-logo-img" src="./assets/images/logo_ar.png?v=39-fix1"
-                         alt="" width="1920" height="1080" loading="eager" decoding="sync">
+                    <img class="r39-logo-img"
+                         src="./assets/images/logo_ar.png?v=39-fix1"
+                         alt="" width="1920" height="1080"
+                         loading="eager" decoding="sync">
                 </span>
                 <div>
                     <h3>AR (Markerless)</h3>
-                    <p>Rasakan pengalaman baru melihat objek 3D dengan Teknologi Augmented Reality Markerless.</p>
+                    <p>
+                        Rasakan pengalaman baru melihat objek 3D
+                        dengan Teknologi Augmented Reality Markerless.
+                    </p>
                 </div>
                 <strong>Buka AR →</strong>
             </button>
 
-            <button id="featureNav" class="feature-card" type="button">
+            <!-- NAVIGASI DISIMPAN TETAPI DISEMBUNYIKAN -->
+            <button id="featureNav" class="feature-card"
+                    type="button">
                 <span class="feature-icon" aria-hidden="true">
-                    <img class="r39-logo-img" src="./assets/images/logo_navigasi.png?v=39-fix1"
-                         alt="" width="1000" height="1000" loading="eager" decoding="sync">
+                    <img class="r39-logo-img"
+                         src="./assets/images/logo_navigasi.png?v=39-fix1"
+                         alt="" width="1000" height="1000"
+                         loading="eager" decoding="sync">
                 </span>
                 <div>
                     <h3>NAVIGASI</h3>
-                    <p>Dapatkan arah menuju Ruang Kelas, Laboratorium, atau Ruangan lainnya dengan memilih tujuan anda.</p>
+                    <p>
+                        Dapatkan arah menuju Ruang Kelas,
+                        Laboratorium, atau Ruangan lainnya dengan
+                        memilih tujuan anda.
+                    </p>
                 </div>
                 <strong>Buka Navigasi →</strong>
             </button>
 
-            <button id="featureDirectory" class="feature-card" type="button">
-                <span class="feature-icon directory-feature-icon" aria-hidden="true">
-                    <img class="r39-logo-img" src="./assets/images/logo_direktori.png?v=39-fix1"
-                         alt="" width="1254" height="1254" loading="eager" decoding="sync">
+            <button id="featureDirectory" class="feature-card"
+                    type="button">
+                <span class="feature-icon directory-feature-icon"
+                      aria-hidden="true">
+                    <img class="r39-logo-img"
+                         src="./assets/images/logo_direktori.png?v=39-fix1"
+                         alt="" width="1254" height="1254"
+                         loading="eager" decoding="sync">
                 </span>
                 <div>
                     <h3>DIREKTORI</h3>
-                    <p>Informasi mengenai Bangunan & Civitas Akademik dilingkungan Fakultas Teknik UISU.</p>
+                    <p>
+                        Informasi mengenai Bangunan &amp;
+                        Civitas Akademik dilingkungan
+                        Fakultas Teknik UISU.
+                    </p>
                 </div>
                 <strong>Buka Direktori →</strong>
             </button>
+
         </div>
     </section>
 </section>
 
-<!-- 3D OBJEK -->
+<!-- =====================================================
+     3D OBJEK
+===================================================== -->
 <section id="viewerPage" class="page content-page">
     <div class="content-container">
-        <button class="page-back-button" data-back type="button">← Kembali</button>
+        <button class="page-back-button"
+                data-back type="button">← Kembali</button>
+
         <div class="page-heading">
             <small>3D OBJEK</small>
             <h1>3D Model Viewer</h1>
-            <p>Pilih Gedung atau Ruangan Fakultas Teknik yang ingin ditampilkan.</p>
+            <p>
+                Pilih Gedung atau Ruangan Fakultas Teknik
+                yang ingin ditampilkan.
+            </p>
         </div>
+
         <div class="selection-card single-selection-card">
             <div class="selection-field">
                 <label for="viewerBuildingSelect">Pilih Gedung</label>
@@ -254,28 +375,42 @@
                     <option value="">-- Pilih Gedung --</option>
                 </select>
             </div>
-            <button id="show3DModel" class="button button-primary"
+            <button id="show3DModel"
+                    class="button button-primary"
                     type="button">Tampilkan 3D Objek</button>
             <p id="viewerMessage" class="form-message"></p>
         </div>
 
         <div id="viewerCard" class="viewer-card hidden">
+
             <div class="viewer-toolbar">
                 <div class="viewer-heading-inline">
                     <strong id="viewerTitle">Model 3D</strong>
-                    <span id="viewerSingleModeBadge" class="model-mode-badge hidden"></span>
+                    <span id="viewerSingleModeBadge"
+                          class="model-mode-badge hidden"></span>
                 </div>
+
                 <div class="viewer-toolbar-right">
-                    <div id="viewerModelSwitch" class="model-mode-switch hidden"></div>
-                    <button id="resetCamera" class="small-button reset-camera-button"
+                    <div id="viewerModelSwitch"
+                         class="model-mode-switch hidden"></div>
+
+                    <button id="resetCamera"
+                            class="small-button reset-camera-button"
                             type="button">Reset Kamera</button>
-                    <button id="viewerFullscreenButton" class="viewer-fullscreen-button hidden"
-                            type="button" aria-controls="viewerCard"
+
+                    <button id="viewerFullscreenButton"
+                            class="viewer-fullscreen-button hidden"
+                            type="button"
+                            aria-controls="viewerCard"
                             aria-label="Tampilkan viewer 3D dalam layar penuh">
-                        <span aria-hidden="true">⛶</span> Fullscreen
+                        <span aria-hidden="true">⛶</span>
+                        Fullscreen
                     </button>
-                    <button id="viewerFullscreenExit" class="viewer-fullscreen-exit hidden"
-                            type="button" aria-controls="viewerCard"
+
+                    <button id="viewerFullscreenExit"
+                            class="viewer-fullscreen-exit hidden"
+                            type="button"
+                            aria-controls="viewerCard"
                             aria-label="Keluar dari layar penuh"
                             title="Keluar dari layar penuh">
                         <span aria-hidden="true">×</span>
@@ -285,61 +420,95 @@
 
             <div class="viewer-preload-info">
                 <div class="viewer-preload-status">
-                    <span id="viewerLoadingDot" class="loading-dot"></span>
-                    <small id="viewerLoadStatus">MEMUAT MODEL 3D...</small>
+                    <span id="viewerLoadingDot"
+                          class="loading-dot"></span>
+                    <small id="viewerLoadStatus">
+                        MEMUAT MODEL 3D...
+                    </small>
                 </div>
                 <h3 id="viewerCurrentModelName">Model 3D</h3>
-                <p id="viewerPreloadDescription">Memuat informasi model...</p>
+                <p id="viewerPreloadDescription">
+                    Memuat informasi model...
+                </p>
             </div>
 
             <div id="modelViewerStage" class="model-viewer-stage">
-                <model-viewer id="main3DViewer" class="main-model-viewer-single"
-                              camera-controls loading="eager"
-                              shadow-intensity="0.7" shadow-softness="1"
-                              environment-image="neutral"
-                              camera-orbit="auto auto auto"
-                              camera-target="auto auto auto"
-                              min-camera-orbit="auto auto 0.01m"
-                              max-camera-orbit="auto auto auto"
-                              min-field-of-view="5deg"
-                              max-field-of-view="90deg"
-                              field-of-view="35deg"
-                              interpolation-decay="40"
-                              interaction-prompt="none"
-                              alt="Model 3D Fakultas Teknik">
-                    <button id="destination3DHotspot" class="destination-3d-hotspot hidden"
-                            slot="hotspot-destination" data-position="0m 0m 0m"
-                            data-normal="0m 1m 0m" type="button">
+                <model-viewer
+                    id="main3DViewer"
+                    class="main-model-viewer-single"
+                    camera-controls
+                    loading="eager"
+                    shadow-intensity="0.7"
+                    shadow-softness="1"
+                    environment-image="neutral"
+                    camera-orbit="auto auto auto"
+                    camera-target="auto auto auto"
+                    min-camera-orbit="auto auto 0.01m"
+                    max-camera-orbit="auto auto auto"
+                    min-field-of-view="5deg"
+                    max-field-of-view="90deg"
+                    field-of-view="35deg"
+                    interpolation-decay="40"
+                    interaction-prompt="none"
+                    alt="Model 3D Fakultas Teknik">
+
+                    <button id="destination3DHotspot"
+                            class="destination-3d-hotspot hidden"
+                            slot="hotspot-destination"
+                            data-position="0m 0m 0m"
+                            data-normal="0m 1m 0m"
+                            type="button">
                         <span></span>
                         <strong id="destination3DLabel">Tujuan</strong>
                     </button>
                 </model-viewer>
-                <div id="viewerLoadingOverlay" class="model-state-overlay hidden">
+
+                <div id="viewerLoadingOverlay"
+                     class="model-state-overlay hidden">
                     <div class="model-loader"></div>
                     <strong>Memuat Model 3D...</strong>
                 </div>
-                <div id="viewerUnavailable" class="model-state-overlay model-unavailable hidden">
+
+                <div id="viewerUnavailable"
+                     class="model-state-overlay model-unavailable hidden">
                     <div class="unavailable-3d-icon">3D</div>
-                    <strong>Model 3D sedang dalam tahap penyelesaian</strong>
-                    <p>Model akan tersedia setelah proses desain selesai.</p>
+                    <strong>
+                        Model 3D sedang dalam tahap penyelesaian
+                    </strong>
+                    <p>
+                        Model akan tersedia setelah proses desain selesai.
+                    </p>
                 </div>
             </div>
+
             <div class="viewer-interaction-info">
-                <span>GESER</span><span>PUTAR</span><span>ZOOM</span><span>RESET</span>
+                <span>GESER</span>
+                <span>PUTAR</span>
+                <span>ZOOM</span>
+                <span>RESET</span>
             </div>
+
         </div>
     </div>
 </section>
 
-<!-- AR MARKERLESS -->
+<!-- =====================================================
+     AR MARKERLESS — SISTEM REVISI 8 DIPERTAHANKAN
+===================================================== -->
 <section id="arPage" class="page content-page">
     <div class="content-container">
-        <button class="page-back-button" data-back type="button">← Kembali</button>
+        <button class="page-back-button"
+                data-back type="button">← Kembali</button>
+
         <div class="page-heading">
             <small>AUGMENTED REALITY</small>
             <h1>AR (Markerless)</h1>
-            <p>Pilih Gedung atau Ruangan yang ingin ditampilkan menggunakan Augmented Reality.</p>
+            <p>
+                Pilih Gedung atau Ruangan yang ingin ditampilkan
+                menggunakan Augmented Reality.
+            </p>
         </div>
+
         <div class="selection-card single-selection-card">
             <div class="selection-field">
                 <label for="arBuildingSelect">Pilih Gedung</label>
@@ -347,78 +516,150 @@
                     <option value="">-- Pilih Gedung --</option>
                 </select>
             </div>
-            <button id="prepareMainAR" class="button button-primary"
+
+            <button id="prepareMainAR"
+                    class="button button-primary"
                     type="button">Pratinjau Model</button>
+
             <p id="arMessage" class="form-message"></p>
-            <p class="ar-hint">Pilih gedung, lihat pratinjau 3D dan tentukan model Indoor atau Outdoor terlebih dahulu. Setelah siap, tekan Mulai Kamera AR.</p>
+
+            <p class="ar-hint">
+                Pilih gedung, lihat pratinjau 3D dan tentukan model
+                Indoor atau Outdoor terlebih dahulu.
+                Setelah siap, tekan Mulai Kamera AR.
+            </p>
         </div>
 
         <div id="arViewerCard" class="ar-viewer-card hidden">
             <div class="viewer-toolbar">
                 <div class="viewer-heading-inline">
-                    <strong id="arViewerTitle">AR Fakultas Teknik</strong>
-                    <span id="arSingleModeBadge" class="model-mode-badge hidden"></span>
+                    <strong id="arViewerTitle">
+                        AR Fakultas Teknik
+                    </strong>
+                    <span id="arSingleModeBadge"
+                          class="model-mode-badge hidden"></span>
                 </div>
-                <div id="arModelSwitch" class="model-mode-switch hidden"></div>
+
+                <div id="arModelSwitch"
+                     class="model-mode-switch hidden"></div>
             </div>
+
             <div class="viewer-preload-info">
                 <div class="viewer-preload-status">
-                    <span id="arLoadingDot" class="loading-dot"></span>
-                    <small id="arLoadStatus">MEMUAT MODEL AR...</small>
+                    <span id="arLoadingDot"
+                          class="loading-dot"></span>
+                    <small id="arLoadStatus">
+                        MEMUAT MODEL AR...
+                    </small>
                 </div>
                 <h3 id="arCurrentModelName">Model AR</h3>
-                <p id="arPreloadDescription">Memuat informasi model...</p>
+                <p id="arPreloadDescription">
+                    Memuat informasi model...
+                </p>
             </div>
+
             <div class="ar-model-stage">
-                <model-viewer id="mainARViewer" camera-controls loading="eager"
-                              shadow-intensity="1" environment-image="neutral"
-                              alt="AR Fakultas Teknik"></model-viewer>
-                <div id="arLoadingOverlay" class="model-state-overlay hidden">
+                <model-viewer
+                    id="mainARViewer"
+                    camera-controls
+                    loading="eager"
+                    shadow-intensity="1"
+                    environment-image="neutral"
+                    alt="AR Fakultas Teknik">
+                </model-viewer>
+
+                <div id="arLoadingOverlay"
+                     class="model-state-overlay hidden">
                     <div class="model-loader"></div>
                     <strong>Memuat Model AR...</strong>
                 </div>
-                <div id="arUnavailable" class="model-state-overlay model-unavailable hidden">
+
+                <div id="arUnavailable"
+                     class="model-state-overlay model-unavailable hidden">
                     <div class="unavailable-3d-icon">AR</div>
-                    <strong>Model 3D sedang dalam tahap penyelesaian</strong>
-                    <p>Model AR akan aktif otomatis setelah file 3D tersedia.</p>
+                    <strong>
+                        Model 3D sedang dalam tahap penyelesaian
+                    </strong>
+                    <p>
+                        Model AR akan aktif otomatis setelah
+                        file 3D tersedia.
+                    </p>
                 </div>
             </div>
+
             <div class="ar-preview-actions">
-                <p>Pilih Indoor / Outdoor di atas, kemudian buka kamera dengan model yang dipilih.</p>
-                <button id="launchARCamera" class="button button-primary ar-launch-button"
-                        type="button" disabled>Mulai Kamera AR</button>
+                <p>
+                    Pilih Indoor / Outdoor di atas,
+                    kemudian buka kamera dengan model yang dipilih.
+                </p>
+                <button id="launchARCamera"
+                        class="button button-primary ar-launch-button"
+                        type="button" disabled>
+                    Mulai Kamera AR
+                </button>
             </div>
+
         </div>
     </div>
 </section>
 
-<!-- NAVIGASI TETAP DISIMPAN -->
+<!-- =====================================================
+     NAVIGASI — DISIMPAN, DISEMBUNYIKAN
+===================================================== -->
 <section id="navigationPage" class="page content-page">
     <div class="content-container">
-        <button class="page-back-button" data-back type="button">← Kembali</button>
+        <button class="page-back-button"
+                data-back type="button">← Kembali</button>
+
         <div class="page-heading navigation-heading">
             <small>NAVIGASI</small>
             <h1>Denah dan Petunjuk Arah</h1>
-            <p>Cari gedung atau ruangan tujuan, lalu tandai posisi Anda pada denah.</p>
+            <p>
+                Cari gedung atau ruangan tujuan,
+                lalu tandai posisi Anda pada denah.
+            </p>
         </div>
+
         <div class="nav-progress">
-            <div id="stepTarget" class="nav-step active"><b>1</b><span>Tujuan</span></div><i></i>
-            <div id="stepPosition" class="nav-step"><b>2</b><span>Posisi</span></div><i></i>
-            <div id="stepRoute" class="nav-step"><b>3</b><span>Rute</span></div><i></i>
-            <div id="stepNavigation" class="nav-step"><b>4</b><span>Navigasi</span></div>
+            <div id="stepTarget" class="nav-step active">
+                <b>1</b><span>Tujuan</span>
+            </div>
+            <i></i>
+            <div id="stepPosition" class="nav-step">
+                <b>2</b><span>Posisi</span>
+            </div>
+            <i></i>
+            <div id="stepRoute" class="nav-step">
+                <b>3</b><span>Rute</span>
+            </div>
+            <i></i>
+            <div id="stepNavigation" class="nav-step">
+                <b>4</b><span>Navigasi</span>
+            </div>
         </div>
+
         <div class="navigation-search-card">
-            <label for="navigationSearch">Cari Gedung / Ruangan Tujuan</label>
+            <label for="navigationSearch">
+                Cari Gedung / Ruangan Tujuan
+            </label>
+
             <div class="search-box">
                 <span class="search-symbol">⌕</span>
-                <input id="navigationSearch" type="search"
+                <input id="navigationSearch"
+                       type="search"
                        placeholder="Contoh: Perpustakaan atau Ruang Dekan"
                        autocomplete="off">
             </div>
-            <div id="navigationSearchResults" class="search-results">
-                <div class="search-empty">Ketik nama gedung atau ruangan tujuan.</div>
+
+            <div id="navigationSearchResults"
+                 class="search-results">
+                <div class="search-empty">
+                    Ketik nama gedung atau ruangan tujuan.
+                </div>
             </div>
-            <div id="selectedDestination" class="destination-card hidden">
+
+            <div id="selectedDestination"
+                 class="destination-card hidden">
                 <small>TUJUAN DIPILIH</small>
                 <h3 id="selectedDestinationName">-</h3>
                 <p id="selectedDestinationParent">-</p>
@@ -426,174 +667,363 @@
         </div>
 
         <div id="mapSection" class="map-section hidden">
-            <div id="mapInstructionArea" class="map-instruction">
-                <h2 id="mapHeadingTitle">Tap pada denah sesuai posisi Anda sekarang.</h2>
+
+            <div id="mapInstructionArea"
+                 class="map-instruction">
+                <h2 id="mapHeadingTitle">
+                    Tap pada denah sesuai posisi Anda sekarang.
+                </h2>
             </div>
-            <div id="routeFoundBox" class="route-found-box hidden">
+
+            <div id="routeFoundBox"
+                 class="route-found-box hidden">
                 <div>
                     <h3>Rute ditemukan</h3>
-                    <p>Garis biru adalah jalur tercepat yang bisa anda lalui, klik "Mulai Navigasi" untuk Navigasi selanjutnya.</p>
+                    <p>
+                        Garis biru adalah jalur tercepat yang bisa
+                        anda lalui, klik "Mulai Navigasi" untuk
+                        Navigasi selanjutnya.
+                    </p>
                 </div>
+
                 <div class="route-found-actions">
-                    <button id="showDestination3D" class="button button-primary"
-                            type="button">Tampilkan dalam 3D</button>
-                    <button id="startNavigation" class="button button-primary"
-                            type="button">Mulai Navigasi</button>
+                    <button id="showDestination3D"
+                            class="button button-primary"
+                            type="button">
+                        Tampilkan dalam 3D
+                    </button>
+                    <button id="startNavigation"
+                            class="button button-primary"
+                            type="button">
+                        Mulai Navigasi
+                    </button>
                 </div>
             </div>
+
             <div id="navigationMap" class="navigation-map">
-                <img id="navigationMapImage" src="./assets/maps/denah-v1.png"
-                     alt="Denah Fakultas Teknik UISU" draggable="false">
-                <svg class="route-svg" viewBox="0 0 768 1024"
+                <img id="navigationMapImage"
+                     src="./assets/maps/denah-v1.png"
+                     alt="Denah Fakultas Teknik UISU"
+                     draggable="false">
+
+                <svg class="route-svg"
+                     viewBox="0 0 768 1024"
                      preserveAspectRatio="none">
-                    <polyline id="activeRoute" points=""></polyline>
+                    <polyline id="activeRoute"
+                              points=""></polyline>
                 </svg>
-                <div id="userMarker" class="user-marker hidden">
-                    <span></span><label>Posisi Anda</label>
+
+                <div id="userMarker"
+                     class="user-marker hidden">
+                    <span></span>
+                    <label>Posisi Anda</label>
                 </div>
-                <div id="entranceMarker" class="entrance-marker hidden">
+
+                <div id="entranceMarker"
+                     class="entrance-marker hidden">
                     <span></span>
                 </div>
             </div>
-            <button id="resetPosition" class="reset-position-button hidden"
-                    type="button">Ulangi Posisi</button>
+
+            <button id="resetPosition"
+                    class="reset-position-button hidden"
+                    type="button">
+                Ulangi Posisi
+            </button>
         </div>
     </div>
 </section>
 
-<section id="navigationActivePage" class="page navigation-live-page">
+<section id="navigationActivePage"
+         class="page navigation-live-page">
+
     <div class="navigation-live-shell">
+
         <div class="live-instruction-bar">
-            <div id="liveDirectionIcon" class="live-direction-icon">↑</div>
+            <div id="liveDirectionIcon"
+                 class="live-direction-icon">↑</div>
             <div>
                 <small>PETUNJUK BERIKUTNYA</small>
-                <strong id="liveNextInstruction">Ikuti jalur</strong>
+                <strong id="liveNextInstruction">
+                    Ikuti jalur
+                </strong>
                 <span id="liveTargetName">Tujuan</span>
             </div>
         </div>
+
         <div class="live-map-viewport">
-            <div id="liveMapContent" class="live-map-content">
-                <img class="live-map-background" src="./assets/maps/denah-v1.png"
-                     alt="Navigasi Fakultas Teknik UISU" draggable="false">
-                <svg class="live-route-svg" viewBox="0 0 768 1024"
+            <div id="liveMapContent"
+                 class="live-map-content">
+
+                <img class="live-map-background"
+                     src="./assets/maps/denah-v1.png"
+                     alt="Navigasi Fakultas Teknik UISU"
+                     draggable="false">
+
+                <svg class="live-route-svg"
+                     viewBox="0 0 768 1024"
                      preserveAspectRatio="none">
-                    <polyline id="liveRoute" points=""></polyline>
+                    <polyline id="liveRoute"
+                              points=""></polyline>
                 </svg>
-                <div id="liveBuildingMarkers" class="live-building-markers"></div>
-                <div id="liveUserMarker" class="live-user-marker hidden">
+
+                <div id="liveBuildingMarkers"
+                     class="live-building-markers"></div>
+
+                <div id="liveUserMarker"
+                     class="live-user-marker hidden">
                     <span></span>
                 </div>
-                <div id="liveDestinationMarker" class="live-destination-marker hidden">
+
+                <div id="liveDestinationMarker"
+                     class="live-destination-marker hidden">
                     <span></span>
-                    <label id="liveDestinationMarkerLabel">Tujuan</label>
+                    <label id="liveDestinationMarkerLabel">
+                        Tujuan
+                    </label>
                 </div>
             </div>
         </div>
+
         <div class="navigation-bottom-sheet">
             <div class="bottom-sheet-handle"></div>
+
             <div class="live-route-summary">
                 <div>
                     <small>MENUJU</small>
-                    <h2 id="liveRouteDestination">Tujuan</h2>
-                    <p id="liveRouteEntrance">Entrance tujuan</p>
+                    <h2 id="liveRouteDestination">
+                        Tujuan
+                    </h2>
+                    <p id="liveRouteEntrance">
+                        Entrance tujuan
+                    </p>
                 </div>
             </div>
-            <button id="toggleRouteDetail" class="route-detail-button"
-                    type="button">☷ &nbsp; Detail</button>
-            <div id="routeDetailPanel" class="route-detail-panel hidden">
+
+            <button id="toggleRouteDetail"
+                    class="route-detail-button"
+                    type="button">
+                ☷ &nbsp; Detail
+            </button>
+
+            <div id="routeDetailPanel"
+                 class="route-detail-panel hidden">
                 <div id="routeInstructionList"></div>
             </div>
-            <button id="endRoute" class="end-route-button"
-                    type="button">Akhiri Rute</button>
+
+            <button id="endRoute"
+                    class="end-route-button"
+                    type="button">
+                Akhiri Rute
+            </button>
         </div>
+
     </div>
 </section>
 
-<!-- DIREKTORI -->
+<!-- =====================================================
+     DIREKTORI
+===================================================== -->
 <section id="directoryPage" class="page content-page">
     <div class="content-container">
-        <button class="page-back-button" data-back type="button">← Kembali</button>
+
+        <button class="page-back-button"
+                data-back type="button">
+            ← Kembali
+        </button>
+
         <div class="page-heading directory-heading">
-            <small>DAFTAR GEDUNG & RUANGAN</small>
+            <small>DAFTAR GEDUNG &amp; RUANGAN</small>
             <h1>Direktori Fakultas Teknik</h1>
-            <p id="directoryNavigationDescription">Pilih Gedung dan Ruangan untuk melihat Informasi atau membuka Petunjuk Arah.</p>
+            <p id="directoryNavigationDescription">
+                Pilih gedung dan ruangan untuk melihat
+                informasi atau data tenaga kependidikan.
+            </p>
         </div>
-        <div id="directoryContainer" class="directory"></div>
+
+        <div id="directoryContainer"
+             class="directory"></div>
     </div>
 </section>
 
-<!-- BANTUAN -->
+<!-- =====================================================
+     BANTUAN
+===================================================== -->
 <section id="helpPage" class="page content-page">
     <div class="content-container">
-        <button class="page-back-button" data-back type="button">← Kembali</button>
+
+        <button class="page-back-button"
+                data-back type="button">← Kembali</button>
+
         <div class="page-heading">
             <small>BANTUAN</small>
             <h1>Cara Menggunakan Website</h1>
         </div>
+
         <div class="help-grid">
+
             <article>
                 <h3>3D Objek</h3>
                 <ul>
-                    <li>Pilih Gedung atau Ruangan yang ingin anda lihat.</li>
-                    <li>Klik tombol "Tampilkan 3D Objek".</li>
-                    <li>Sistem akan menampilkan Model 3D sesuai pilihan anda.</li>
-                    <li>Untuk Biro dan Perkuliahan, Indoor dan Outdoor dapat diganti langsung pada viewer yang sama.</li>
-                    <li>Model dapat di-drag, rotate, serta diperbesar atau diperkecil menggunakan scroll mouse atau pinch pada layar.</li>
+                    <li>
+                        Pilih Gedung atau Ruangan yang
+                        ingin anda lihat.
+                    </li>
+                    <li>
+                        Klik tombol "Tampilkan 3D Objek".
+                    </li>
+                    <li>
+                        Sistem akan menampilkan Model 3D
+                        sesuai pilihan anda.
+                    </li>
+                    <li>
+                        Untuk Biro dan Perkuliahan, Indoor dan
+                        Outdoor dapat diganti langsung pada viewer
+                        yang sama.
+                    </li>
+                    <li>
+                        Model dapat di-drag, rotate, serta
+                        diperbesar atau diperkecil menggunakan
+                        scroll mouse atau pinch pada layar.
+                    </li>
                 </ul>
             </article>
+
             <article>
                 <h3>AR Markerless</h3>
                 <ul>
-                    <li>Pilih Gedung atau Ruangan yang ingin anda lihat.</li>
-                    <li>Sistem akan meminta akses izin kamera terlebih dahulu.</li>
-                    <li>Arahkan kamera perlahan ke lantai datar yang bertekstur dan mendapat cahaya cukup.</li>
-                    <li>Augmented Reality Model 3D sesuai pilihan akan muncul.</li>
+                    <li>
+                        Pilih Gedung atau Ruangan yang
+                        ingin anda lihat.
+                    </li>
+                    <li>
+                        Sistem akan meminta akses izin kamera
+                        terlebih dahulu.
+                    </li>
+                    <li>
+                        Arahkan kamera perlahan ke lantai datar
+                        yang bertekstur dan mendapat cahaya cukup.
+                    </li>
+                    <li>
+                        Augmented Reality Model 3D sesuai pilihan
+                        akan muncul apabila pelacakan dan
+                        penempatan berhasil.
+                    </li>
                 </ul>
             </article>
+
             <article class="navigation-only">
                 <h3>Navigasi</h3>
                 <ul>
-                    <li>Pilih tujuan dengan mengetik nama Gedung atau Ruangan.</li>
-                    <li>Sistem akan menampilkan denah 2D UISU.</li>
-                    <li>Tentukan posisi anda dengan mengklik denah.</li>
-                    <li>Sistem menghitung rute outdoor menuju entrance tujuan.</li>
-                    <li>Klik "Mulai Navigasi" untuk membuka mode navigasi.</li>
+                    <li>
+                        Pilih tujuan dengan mengetik nama
+                        Gedung atau Ruangan.
+                    </li>
+                    <li>
+                        Sistem akan menampilkan denah 2D UISU.
+                    </li>
+                    <li>
+                        Tentukan posisi anda dengan mengklik denah.
+                    </li>
+                    <li>
+                        Sistem menghitung rute outdoor menuju
+                        entrance tujuan.
+                    </li>
+                    <li>
+                        Klik "Mulai Navigasi" untuk membuka
+                        mode navigasi.
+                    </li>
                 </ul>
             </article>
+
             <article>
                 <h3>Direktori</h3>
                 <ul>
-                    <li>Pilih Gedung, Ruangan, atau Civitas Akademik.</li>
-                    <li>Sistem menampilkan informasi lokasi.</li>
-                    <li class="navigation-only">Pilih Petunjuk Arah jika ingin membuka Navigasi.</li>
+                    <li>
+                        Pilih Gedung, Ruangan, atau
+                        Civitas Akademik.
+                    </li>
+                    <li>
+                        Sistem menampilkan informasi lokasi.
+                    </li>
+                    <li>
+                        Gunakan tombol Tendik untuk membuka
+                        informasi pegawai pada lokasi
+                        yang tersedia.
+                    </li>
+                    <li class="navigation-only">
+                        Pilih Petunjuk Arah jika ingin
+                        membuka Navigasi.
+                    </li>
                 </ul>
             </article>
+
         </div>
     </div>
 </section>
 
-<!-- TENTANG -->
+<!-- =====================================================
+     TENTANG
+===================================================== -->
 <section id="aboutPage" class="page content-page">
     <div class="content-container">
-        <button class="page-back-button" data-back type="button">← Kembali</button>
+
+        <button class="page-back-button"
+                data-back type="button">
+            ← Kembali
+        </button>
+
         <div class="developer-card">
+
             <div class="developer-photo-wrap">
                 <img src="./assets/images/foto_developer.png"
                      alt="Muhammad Arief Rachim">
             </div>
+
             <div class="developer-content">
-                <small class="developer-label">DEVELOPER</small>
+
+                <small class="developer-label">
+                    DEVELOPER
+                </small>
+
                 <h1>
                     <strong>Muhammad Arief Rachim</strong>
                     <span>(Acim)</span>
                 </h1>
-                <p class="developer-role">Mahasiswa Teknik Informatika FT-UISU</p>
+
+                <p class="developer-role">
+                    Mahasiswa Teknik Informatika FT-UISU
+                </p>
+
                 <div class="about-text">
-                    <p>Website ini dibuat berdasarkan hasil dari Keresahan Developer atas minimnya akses informasi mengenai Ruangan dan Civitas Akademik yang tidak hanya dialami oleh Pengunjung, juga oleh Mahasiswa.</p>
-                    <p>Proyek berbasis Skripsi berjudul <strong>"Implementasi <em>Augmented Reality Markerless</em> menggunakan Algoritma <em>Simultaneous Localization and Mapping</em> (SLAM) pada Denah Fakultas Teknik Universitas Islam Sumatera Utara"</strong> ini, diharapkan menjadi solusi dari pertanyaan <em>"Ruangan A dimana ya?"</em>, <em>"Pak B dimana ya Ruangannya?"</em>.</p>
+                    <p>
+                        Website ini dibuat berdasarkan hasil dari
+                        Keresahan Developer atas minimnya akses
+                        informasi mengenai Ruangan dan Civitas Akademik
+                        yang tidak hanya dialami oleh Pengunjung,
+                        juga oleh Mahasiswa.
+                    </p>
+
+                    <p>
+                        Proyek berbasis Skripsi berjudul
+                        <strong>
+                            "Implementasi
+                            <em>Augmented Reality Markerless</em>
+                            menggunakan Algoritma
+                            <em>Simultaneous Localization and Mapping</em>
+                            (SLAM) pada Denah Fakultas Teknik
+                            Universitas Islam Sumatera Utara"
+                        </strong>
+                        ini diharapkan menjadi solusi dari pertanyaan
+                        <em>"Ruangan A dimana ya?"</em> dan
+                        <em>"Pak B dimana ya Ruangannya?"</em>.
+                    </p>
                 </div>
+
                 <div class="developer-contacts">
-                    <a href="mailto:arifrahim1801@gmail.com" class="contact-item">
+
+                    <a href="mailto:arifrahim1801@gmail.com"
+                       class="contact-item">
                         <span class="contact-icon">
                             <svg viewBox="0 0 24 24">
                                 <path d="M3 5h18v14H3V5zm2 2v.5l7 5 7-5V7H5zm14 10V10l-7 5-7-5v7h14z"></path>
@@ -604,8 +1034,10 @@
                             <strong>arifrahim1801@gmail.com</strong>
                         </div>
                     </a>
+
                     <a href="https://wa.me/6281263185492"
-                       target="_blank" rel="noopener noreferrer"
+                       target="_blank"
+                       rel="noopener noreferrer"
                        class="contact-item">
                         <span class="contact-icon">
                             <svg viewBox="0 0 24 24">
@@ -617,8 +1049,10 @@
                             <strong>081263185492</strong>
                         </div>
                     </a>
+
                     <a href="https://instagram.com/ar.chimm"
-                       target="_blank" rel="noopener noreferrer"
+                       target="_blank"
+                       rel="noopener noreferrer"
                        class="contact-item">
                         <span class="contact-icon">
                             <svg viewBox="0 0 24 24">
@@ -630,99 +1064,171 @@
                             <strong>ar.chimm</strong>
                         </div>
                     </a>
+
                 </div>
             </div>
         </div>
     </div>
 </section>
+
 </main>
 
+<!-- FOOTER -->
 <footer class="site-footer">
     <p><em>Created By</em> : Acim.</p>
-    <strong>© 2026 Muhammad Arief Rachim. All Rights Reserved.</strong>
+    <strong>
+        © 2026 Muhammad Arief Rachim.
+        All Rights Reserved.
+    </strong>
 </footer>
 
-<!-- MODAL INFORMASI -->
+<!-- =====================================================
+     MODAL INFORMASI
+===================================================== -->
 <div id="infoModal" class="modal hidden">
     <div id="infoBackdrop" class="modal-backdrop"></div>
+
     <div class="info-modal">
-        <button id="closeInfoModal" class="close-button modal-close" type="button">×</button>
+        <button id="closeInfoModal"
+                class="close-button modal-close"
+                type="button">×</button>
+
         <small>INFORMASI</small>
         <h2 id="infoTitle">-</h2>
-        <div id="infoUnits" class="info-units hidden"></div>
-        <div id="infoDescription" class="info-description"></div>
+        <div id="infoUnits"
+             class="info-units hidden"></div>
+        <div id="infoDescription"
+             class="info-description"></div>
     </div>
 </div>
 
-<!-- MODAL TENDIK -->
+<!-- =====================================================
+     MODAL TENDIK
+===================================================== -->
 <div id="tendikModal" class="modal hidden">
     <div id="tendikBackdrop" class="modal-backdrop"></div>
+
     <div class="tendik-modal">
-        <button id="closeTendikModal" class="close-button modal-close"
+        <button id="closeTendikModal"
+                class="close-button modal-close"
                 type="button">×</button>
+
         <small>TENAGA KEPENDIDIKAN</small>
         <h2 id="tendikRoomTitle">-</h2>
-        <p id="tendikRoomParent">Biro Fakultas Teknik UISU</p>
+        <p id="tendikRoomParent">
+            Biro Fakultas Teknik UISU
+        </p>
+
         <div id="tendikList" class="tendik-list"></div>
     </div>
 </div>
 
-<!-- WEBAR MARKERLESS REVISI 8 -->
-<div id="webarOverlay" class="webar-overlay hidden"
-     role="dialog" aria-modal="true"
+<!-- =====================================================
+     WEBAR — REVISI 8 TETAP DIPERTAHANKAN
+===================================================== -->
+<div id="webarOverlay"
+     class="webar-overlay hidden"
+     role="dialog"
+     aria-modal="true"
      aria-label="Kamera AR Markerless">
 
-    <video id="webarPreview" class="webar-preview"
-           autoplay muted playsinline aria-hidden="true"></video>
+    <video id="webarPreview"
+           class="webar-preview"
+           autoplay muted playsinline
+           aria-hidden="true"></video>
 
     <canvas id="webarEngineCanvas"
             class="webar-engine-canvas"
             aria-hidden="true"></canvas>
 
-    <canvas id="webarCamera" class="webar-camera"></canvas>
+    <canvas id="webarCamera"
+            class="webar-camera"></canvas>
 
     <div class="webar-top">
-        <button id="webarClose" class="webar-close"
-                type="button" aria-label="Kembali ke pratinjau model">← Kembali</button>
+        <button id="webarClose"
+                class="webar-close"
+                type="button"
+                aria-label="Kembali ke pratinjau model">
+            ← Kembali
+        </button>
+
         <div class="webar-heading">
             <strong>AR MARKERLESS</strong>
             <span id="webarTitle">Gedung</span>
         </div>
     </div>
 
-    <div class="webar-center" aria-hidden="true">
-        <div id="webarReticle" class="webar-reticle hidden">
+    <div class="webar-center"
+         aria-hidden="true">
+        <div id="webarReticle"
+             class="webar-reticle hidden">
             <span></span>
         </div>
     </div>
 
     <div class="webar-bottom">
-        <p id="webarStatus" class="webar-status"
-           role="status" aria-live="polite">Memuat pelacakan bidang...</p>
-        <p id="webarInstructions" class="webar-instructions">
-            Arahkan kamera ke lantai bertekstur, lalu gerakkan perangkat perlahan.
+
+        <p id="webarStatus"
+           class="webar-status"
+           role="status"
+           aria-live="polite">
+            Memuat pelacakan bidang...
         </p>
+
+        <p id="webarInstructions"
+           class="webar-instructions">
+            Arahkan kamera ke lantai bertekstur,
+            lalu gerakkan perangkat perlahan.
+        </p>
+
         <div class="webar-actions">
-            <button id="webarBackBottom" class="webar-reset webar-back-bottom"
-                    type="button">← Kembali ke Pratinjau</button>
-            <button id="webarPlace" class="webar-reset hidden"
-                    type="button">Tempatkan Model</button>
-            <button id="webarMotion" class="webar-reset hidden"
-                    type="button">Izinkan Sensor Gerak</button>
-            <button id="webarRetry" class="webar-reset hidden"
-                    type="button">Coba Lagi</button>
-            <button id="webarReset" class="webar-reset hidden"
-                    type="button">Ulangi Penempatan</button>
+            <button id="webarBackBottom"
+                    class="webar-reset webar-back-bottom"
+                    type="button">
+                ← Kembali ke Pratinjau
+            </button>
+
+            <button id="webarPlace"
+                    class="webar-reset hidden"
+                    type="button">
+                Tempatkan Model
+            </button>
+
+            <button id="webarMotion"
+                    class="webar-reset hidden"
+                    type="button">
+                Izinkan Sensor Gerak
+            </button>
+
+            <button id="webarRetry"
+                    class="webar-reset hidden"
+                    type="button">
+                Coba Lagi
+            </button>
+
+            <button id="webarReset"
+                    class="webar-reset hidden"
+                    type="button">
+                Ulangi Penempatan
+            </button>
         </div>
-        <small id="webarDiagnostic" class="webar-diagnostic" aria-live="off">
-            Kamera: menunggu · SLAM: mencari · GLB: memuat · Render: menunggu
+
+        <small id="webarDiagnostic"
+               class="webar-diagnostic"
+               aria-live="off">
+            Kamera: menunggu · SLAM: mencari ·
+            GLB: memuat · Render: menunggu
         </small>
+
         <small class="webar-credit">
             XR Engine © 2026 Niantic Spatial, Inc.
         </small>
+
     </div>
 </div>
 
+<!-- TOAST -->
 <div id="toast" class="toast"></div>
+
 </body>
 </html>
