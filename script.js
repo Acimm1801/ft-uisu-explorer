@@ -21,7 +21,7 @@ function getModelVariant(buildingId,modelId){return typeof DATA.getModelVariant=
 function getDefaultModelVariant(buildingId){if(typeof DATA.getDefaultModelVariant==="function")return DATA.getDefaultModelVariant(buildingId);const building=getBuildingById(buildingId);return building?getModelVariant(building.id,building.defaultModel)||building.models?.[0]||null:null}
 function getNavigationEntrance(location){if(typeof DATA.getNavigationEntranceForLocation==="function")return DATA.getNavigationEntranceForLocation(location);if(!location)return null;if(location.type==="room"&&location.navigationEntranceId)return getEntranceById(location.navigationEntranceId);const building=getBuildingById(location.buildingId||location.id);return building?getEntranceById(building.defaultEntranceId):null}
 const MODEL_CACHE_NAME="ft-uisu-r12-models",PRIORITY_MODELS=["./assets/models/gedung_biro_outdoor.glb","./assets/models/gedung_perkuliahan_outdoor.glb","./assets/models/laboratorium_outdoor.glb","./assets/models/gedung_biro_indoor.glb","./assets/models/gedung_perkuliahan_indoor.glb"];
-async function registerServiceWorker(){if(!("serviceWorker"in navigator))return;try{await navigator.serviceWorker.register("./sw.js?v=12-r9-ui-ar",{scope:"./"});await navigator.serviceWorker.ready}catch(error){console.warn("Service Worker:",error)}}
+async function registerServiceWorker(){if(!("serviceWorker"in navigator))return;try{await navigator.serviceWorker.register("./sw.js?v=11-ar-interaction",{scope:"./"});await navigator.serviceWorker.ready}catch(error){console.warn("Service Worker:",error)}}
 async function cacheModel(url){if(!url||!("caches"in window))return false;try{const cache=await caches.open(MODEL_CACHE_NAME);if(await cache.match(url,{ignoreSearch:true}))return true;const response=await fetch(url,{cache:"force-cache"});if(!response.ok)return false;await cache.put(url,response.clone());return true}catch(error){return false}}
 async function preloadPriorityModels(){const queue=PRIORITY_MODELS.slice();async function worker(){while(queue.length)await cacheModel(queue.shift())}await Promise.all([worker(),worker()])}
 function preloadBuildingModels(building){if(building&&Array.isArray(building.models))building.models.forEach(model=>cacheModel(model.src))}
@@ -275,7 +275,14 @@ function preload(){return Promise.all([libraries(),engine()])}
 function requestMotion(){if(motionOK)return Promise.resolve(true);const tasks=[];try{for(const type of[window.DeviceMotionEvent,window.DeviceOrientationEvent])if(typeof type?.requestPermission==="function")tasks.push(type.requestPermission());return Promise.all(tasks).then(results=>motionOK=results.every(x=>x==="granted")).catch(()=>false)}catch(e){return Promise.resolve(false)}}
 function dispose(root){const geometries=new Set(),materials=new Set(),textures=new Set();root?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m){materials.add(m);Object.values(m).forEach(t=>{if(t?.isTexture)textures.add(t)})}});textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
 function clearHit(q){q.hit=null;q.since=0;q.lastHit=0;visible("webarPlace",false);visible("webarReticle",false);if(q.reticle)q.reticle.visible=false}
-function size(){const q=current;if(!q||q.closed)return;const ratio=Math.min(devicePixelRatio||1,1.5),w=Math.max(2,Math.round(overlay.clientWidth*ratio)),h=Math.max(2,Math.round(overlay.clientHeight*ratio));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}clearHit(q)}
+function size(){
+const q=current;if(!q||q.closed)return;
+const width=Math.max(2,overlay.clientWidth),height=Math.max(2,overlay.clientHeight),limit=q.renderer?.capabilities.maxTextureSize||4096;
+const ratio=Math.min(window.devicePixelRatio||1,AR_INTERACTION.maxDpr,Math.sqrt(AR_INTERACTION.pixelBudget/(width*height)),limit/width,limit/height);
+const w=Math.max(2,Math.floor(width*ratio)),h=Math.max(2,Math.floor(height*ratio)),changed=canvas.width!==w||canvas.height!==h;
+if(changed){canvas.width=w;canvas.height=h;clearHit(q);q.pointers.clear();q.gesture=null;q.tapStart=null;q.lastTap=null}
+if(q.renderer){if(q.renderer.getPixelRatio()!==1)q.renderer.setPixelRatio(1);const currentSize=q.renderer.getSize(q.renderSize||(q.renderSize=new q.L.T.Vector2()));if(currentSize.x!==w||currentSize.y!==h)q.renderer.setSize(w,h,false)}
+}
 function stop(q){if(!q||q.closed)return;q.closed=true;clearTimeout(q.watchdog);clearInterval(q.heartbeat);if(q.running){try{window.XR8.stop()}catch(e){}try{window.XR8.clearCameraPipelineModules()}catch(e){}}q.abort.abort();dispose(q.group);dispose(q.reticle);q.group?.removeFromParent();q.reticle?.removeFromParent();q.lights?.forEach(l=>l.removeFromParent());q.draco?.dispose();q.ktx?.dispose();q.renderer?.dispose();q.pointers.clear()}
 function fail(q,error){if(!alive(q))return;const reason=explain(error);stop(q);visible("webarPlace",false);visible("webarReticle",false);visible("webarReset",false);visible("webarRetry",true);message("AR belum dapat dijalankan",reason);$("webarDiagnostic").textContent="Pelacakan AR tidak aktif."}
 async function model(q,L){
@@ -283,7 +290,11 @@ const{T,G,D,K,M}=L,loader=new G();q.draco=new D();q.draco.setDecoderPath("https:
 const url=new URL(q.src,document.baseURI),response=await fetch(url.href,{signal:q.abort.signal,cache:"default"});if(!response.ok)throw Error(`Model tidak dapat diunduh (HTTP ${response.status}).`);
 const bytes=await response.arrayBuffer();if(!alive(q))return;const gltf=await loader.parseAsync(bytes,new URL(".",url).href);if(!alive(q)){dispose(gltf.scene);return}
 const root=gltf.scene;root.updateMatrixWorld(true);const box=new T.Box3().setFromObject(root);if(box.isEmpty()){dispose(root);throw Error("Model tidak mengandung mesh yang dapat ditampilkan.")}
-const center=box.getCenter(new T.Vector3()),extent=box.getSize(new T.Vector3()),scale=.8/Math.max(extent.x,extent.z,extent.y*.65,.001);root.scale.multiplyScalar(scale);root.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);q.turn.add(root);q.loaded=true;diagnostic(q);
+const center=box.getCenter(new T.Vector3()),extent=box.getSize(new T.Vector3()),normalizer=1/Math.max(extent.x,extent.y,extent.z,.001),content=new T.Group();
+content.add(root);content.scale.setScalar(normalizer);content.position.set(-center.x*normalizer,-box.min.y*normalizer,-center.z*normalizer);q.turn.add(content);q.radius=Math.max(.001,extent.length()*normalizer*.5);q.fitScale=1;
+const textures=new Set(),anisotropy=Math.max(1,Math.min(AR_INTERACTION.anisotropy,q.renderer.capabilities.getMaxAnisotropy()));
+root.traverse(object=>{for(const material of Array.isArray(object.material)?object.material:[object.material])if(material)Object.values(material).forEach(texture=>{if(texture?.isTexture&&!texture.isVideoTexture&&!textures.has(texture)){textures.add(texture);if(texture.anisotropy!==anisotropy){texture.anisotropy=anisotropy;texture.needsUpdate=true}}})});
+q.loaded=true;diagnostic(q);
 }
 function update(q,reality,T){
 if(!alive(q))return;q.lastFrame=performance.now();const now=q.lastFrame;q.tracking=reality?.trackingStatus==="NORMAL";
@@ -303,12 +314,12 @@ const{T}=L;size();xr.clearCameraPipelineModules();xr.XrController.configure({dis
 const pipeline={
 name:"ft-uisu-r9-ui-slam-"+q.id,
 onCameraStatusChange:({status,error})=>{if(!alive(q))return;if(status==="failed")fail(q,error||Error("Kamera tidak dapat dibuka."));else if(status==="requesting")message("Meminta akses kamera...","Izinkan penggunaan kamera belakang ketika browser meminta izin.")},
-onStart:()=>{if(!alive(q))return;try{const{scene,camera,renderer}=xr.Threejs.xrScene();Object.assign(q,{scene,camera,renderer,started:true});renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.shadowMap.enabled=false;camera.position.set(0,1.6,0);xr.XrController.updateCameraProjectionMatrix({origin:camera.position,facing:camera.quaternion});q.group=new T.Group();q.group.visible=false;q.turn=new T.Group();q.group.add(q.turn);scene.add(q.group);q.lights=[new T.HemisphereLight(0xffffff,0x9eabb0,2),new T.DirectionalLight(0xffffff,2)];q.lights[1].position.set(3,6,4);scene.add(...q.lights);message("Kamera aktif — memuat model","Gerakkan perangkat perlahan untuk membangun peta SLAM.");model(q,L).catch(e=>{if(alive(q))fail(q,e)});diagnostic(q)}catch(e){fail(q,e)}},
+onStart:()=>{if(!alive(q))return;try{const{scene,camera,renderer}=xr.Threejs.xrScene();Object.assign(q,{scene,camera,renderer,started:true});renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.shadowMap.enabled=false;size();camera.position.set(0,1.6,0);xr.XrController.updateCameraProjectionMatrix({origin:camera.position,facing:camera.quaternion});q.group=new T.Group();q.group.visible=false;q.turn=new T.Group();q.group.add(q.turn);scene.add(q.group);q.lights=[new T.HemisphereLight(0xffffff,0x9eabb0,2),new T.DirectionalLight(0xffffff,2)];q.lights[1].position.set(3,6,4);scene.add(...q.lights);message("Kamera aktif — memuat model","Gerakkan perangkat perlahan untuk membangun peta SLAM.");model(q,L).catch(e=>{if(alive(q))fail(q,e)});diagnostic(q)}catch(e){fail(q,e)}},
 onUpdate:({processCpuResult})=>{try{update(q,processCpuResult?.reality,T)}catch(e){fail(q,e)}},
 onException:e=>fail(q,e)
 };
 xr.addCameraPipelineModules([xr.GlTextureRenderer.pipelineModule(),xr.Threejs.pipelineModule(),xr.XrController.pipelineModule(),pipeline]);q.running=true;q.lastFrame=performance.now();message("Memulai XR Engine...","Kamera dibuka langsung oleh engine tanpa kamera pratinjau tambahan.");
-await xr.run({canvas,webgl2:true,cameraConfig:{direction:xr.XrConfig.camera().BACK},glContextConfig:{alpha:false,antialias:false,preserveDrawingBuffer:false,powerPreference:"high-performance"},allowedDevices:xr.XrConfig.device().MOBILE,sessionConfiguration:{disableXrTablet:true,defaultEnvironment:{disabled:true}}});
+await xr.run({canvas,webgl2:true,cameraConfig:{direction:xr.XrConfig.camera().BACK},glContextConfig:{alpha:false,antialias:true,preserveDrawingBuffer:false,powerPreference:"high-performance"},allowedDevices:xr.XrConfig.device().MOBILE,sessionConfiguration:{disableXrTablet:true,defaultEnvironment:{disabled:true}}});
 if(!alive(q))return;q.watchdog=setTimeout(()=>{if(alive(q)&&!q.started)fail(q,Error("Kamera belum siap. Tutup kamera/aplikasi lain, kemudian coba kembali."))},30000);q.heartbeat=setInterval(()=>{if(!alive(q))return;diagnostic(q);if(q.started&&performance.now()-q.lastFrame>12000)fail(q,Error("Frame pelacakan terhenti. Tekan Coba Lagi untuk memulai sesi baru."))},2000);
 }
 function start(src,title){
@@ -317,17 +328,50 @@ current=q;overlay.classList.remove("hidden");document.documentElement.classList.
 document.querySelectorAll("model-viewer").forEach(v=>{v.dataset.arAutoRotate=v.hasAttribute("auto-rotate")?"1":"0";v.removeAttribute("auto-rotate");v.pause?.()});message("Menyiapkan XR Engine...","Izin kamera dan sensor diperlukan untuk pelacakan dunia.");
 Promise.all([preload(),permission]).then(async([[L,xr],granted])=>{if(!alive(q))return;q.L=L;q.xr=xr;if(!granted){visible("webarMotion",true);message("Izin sensor gerak diperlukan","Tekan Izinkan Sensor Gerak untuk melanjutkan.");return}await boot(q,L,xr)}).catch(e=>fail(q,e));
 }
-function place(){const q=current;if(!q||!alive(q)||!q.tracking||!q.loaded||!q.hit||performance.now()-q.since<400||performance.now()-q.lastHit>350)return;q.group.position.copy(q.hit);q.group.visible=true;q.placed=true;visible("webarReticle",false);visible("webarPlace",false);visible("webarReset",true);message("Model telah ditempatkan","Satu jari untuk memutar, dua jari untuk mengubah ukuran. Gerakkan kamera untuk melihat sisi lainnya.")}
-function reset(){const q=current;if(!q||!alive(q)||!q.group)return;q.placed=false;q.group.visible=false;q.turn.rotation.y=0;q.turn.scale.setScalar(1);q.zoom=1;q.rotation=0;q.pointers.clear();clearHit(q);visible("webarReset",false);message("Cari titik penempatan baru","Arahkan kamera ke permukaan bertekstur. Peta SLAM tetap dipertahankan.")}
+function place(){const q=current;if(!q||!alive(q)||!q.tracking||!q.loaded||!q.hit||performance.now()-q.since<400||performance.now()-q.lastHit>350)return;q.group.position.copy(q.hit);fitModel(q);q.group.visible=true;q.placed=true;q.lastTap=null;q.tapStart=null;q.pointers.clear();q.gesture=null;visible("webarReticle",false);visible("webarPlace",false);visible("webarReset",true);message("Model telah ditempatkan",INTERACTION_HINT)}
+function reset(){const q=current;if(!q||!alive(q)||!q.group)return;q.placed=false;q.group.visible=false;q.turn.rotation.y=0;q.turn.scale.setScalar(1);q.fitScale=1;q.zoom=1;q.rotation=0;q.pointers.clear();q.gesture=null;q.tapStart=null;q.lastTap=null;clearHit(q);visible("webarReset",false);message("Cari titik penempatan baru","Arahkan kamera ke permukaan bertekstur. Peta SLAM tetap dipertahankan.")}
 function close(){if(current)stop(current);current=null;overlay.classList.add("hidden");document.documentElement.classList.remove("webar-open");document.querySelectorAll("model-viewer").forEach(v=>{if(v.dataset.arAutoRotate==="1")v.setAttribute("auto-rotate","");delete v.dataset.arAutoRotate;v.play?.()})}
 function retry(){const q=current;if(!q)return;const{src,title}=q;close();start(src,title)}
 function pinch(q){const p=[...q.pointers.values()];return p.length===2?Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y):0}
-canvas.style.touchAction="none";
-canvas.addEventListener("pointerdown",e=>{const q=current;if(!q?.placed||!alive(q))return;e.preventDefault();try{canvas.setPointerCapture(e.pointerId)}catch(error){}q.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});q.pinch=pinch(q)});
-canvas.addEventListener("pointermove",e=>{const q=current;if(!q?.placed||!alive(q)||!q.pointers.has(e.pointerId))return;e.preventDefault();const previous=q.pointers.get(e.pointerId);q.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(q.pointers.size===2){const d=pinch(q);if(q.pinch>0){q.zoom=clamp(q.zoom*d/q.pinch,.3,4);q.turn.scale.setScalar(q.zoom)}q.pinch=d}else if(q.pointers.size===1){q.rotation+=(e.clientX-previous.x)*.008;q.turn.rotation.y=q.rotation}},{passive:false});
-["pointerup","pointercancel","lostpointercapture"].forEach(name=>canvas.addEventListener(name,e=>{const q=current;if(!q)return;q.pointers.delete(e.pointerId);q.pinch=pinch(q)}));
+const AR_INTERACTION={minZoom:.05,maxZoom:64,maxDpr:3,pixelBudget:4000000,anisotropy:8,fillWidth:.72,fillHeight:.5};
+const INTERACTION_HINT="Satu jari: putar. Dua jari: perbesar/perkecil dan putar. Ketuk dua kali untuk mengembalikan ukuran.";
+function applyZoom(q,value){if(!q.turn||!Number.isFinite(value))return;q.zoom=clamp(value,AR_INTERACTION.minZoom,AR_INTERACTION.maxZoom);q.turn.scale.setScalar((q.fitScale||1)*q.zoom)}
+function fitModel(q){
+if(!q.camera||!q.group||!q.radius)return;
+const p=q.camera.projectionMatrix.elements,distance=Math.max(.05,q.camera.position.distanceTo(q.group.position));
+const width=2*distance/Math.max(Math.abs(p[0]),.001),height=2*distance/Math.max(Math.abs(p[5]),.001);
+q.fitScale=Math.min(width*AR_INTERACTION.fillWidth,height*AR_INTERACTION.fillHeight)/(2*q.radius);
+applyZoom(q,1);
+}
+function resetView(q){if(!alive(q)||!q.placed||!q.tracking)return;fitModel(q);q.rotation=0;q.turn.rotation.y=0;q.lastTap=null;rebaseGesture(q);message("Ukuran dan sudut model dikembalikan",INTERACTION_HINT)}
+function gesture(q){const p=[...q.pointers.values()];if(p.length<2)return null;const dx=p[1].x-p[0].x,dy=p[1].y-p[0].y;return{distance:Math.hypot(dx,dy),angle:Math.atan2(dy,dx)}}
+function rebaseGesture(q){const g=gesture(q);q.gesture=g?{distance:Math.max(g.distance,8),angle:g.angle,zoom:q.zoom,rotation:q.rotation}:null}
+function pointerDown(e){
+const q=current;if(!q?.placed||!alive(q)||!q.tracking)return;if(e.pointerType==="mouse"&&e.button!==0)return;e.preventDefault();
+try{canvas.setPointerCapture(e.pointerId)}catch(error){}
+q.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+if(q.pointers.size===1)q.tapStart={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),moved:false};else{q.tapStart=null;q.lastTap=null}
+rebaseGesture(q);
+}
+function pointerMove(e){
+const q=current;if(!q?.placed||!alive(q)||!q.pointers.has(e.pointerId))return;e.preventDefault();
+const previous=q.pointers.get(e.pointerId);q.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+if(q.tapStart&&Math.hypot(e.clientX-q.tapStart.x,e.clientY-q.tapStart.y)>10)q.tapStart.moved=true;
+if(!q.tracking){rebaseGesture(q);return}
+if(q.pointers.size>=2){const g=gesture(q);if(!q.gesture){rebaseGesture(q);return}applyZoom(q,q.gesture.zoom*g.distance/q.gesture.distance);const delta=g.angle-q.gesture.angle;q.rotation=q.gesture.rotation+Math.atan2(Math.sin(delta),Math.cos(delta));q.turn.rotation.y=q.rotation}
+else{q.rotation+=(e.clientX-previous.x)*.008;q.turn.rotation.y=q.rotation}
+}
+function pointerEnd(e){
+const q=current;if(!q||!q.pointers.has(e.pointerId))return;
+const tap=q.tapStart,now=performance.now(),isTap=e.type==="pointerup"&&q.pointers.size===1&&tap?.id===e.pointerId&&!tap.moved&&now-tap.time<280&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)<10;
+q.pointers.delete(e.pointerId);q.tapStart=null;rebaseGesture(q);
+if(e.type!=="pointerup"){q.lastTap=null;return}
+if(isTap){const last=q.lastTap;if(last&&now-last.time<350&&Math.hypot(e.clientX-last.x,e.clientY-last.y)<32)resetView(q);else q.lastTap={time:now,x:e.clientX,y:e.clientY}}
+}
+function wheelZoom(e){const q=current;if(!q?.placed||!alive(q)||!q.tracking)return;e.preventDefault();const pixels=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?canvas.clientHeight:1);applyZoom(q,q.zoom*Math.exp(-clamp(pixels,-600,600)*.002));q.lastTap=null;rebaseGesture(q)}
+canvas.style.touchAction="none";canvas.addEventListener("pointerdown",pointerDown,{passive:false});canvas.addEventListener("pointermove",pointerMove,{passive:false});["pointerup","pointercancel","lostpointercapture"].forEach(name=>canvas.addEventListener(name,pointerEnd));canvas.addEventListener("wheel",wheelZoom,{passive:false});
 $("webarClose").addEventListener("click",close);$("webarBackBottom").addEventListener("click",close);$("webarPlace").addEventListener("click",place);$("webarReset").addEventListener("click",reset);$("webarRetry").addEventListener("click",retry);
 $("webarMotion").addEventListener("click",()=>{const q=current;if(!q||!alive(q))return;requestMotion().then(granted=>{if(!alive(q))return;if(!granted){message("Sensor belum diizinkan","Izinkan akses sensor melalui pengaturan Safari, kemudian coba lagi.");return}visible("webarMotion",false);return boot(q,q.L,q.xr)}).catch(e=>fail(q,e))});
-window.addEventListener("resize",size);window.visualViewport?.addEventListener("resize",size);document.addEventListener("visibilitychange",()=>{if(document.hidden&&current)close()});window.addEventListener("pagehide",close);document.addEventListener("keydown",e=>{if(current&&e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();close()}},true);
+window.addEventListener("resize",size);window.addEventListener("orientationchange",()=>requestAnimationFrame(size));if(typeof ResizeObserver!=="undefined")new ResizeObserver(size).observe(overlay);window.visualViewport?.addEventListener("resize",size);document.addEventListener("visibilitychange",()=>{if(document.hidden&&current)close()});window.addEventListener("pagehide",close);document.addEventListener("keydown",e=>{if(current&&e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();close()}},true);
 window.FT_WEBAR={start,close,reset,preload};
 })();
