@@ -1,4 +1,4 @@
-/* Revisi 10: 5 gedung, 10 model, 54 ruangan. Data Navigasi tetap disimpan. */
+/* 5 gedung, 10 model, 54 ruangan. Data peta tetap disimpan. */
 (function(){"use strict";
 const MAP_WIDTH=768,MAP_HEIGHT=1024,NAVIGATION_MAP="./assets/maps/denah-v1.png",FULL_DETAIL_REFERENCE="./assets/maps/denah-full-detail.png";
 const BIRO="biro-ft",KELAS="perkuliahan-ft",LAB="laboratorium-ft",PERPUS="perpustakaan-ft",SERBAGUNA="serbaguna-ft";
