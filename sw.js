@@ -1,4 +1,4 @@
-const VERSION="ft-uisu-r12-r9-ui",APP=VERSION+"-app",MODELS="ft-uisu-r12-models",STATIC=["./","./index.html","./style.css?v=12-r9-ui-ar","./script.js?v=12-r9-ui-ar","./data/map-data.js?v=12-r9-ui-ar"];
+const VERSION="ft-uisu-r11-ar-interaction",APP=VERSION+"-app",MODELS="ft-uisu-r11-ar-models",STATIC=["./","./index.html","./style.css?v=12-r9-ui-ar","./script.js?v=11-ar-interaction","./data/map-data.js?v=12-r9-ui-ar"];
 
 self.addEventListener("install",event=>{
 event.waitUntil(caches.open(APP).then(cache=>cache.addAll(STATIC)).then(()=>self.skipWaiting()));
